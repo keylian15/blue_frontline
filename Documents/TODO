@@ -1,0 +1,15 @@
+HUD :
+    Timer
+    Ressources
+    Unités
+    Batiments
+    
+Map : 
+    Marée haute
+    Marée basse
+    Cratére
+    Brouillard
+
+Algos : 
+    Bruit de Perlin Inversé (+ intégration dans la map)
+
