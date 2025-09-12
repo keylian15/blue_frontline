@@ -1,6 +1,7 @@
 import pygame, pytmx, pyscroll
 from Class.Camera import *
 from Global import *
+from Class.hud import *
 
 class Game : 
     """Classe principale du jeu."""
@@ -24,6 +25,9 @@ class Game :
         # Dessiner le groupe de calques
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
         self.group.add(self.camera)
+        
+        # le HUD
+        self.hud = Hud (self.screen.get_width(), self.screen.get_height())
 
     def handle_input(self):
         """Gère les entrées clavier pour déplacer la caméra."""
@@ -66,7 +70,8 @@ class Game :
             self.group.center(self.camera.rect.center)
             # On dessine le groupe
             self.group.draw(self.screen)
-            
+            #on dessine le hud
+            self.hud.draw(self.screen)
             pygame.display.flip()
             
             clock.tick(60)
