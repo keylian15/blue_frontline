@@ -1,3 +1,4 @@
+import time
 import pygame, pytmx, pyscroll
 from Class.Camera import *
 from Global import *
@@ -43,10 +44,15 @@ class Game :
             dx -= self.camera.camera_move
         if pressed[pygame.K_RIGHT]: # Droite
             dx += self.camera.camera_move
+            
+        if pressed[pygame.K_h]:
+            self.hud.switch()
+            time.sleep(0.1)
 
         # On déplace la caméra seulement si il y a un déplacement
         if dx or dy:  
             self.camera.move(dx, dy)
+            
 
     def run(self): 
         
@@ -71,8 +77,9 @@ class Game :
             # On dessine le groupe
             self.group.draw(self.screen)
             #on dessine le hud
-            self.hud.draw(self.screen)
-            pygame.display.flip()
+            if self.hud.show:
+                self.hud.draw(self.screen)
             
+            pygame.display.flip()
             clock.tick(60)
         pygame.quit()
