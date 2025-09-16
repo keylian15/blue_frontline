@@ -3,7 +3,8 @@ import pygame, pytmx, pyscroll
 from Class.Camera import *
 from Global import *
 from Class.hud import *
-from Class.Counter import Petrole
+from Class.Petrole import *
+from Class.Piece import *
 class Game : 
     """Classe principale du jeu."""
 

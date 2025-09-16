@@ -1,7 +1,7 @@
 import pygame 
-from Class.Counter import Petrole
+from Class.Petrole import Petrole
 from Global import * 
-
+from Class.Piece import Piece
 class Hud:
     
     def __init__(self, width, height):
@@ -16,14 +16,14 @@ class Hud:
                 
         # Build du HUD
         self.build_surface = pygame.Surface((width * 0.15, height * 0.25), pygame.SRCALPHA)
-        self.build_surface.fill(self.hud_color)
         
         # Select HUD
         self.select_surface = pygame.Surface((width * 0.3, height * 0.2), pygame.SRCALPHA)
-        self.select_surface.fill(self.hud_color)
+
 
         # Instance unique de ton compteur de pétrole
         self.petrole = Petrole()
+        self.piece = Piece()
 
     def switch(self):
         self.show = not self.show
@@ -46,6 +46,10 @@ class Hud:
         font = pygame.font.Font(None, 30)
         text = font.render(str(self.petrole.count), True, (0, 0, 0))
         screen.blit(text, (self.width * 0.84 + 90, self.height * 0.84 + 30))
+        
+        #Texte compteur pièces
+        text = font.render(str(self.piece.count), True, (0, 0, 0))
+        screen.blit(text, (self.width * 0.84 + 90, self.height * 0.74 + 30))
 
     def load_images(self):
         piece = pygame.image.load(PIECE_IMAGE_PATH).convert_alpha()
@@ -59,3 +63,5 @@ class Hud:
             'petrole': petrole
         }
         return images
+    
+    
