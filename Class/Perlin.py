@@ -1,5 +1,6 @@
 from random import randint
 from perlin_noise import PerlinNoise
+from Global import *
 import pygame
 
 class Perlin:
@@ -57,42 +58,95 @@ class Perlin:
         for ligne in matrice:
             print("".join(mapping[val] for val in ligne))
 
-    def render_matrix(self, matrice, tileset, tile_size, mapping):
+    def render_matrix(self, matrice, tileset):
         """
-        Transforme une matrice de tuiles en surface Pygame. (Ile Brute)
+        Transforme une matrice de tuiles en surface Pygame. (Ile Brute donc case uniquements pleines)
         Args:
             matrice (list[list[int]]): matrice générée par Perlin
-            tileset (list[pygame.Surface]): liste de tuiles
-            tile_size (int): taille d'une tuile en pixels
+            tileset (list[pygame.Surface]): liste de tuiles DÉJÀ CHARGÉES
             mapping (dict): association {val_matrice: index_tileset}
         Returns:
             pygame.Surface: surface représentant la carte
         """
         height = len(matrice)
         width = len(matrice[0])
-        surface = pygame.Surface((width * tile_size, height * tile_size), pygame.SRCALPHA)
+        surface = pygame.Surface((width * 32, height * 32), pygame.SRCALPHA)
 
         for y in range(height):
             for x in range(width):
-                val = matrice[y][x]
-                tile_index = mapping[val]
-                tile = tileset[tile_index]
-                surface.blit(tile, (x * tile_size, y * tile_size))
+                val = matrice[y][x]  # 0 (Profonde), 1 (Peu profonde), ou 2 (Ile)
+                tile = tileset[val]  # Récupère la tuile correspondante
+                surface.blit(tile, (x * 32, y * 32))
 
         return surface
 
-    def smooth_map(self, matrice, surface):
-        """Méthode pour lisser la carte."""
+    def get_matrix_value(self, matrice, y, x):
         """
-        2  3  4
-        1  x  5
-        8  7  6
-        Algorithme de lissage simple :
-            Pour chaque cellule, on regarde ses 8 voisins.
-            
-        
-        
+        Retourne la valeur de la matrice aux coordonnées (y, x).
+        Si les coordonnées sont hors limites, retourne 1 (eau peu profonde).
         """
+        height = len(matrice)
+        width = len(matrice[0])
+        
+        if y < 0 or y >= height or x < 0 or x >= width:
+            return 1
+        return matrice[y][x]
+
+    def smooth_map(self, matrice: list[list[int]], tilesets : list):
+        """
+        Génère une surface avec transitions (edges, corners, L-shapes).
+        Args:
+            matrice (list[list[int]]): matrice générée par Perlin
+            tilesets (list): liste de tilesets par biome
+                            [deep_tileset, shallow_tileset, island_tileset]
+        """
+        height = len(matrice)
+        width = len(matrice[0])
+        surface = pygame.Surface((width * 32, height * 32), pygame.SRCALPHA)
+
+        # On parcour toutes les cases de la matrice de Perlin
+        for y in range(height):
+            for x in range(width):
+                # Valeurs possibles : 0 (terre), 1 (eau peu profonde), 2 (île)
+                val = matrice[y][x]
+                # Les différents tilesets (terre, eau peu profonde, île)
+                spritesheet = tilesets[val]
+
+                # Détermine quel type de voisin rechercher pour les transitions
+                # Cas spécial : eau peu profonde utilise toujours le centre
+                if val == 1:
+                    tile_index = MAPPING["center"]
+                else:
+                    if val == 2:  # île
+                        zone_recherche = 1  # recherche l'eau peu profonde autour
+                    else:  # val == 0, eau profonde
+                        zone_recherche = 1  # recherche l'eau peu profonde autour
+
+                    # On utilise un mask pour du binaire afin de savoir quelle tuile prendre.
+                    # Voir Global.py pour le MASK_MAPPING.
+                    mask = 0
+
+                    # Vérifie le voisin au-dessus (Nord)
+                    if self.get_matrix_value(matrice, y-1, x) == zone_recherche:
+                        mask |= 1 # On active le Bit 1 
+
+                    # Vérifie le voisin à droite (Est)
+                    if self.get_matrix_value(matrice, y, x+1) == zone_recherche:
+                        mask |= 2 # On active le Bit 2
+
+                    # Vérifie le voisin en dessous (Sud)
+                    if self.get_matrix_value(matrice, y+1, x) == zone_recherche:
+                        mask |= 4 # On active le Bit 4
+
+                    # Vérifie le voisin à gauche (Ouest)
+                    if self.get_matrix_value(matrice, y, x-1) == zone_recherche:
+                        mask |= 8 # On active le Bit 8
+
+                    tile_index = MASK_MAPPING.get(mask, MAPPING["center"])
+                tile = spritesheet[tile_index]
+                surface.blit(tile, (x * 32, y * 32))
+
+        return surface
 
 if __name__ == "__main__":
     perlin = Perlin()
