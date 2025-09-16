@@ -28,6 +28,11 @@ class Game :
         map_data = pyscroll.data.TiledMapData(self.tmx_data)
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size()) 
         
+        # Les data de tilesets
+        self.island_tileset = load_tileset(ISLAND_TILESET_PATH)
+        self.deep_water_tileset = load_tileset(DEEP_WATER_TILESET_PATH)
+        self.water_tileset = load_tileset(WATER_TILESET_PATH)
+        
         # Créer la caméra
         camera_position = self.tmx_data.get_object_by_name("spawn") # Récupère la position de la caméra depuis Tiled
         self.camera = Camera(camera_position.x, camera_position.y)
@@ -35,41 +40,42 @@ class Game :
         # Dessiner le groupe de calques
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
         self.group.add(self.camera)
-        
+            
     def quantique(self):
+        """ Génération de l'île quantique"""
         # Générer l'île avec Perlin
         island_position = None
         for obj in self.tmx_data.objects:
-            if obj.name == "ile_quantique":               
+            if obj.name == "ile_quantique" :                         
+                # On récupère la position et on l'aligne à la grille      
                 aligned_x = (obj.x // 32) * 32
                 aligned_y = (obj.y // 32) * 32
                 island_position = (aligned_x, aligned_y)
 
-                island_width_tiles = int(obj.width // 32) + 1
-                island_height_tiles = int(obj.height // 32) + 1
-                break
-
-        eau_profonde = pygame.image.load(DEEP_WATER_PATH).convert_alpha()
-        eau_peu_profonde = pygame.image.load(WATER_PATH).convert_alpha()
-        terre = pygame.image.load(ISLAND_PATH).convert_alpha()
-        tileset = [eau_profonde, eau_peu_profonde, terre]
-        # tileset = load_tileset(TILESET_PATH)
-        mapping = {0: 0, 1: 1, 2: 2}
-
-        # Générer et créer le sprite de l'île
-        self.perlin = Perlin()
-        island_matrix = self.perlin.generate_island(island_height_tiles, island_width_tiles)
-        island_surface = self.perlin.render_matrix(island_matrix, tileset, 32, mapping)
+                # On récupère la taille en nombre de tuiles
+                island_width_tiles = int(obj.width // 32) 
+                island_height_tiles = int(obj.height // 32)
+                        
+                # Créer le tileset final avec les tuiles centrales
+                tileset_surface_smooth = [
+                        self.deep_water_tileset,# Index 0: Eau profonde (centre du tileset)
+                        self.water_tileset,     # Index 1: Eau peu profonde (le png en lui même)
+                        self.island_tileset     # Index 2: Île (centre du tileset)
+                    ]
         
-        # Créer le sprite et l'ajouter au groupe
-        if island_position:
-            island_sprite = IslandSprite(island_surface, island_position[0], island_position[1])
-        else:
-            # Position par défaut si pas d'objet "ile_quantique" trouvé
-            island_sprite = IslandSprite(island_surface, 100, 100)
-            
-        self.group.add(island_sprite)
-
+                # Générer et créer le sprite de l'île
+                self.perlin = Perlin()
+                island_matrix = self.perlin.generate_island(island_height_tiles, island_width_tiles)
+                island_surface = self.perlin.smooth_map(island_matrix, tileset_surface_smooth)
+                
+                # Créer le sprite et l'ajouter au groupe
+                if island_position:
+                    island_sprite = IslandSprite(island_surface, island_position[0], island_position[1])
+                else:
+                    island_sprite = IslandSprite(island_surface, 100, 100)
+                    
+                self.group.add(island_sprite)
+                
     def handle_input(self):
         """Gère les entrées clavier pour déplacer la caméra."""
         # On récupère les touches appuyées
@@ -103,9 +109,9 @@ class Game :
                 if event.type == pygame.QUIT: 
                     running = False
                     
+                # Clic gauche pour générer l'île
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    self.quantique()
-            
+                    self.quantique()            
             # On gère les entrées
             self.handle_input()
             # On met a jour les groupes
