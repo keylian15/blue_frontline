@@ -10,3 +10,5 @@ MAP_PATH = "map.tmx"
 # === Caméra ===
 # Chemin de l'image Bullet
 BULLET_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/entity/png/bullet.png')
+PIECE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/piece.png')
+PETROLE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/petrole.png')

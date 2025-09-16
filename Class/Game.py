@@ -3,7 +3,7 @@ import pygame, pytmx, pyscroll
 from Class.Camera import *
 from Global import *
 from Class.hud import *
-
+from Class.Counter import Petrole
 class Game : 
     """Classe principale du jeu."""
 
@@ -47,7 +47,7 @@ class Game :
             
         if pressed[pygame.K_h]:
             self.hud.switch()
-            time.sleep(0.1)
+            time.sleep(0.2)
 
         # On déplace la caméra seulement si il y a un déplacement
         if dx or dy:  
@@ -67,7 +67,8 @@ class Game :
 
                 if event.type == pygame.QUIT: 
                     running = False
-            
+                self.hud.petrole.handle_event(event)
+
             # On gère les entrées
             self.handle_input()
             # On met a jour les groupes
@@ -79,7 +80,7 @@ class Game :
             #on dessine le hud
             if self.hud.show:
                 self.hud.draw(self.screen)
-            
+
             pygame.display.flip()
             clock.tick(60)
         pygame.quit()
