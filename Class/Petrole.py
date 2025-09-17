@@ -14,8 +14,6 @@ class Petrole:
         """À appeler dans la boucle principale pour gérer l'auto-incrément"""
         if event.type == self.PETROLE_EVENT:
             self.count += 1
-            
-            print(event.type, event)
 
     # Fonction de test.
     def minus_one(self):
