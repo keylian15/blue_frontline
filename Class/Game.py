@@ -101,11 +101,11 @@ class Game :
         self.hud = Hud(self.screen)
             
     def quantique(self):
-        """ Génération de l'île quantique"""
+        """ Génération de l'île quantique pour toutes les îles quantique dans la map."""
         # Générer l'île avec Perlin
         island_position = None
         for obj in self.tmx_data.objects:
-            if obj.name == "ile_quantique" :                         
+            if obj.name.startswith("ile_quantique")  :                         
                 # On récupère la position et on l'aligne à la grille      
                 aligned_x = (obj.x // 32) * 32
                 aligned_y = (obj.y // 32) * 32
@@ -298,7 +298,7 @@ class Game :
         running = True
 
         while running: 
-            dt = clock.tick(60) / 1000.0  # Delta time en secondes
+            dt = clock.tick(FPS) / TIME_STEP  # Delta time en secondes
             
             # Gestion des événements
             for event in pygame.event.get(): 
@@ -342,7 +342,6 @@ class Game :
                 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1 and not self.show_unit_popup:  # Clic gauche
-                        print("clic gauche détecté")
                         mouse_x, mouse_y = pygame.mouse.get_pos()
                         
                         # Conversion screen vers world coordinates
@@ -367,10 +366,6 @@ class Game :
                                 print(f"Déplacement de {self.selected_unit.__class__.__name__}")
                         else:
                             self.selected_unit = None
-            
-            # On gère les entrées pour le déplacement de la caméra
-            if not self.show_unit_popup:
-                self.handle_input()
             
             # Mettre à jour la caméra (CRITIQUE : synchronise rect.center avec position)
             self.camera.update()
@@ -439,6 +434,5 @@ class Game :
             # Dessiner le popup de sélection des unités
             self.draw_unit_popup()            
             pygame.display.flip()
-            clock.tick(FPS)
             
         pygame.quit()
