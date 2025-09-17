@@ -1,7 +1,11 @@
+import time
 import pygame, pytmx, pyscroll
+from Global import *
 from Class.Camera import *
 from Class.Perlin import *
-from Global import *
+from Class.hud import *
+from Class.Petrole import *
+from Class.Piece import *
 from Utils import *
 
 class IslandSprite(pygame.sprite.Sprite):
@@ -12,6 +16,7 @@ class IslandSprite(pygame.sprite.Sprite):
         self.image = surface
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
+
 
 class Game : 
     """Classe principale du jeu."""
@@ -40,6 +45,9 @@ class Game :
         # Dessiner le groupe de calques
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
         self.group.add(self.camera)
+
+        # le HUD
+        self.hud = Hud (self.screen.get_width(), self.screen.get_height())
             
     def quantique(self):
         """ Génération de l'île quantique"""
@@ -90,10 +98,15 @@ class Game :
             dx -= self.camera.camera_move
         if pressed[pygame.K_RIGHT]: # Droite
             dx += self.camera.camera_move
+            
+        if pressed[pygame.K_h]:
+            self.hud.switch()
+            time.sleep(0.2)
 
         # On déplace la caméra seulement si il y a un déplacement
         if dx or dy:  
             self.camera.move(dx, dy)
+            
 
     def run(self): 
         
@@ -108,10 +121,14 @@ class Game :
 
                 if event.type == pygame.QUIT: 
                     running = False
-                    
+
+                # Gere la gestion de pétrole
+                self.hud.petrole.handle_event(event)
+
                 # Clic gauche pour générer l'île
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                     self.quantique()            
+
             # On gère les entrées
             self.handle_input()
             # On met a jour les groupes
@@ -120,8 +137,10 @@ class Game :
             self.group.center(self.camera.rect.center)
             # On dessine le groupe
             self.group.draw(self.screen)
-            
+            #on dessine le hud
+            if self.hud.show:
+                self.hud.draw(self.screen)
+
             pygame.display.flip()
-            
             clock.tick(60)
         pygame.quit()

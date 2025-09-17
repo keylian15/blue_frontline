@@ -11,6 +11,12 @@ MAP_PATH = "map.tmx"
 # Chemin de l'image Bullet
 BULLET_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/entity/png/bullet.png')
 
+# === HUD === 
+# Chemin des pièces et du pétrole
+PIECE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/piece.png')
+PETROLE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/petrole.png')
+
+
 # === Ile Quantique ===
 WATER_PATH = os.path.join(BASE_DIR, 'assets/water/png/water.png')
 
