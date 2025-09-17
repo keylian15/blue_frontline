@@ -309,8 +309,8 @@ class Game :
                 # Gere la gestion de pétrole
                 self.hud.petrole.handle_event(event)
 
-                # Clic gauche pour générer l'île
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                # Clic Droit pour générer l'île
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                     self.quantique()            
 
             
