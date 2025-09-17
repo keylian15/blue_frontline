@@ -309,8 +309,8 @@ class Game :
                 # Gere la gestion de pétrole
                 self.hud.petrole.handle_event(event)
 
-                # Clic gauche pour générer l'île
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                # Clic droit pour générer l'île
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                     self.quantique()            
 
             
@@ -342,6 +342,7 @@ class Game :
                 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1 and not self.show_unit_popup:  # Clic gauche
+                        print("clic gauche détecté")
                         mouse_x, mouse_y = pygame.mouse.get_pos()
                         
                         # Conversion screen vers world coordinates
