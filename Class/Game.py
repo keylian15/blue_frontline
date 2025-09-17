@@ -1,3 +1,4 @@
+import time
 import pygame, pytmx, pyscroll, math, random
 from Class.Camera import *
 from Class.Combat import CombatSystem
@@ -12,6 +13,22 @@ from Class.units.PaquebotVert import PaquebotVert
 from Class.units.SousmarinRouge import SousMarinRouge
 from Class.units.SousmarinVert import SousMarinVert
 from Global import *
+from Class.Camera import *
+from Class.Perlin import *
+from Class.Hud import *
+from Class.Petrole import *
+from Class.Piece import *
+from Utils import *
+
+class IslandSprite(pygame.sprite.Sprite):
+    """Sprite pour représenter une île générée."""
+    
+    def __init__(self, surface, x, y):
+        super().__init__()
+        self.image = surface
+        self.rect = self.image.get_rect()
+        self.rect.topleft = (x, y)
+
 
 class Game : 
     """Classe principale du jeu."""
@@ -22,19 +39,27 @@ class Game :
         # Créer la fenêtre
         self.screen = pygame.display.set_mode((0, 0), pygame.NOFRAME)        
         pygame.display.set_caption("Blue Frontline")
-        tmx_data = pytmx.util_pygame.load_pygame(MAP_PATH)
+        self.tmx_data = pytmx.util_pygame.load_pygame(MAP_PATH)
         
         # Les data de la map
-        map_data = pyscroll.data.TiledMapData(tmx_data)
+        map_data = pyscroll.data.TiledMapData(self.tmx_data)
         map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size()) 
         
+        # Les data de tilesets
+        self.island_tileset = load_tileset(ISLAND_TILESET_PATH)
+        self.deep_water_tileset = load_tileset(DEEP_WATER_TILESET_PATH)
+        self.water_tileset = load_tileset(WATER_TILESET_PATH)
+        
+        # Créer la caméra
+        camera_position = self.tmx_data.get_object_by_name("spawn") # Récupère la position de la caméra depuis Tiled
+        self.camera = Camera(camera_position.x, camera_position.y, self.screen.get_size(), (camera_position.x, camera_position.y))
         # Récupérer les dimensions de la map pour limiter la caméra
-        self.map_width = tmx_data.width * tmx_data.tilewidth
-        self.map_height = tmx_data.height * tmx_data.tileheight
+        self.map_width =self.tmx_data.width *self.tmx_data.tilewidth
+        self.map_height =self.tmx_data.height *self.tmx_data.tileheight
         print(f"Dimensions de la map: {self.map_width}x{self.map_height}")
         
         # Créer la caméra avec les limites de la map
-        camera_position = tmx_data.get_object_by_name("spawn") # Récupère la position de la caméra depuis Tiled
+        camera_position =self.tmx_data.get_object_by_name("spawn") # Récupère la position de la caméra depuis Tiled
         self.camera = Camera(camera_position.x, camera_position.y, self.screen.get_size(), (self.map_width, self.map_height))
         
         # Dessiner le groupe de calques
@@ -72,11 +97,49 @@ class Game :
         pygame.font.init()
         self.font = pygame.font.Font(None, 24)
 
+        # HUD
+        self.hud = Hud(self.screen)
+            
+    def quantique(self):
+        """ Génération de l'île quantique"""
+        # Générer l'île avec Perlin
+        island_position = None
+        for obj in self.tmx_data.objects:
+            if obj.name == "ile_quantique" :                         
+                # On récupère la position et on l'aligne à la grille      
+                aligned_x = (obj.x // 32) * 32
+                aligned_y = (obj.y // 32) * 32
+                island_position = (aligned_x, aligned_y)
+
+                # On récupère la taille en nombre de tuiles
+                island_width_tiles = int(obj.width // 32) 
+                island_height_tiles = int(obj.height // 32)
+                        
+                # Créer le tileset final avec les tuiles centrales
+                tileset_surface_smooth = [
+                        self.deep_water_tileset,# Index 0: Eau profonde (centre du tileset)
+                        self.water_tileset,     # Index 1: Eau peu profonde (le png en lui même)
+                        self.island_tileset     # Index 2: Île (centre du tileset)
+                    ]
+        
+                # Générer et créer le sprite de l'île
+                self.perlin = Perlin()
+                island_matrix = self.perlin.generate_island(island_height_tiles, island_width_tiles)
+                island_surface = self.perlin.smooth_map(island_matrix, tileset_surface_smooth)
+                
+                # Créer le sprite et l'ajouter au groupe
+                if island_position:
+                    island_sprite = IslandSprite(island_surface, island_position[0], island_position[1])
+                else:
+                    island_sprite = IslandSprite(island_surface, 100, 100)
+                    
+                self.group.add(island_sprite)
+                
     def handle_input(self):
         """Gère les entrées clavier pour déplacer la caméra."""
         # On récupère les touches appuyées
         pressed = pygame.key.get_pressed()
-
+        
         dx, dy = 0, 0
         if pressed[pygame.K_UP]: # Haut
             dy -= self.camera.camera_move
@@ -86,10 +149,15 @@ class Game :
             dx -= self.camera.camera_move
         if pressed[pygame.K_RIGHT]: # Droite
             dx += self.camera.camera_move
+            
+        if pressed[pygame.K_h]:
+            self.hud.switch()
+            time.sleep(0.2)
 
         # On déplace la caméra seulement si il y a un déplacement
         if dx or dy:  
             self.camera.move(dx, dy)
+            
     
     def spawn_unit(self, unit_class):
         """Fait apparaître une unité près de la plateforme correspondant à son équipe."""
@@ -237,6 +305,15 @@ class Game :
 
                 if event.type == pygame.QUIT: 
                     running = False
+
+                # Gere la gestion de pétrole
+                self.hud.petrole.handle_event(event)
+
+                # Clic gauche pour générer l'île
+                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    self.quantique()            
+
+            
                 
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_e:
@@ -312,6 +389,13 @@ class Game :
             self.group.center(self.camera.rect.center)
             # On dessine le groupe
             self.group.draw(self.screen)
+            # On dessine le hud
+            if self.hud.show :
+                self.hud.draw(self.screen)
+
+            
+            # On gère les entrées
+            self.handle_input()
             
             # Dessiner les projectiles
             camera_offset = (self.camera.position[0] - self.screen.get_width() // 2,
@@ -352,8 +436,8 @@ class Game :
                                      (int(unit_screen_x), int(unit_screen_y)), 3, 0)
             
             # Dessiner le popup de sélection des unités
-            self.draw_unit_popup()
-            
+            self.draw_unit_popup()            
             pygame.display.flip()
+            clock.tick(FPS)
             
         pygame.quit()
