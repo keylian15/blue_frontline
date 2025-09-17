@@ -115,7 +115,7 @@ class Perlin:
                 # Détermine quel type de voisin rechercher pour les transitions
                 # Cas spécial : eau peu profonde utilise toujours le centre
                 if val == 1:
-                    tile_index = MAPPING["center"]
+                    tile_index = MAPPING["full"]
                 else:
                     if val == 2:  # île
                         zone_recherche = 1  # recherche l'eau peu profonde autour
@@ -126,6 +126,18 @@ class Perlin:
                     # Voir Global.py pour le MASK_MAPPING.
                     mask = 0
 
+                    # En haut : y-1, x 
+                    # En bas : y+1, x
+                    # A gauche : y, x-1
+                    # A droite : y, x+1
+                    # Haut a Gauche : y-1, x-1
+                    # Haut a Droite : y-1, x+1
+                    # Bas a Gauche : y+1, x-1
+                    # Bas a Droite : y+1, x+1
+                    
+                    
+                        
+                    
                     # Vérifie le voisin au-dessus (Nord)
                     if self.get_matrix_value(matrice, y-1, x) == zone_recherche:
                         mask |= 1 # On active le Bit 1 
@@ -141,8 +153,23 @@ class Perlin:
                     # Vérifie le voisin à gauche (Ouest)
                     if self.get_matrix_value(matrice, y, x-1) == zone_recherche:
                         mask |= 8 # On active le Bit 8
+                        
+                    if self.get_matrix_value(matrice, y-1, x-1) == zone_recherche :
+                        mask |= 16
+                    
+                    if self.get_matrix_value(matrice, y-1, x+1) == zone_recherche :
+                        mask |= 32
+                    
+                    if self.get_matrix_value(matrice, y+1, x-1) == zone_recherche :
+                        mask |= 64
+                        
+                    if self.get_matrix_value(matrice, y+1, x+1) == zone_recherche : 
+                        mask |= 128
+                        
+                        
+                    # === Test algo === 
 
-                    tile_index = MASK_MAPPING.get(mask, MAPPING["center"])
+                    tile_index = MASK_MAPPING.get(mask, MAPPING["full"])
                 tile = spritesheet[tile_index]
                 surface.blit(tile, (x * 32, y * 32))
 

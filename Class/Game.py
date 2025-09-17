@@ -3,7 +3,7 @@ import pygame, pytmx, pyscroll
 from Global import *
 from Class.Camera import *
 from Class.Perlin import *
-from Class.hud import *
+from Class.Hud import *
 from Class.Petrole import *
 from Class.Piece import *
 from Utils import *
@@ -46,8 +46,8 @@ class Game :
         self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
         self.group.add(self.camera)
 
-        # le HUD
-        self.hud = Hud (self.screen.get_width(), self.screen.get_height())
+        # HUD
+        self.hud = Hud(self.screen)
             
     def quantique(self):
         """ Génération de l'île quantique"""
@@ -107,7 +107,6 @@ class Game :
         if dx or dy:  
             self.camera.move(dx, dy)
             
-
     def run(self): 
         
         # On crée une horloge pour gérer les fps
@@ -137,10 +136,10 @@ class Game :
             self.group.center(self.camera.rect.center)
             # On dessine le groupe
             self.group.draw(self.screen)
-            #on dessine le hud
-            if self.hud.show:
+            # On dessine le hud
+            if self.hud.show :
                 self.hud.draw(self.screen)
 
             pygame.display.flip()
-            clock.tick(60)
+            clock.tick(FPS)
         pygame.quit()
