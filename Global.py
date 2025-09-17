@@ -141,6 +141,9 @@ MASK_MAPPING = {
     1 + 2 + 4 + 8 : MAPPING["center"],
     }
 # === Unités ===
+# Team rouge 
+RED_TEAM_PATH = os.path.join(BASE_DIR, 'assets/red_team/png/red_team_spritesheet.png')
+RED_TEAM_PATH = os.path.join(BASE_DIR, 'assets/green_team/png/green_team_spritesheet.png')
 # Chaloupes
 RED_CHALOUPE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/boat/png/red_chaloupe.png')
 GREEN_CHALOUPE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/boat/png/green_chaloupe.png')

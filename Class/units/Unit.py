@@ -1,6 +1,7 @@
 import pygame
 import time
 from Global import *
+from Utils import load_tileset
 
 class Unit(pygame.sprite.Sprite):
     """Classe de base pour toutes les unités du jeu."""
@@ -26,7 +27,9 @@ class Unit(pygame.sprite.Sprite):
         self.fire_rate = 1.0  # Tirs par seconde
         
         # Image et sprite
-        self.load_image(image_path)
+        # self.load_image(image_path)
+        self.tileset = load_tileset(RED_TEAM_PATH)
+        self.image = self.tileset[0]  # Utiliser la première tuile comme image par défaut
         self.rect = self.image.get_rect()
         self.rect.center = (self.position[0], self.position[1])
         
