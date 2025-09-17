@@ -1,3 +1,4 @@
+import time
 import pygame, pytmx, pyscroll, math, random
 from Class.Camera import *
 from Class.Combat import CombatSystem
