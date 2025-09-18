@@ -18,6 +18,7 @@ from Class.Perlin import *
 from Class.Hud import *
 from Class.Petrole import *
 from Class.Piece import *
+from Class.Timer import *
 from Utils import *
 
 class IslandSprite(pygame.sprite.Sprite):
@@ -308,6 +309,7 @@ class Game :
 
                 # Gere la gestion de pétrole
                 self.hud.petrole.handle_event(event)
+                self.hud.timer.handle_event(event)
 
                 # Clic droit pour générer l'île
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:

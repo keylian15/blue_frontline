@@ -23,6 +23,7 @@ PIECE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/piece.png')
 PETROLE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/petrole.png')
 # Événement unique
 PETROLE_EVENT = pygame.USEREVENT + 1
+TIMER_EVENT = pygame.USEREVENT + 1
 
 # === Ile Quantique ===
 WATER_PATH = os.path.join(BASE_DIR, 'assets/water/png/water.png')
