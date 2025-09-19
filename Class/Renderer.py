@@ -73,7 +73,7 @@ class Renderer:
         if self.map_needs_refresh:
             self.refresh_map()
             self.map_needs_refresh = False
-        
+
         if self.game.camera.zoom_level != 1.0:
             # Rendu avec zoom
             temp_surface = pygame.Surface((
@@ -86,7 +86,7 @@ class Renderer:
         else:
             # Rendu normal sans zoom
             self.game.group.draw(self.game.screen)
-            
+
     def _render_projectiles(self):
         """Rend tous les projectiles."""
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())

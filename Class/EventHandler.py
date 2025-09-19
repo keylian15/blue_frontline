@@ -16,6 +16,7 @@ class EventHandler:
             # Gestion des événements HUD
             self.game.hud.petrole.handle_event(event)
             self.game.hud.timer.handle_event(event)
+
             
             # Gestion du changement de marée 
             if self.game.hud.timer.maree_changed:
