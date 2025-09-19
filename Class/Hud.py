@@ -2,7 +2,7 @@ import pygame
 from Class.Petrole import Petrole
 from Global import * 
 from Class.Piece import Piece
-
+from Class.Timer import Timer
 class Hud:
     """Classe pour gérer le HUD du jeu."""
     
@@ -28,6 +28,7 @@ class Hud:
         # Instance unique de ton compteur de pétrole
         self.petrole = Petrole()
         self.piece = Piece()
+        self.timer = Timer()
 
     def switch(self):
         """Fonction permettant d'afficher ou de cacher le HUD"""
@@ -58,6 +59,10 @@ class Hud:
         #Texte compteur pièces
         text = font.render(str(self.piece.count), True, (0, 0, 0))
         screen.blit(text, (self.width * 0.84 + 90, self.height * 0.74 + 30))
+        
+        #Texte timer
+        text = font.render(str(self.timer.get_time()), True, (0, 0, 0))
+        screen.blit(text, (self.width * 0.5, self.height *0.05))
 
     def load_images(self):
         """Fonction permettant de charger les images du HUD"""
