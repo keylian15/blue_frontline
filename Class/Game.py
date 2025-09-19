@@ -1,6 +1,7 @@
 import pygame
 import math
 import random
+
 from Global import *
 from Class.Perlin import Perlin
 
@@ -36,6 +37,7 @@ class Game :
         self.initializer.init_camera()
         self.initializer.init_game_systems()
         self.initializer.init_ui()
+
         
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
@@ -217,7 +219,7 @@ class Game :
         """Boucle principale du jeu."""
         clock = pygame.time.Clock()
         running = True
-
+        
         while running: 
             dt = clock.tick(FPS) / TIME_STEP
             
@@ -234,5 +236,5 @@ class Game :
             self.renderer.render()
             
             pygame.display.flip()
-            
+        
         pygame.quit()

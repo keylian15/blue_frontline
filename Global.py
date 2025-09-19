@@ -8,31 +8,28 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # === Temps === 
 FPS = 60
 TIME_STEP = 1000 # en ms => 1 seconde
-TIME_SPEED = 1 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
+TIME_SPEED = 10 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
 
-# Chemin de la map
+# === MAP ===
 MAP_PATH = "map.tmx"
-
-# === Caméra ===
-# Chemin de l'image Bullet
-BULLET_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/entity/png/bullet.png')
+ISLAND_TILESET_PATH = os.path.join(BASE_DIR, 'assets/island/png/island_spritesheet.png')
+DEEP_WATER_TILESET_PATH = os.path.join(BASE_DIR, 'assets/deep_water/png/deep_water_spritesheet.png')
+WATER_TILESET_PATH = os.path.join(BASE_DIR, 'assets/water/png/water_spritesheet.png')
 
 # === HUD === 
-# Chemin des images
 PIECE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/piece.png')
 PETROLE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/petrole.png')
-BATEAU_ROUGE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/Red_team/png/red_team_spritesheet.png')
-BATEAU_VERT_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/Green_team/png/Green_team_spritesheet.png')
-# Événement unique
+
+# === EVENEMENTS ===
 PETROLE_EVENT = pygame.USEREVENT + 1
 TIMER_EVENT = pygame.USEREVENT + 2
 
 # === Ile Quantique ===
 WATER_PATH = os.path.join(BASE_DIR, 'assets/water/png/water.png')
 
-ISLAND_TILESET_PATH = os.path.join(BASE_DIR, 'assets/island/png/island_spritesheet.png')
-DEEP_WATER_TILESET_PATH = os.path.join(BASE_DIR, 'assets/deep_water/png/deep_water_spritesheet.png')
-WATER_TILESET_PATH = os.path.join(BASE_DIR, 'assets/water/png/water_spritesheet.png')
+# === SONS ===
+SOUND = os.path.join(BASE_DIR, 'blue_frontline_sounds/sandy-beach-calm-waves-water-nature-sounds-8052.mp3')
+VOLUME_SOUND = 0.5  # Volume du son (0.0 à 1.0)
 
 # Les images de mapping font 512 pixels par 512 pixels
 # Chaque tuile fait 32 pixels par 32 pixels
@@ -143,6 +140,7 @@ MASK_MAPPING = {
     1 + 2 + 4 : MAPPING["end_right"],
     1 + 2 + 4 + 8 : MAPPING["center"],
     }
+
 # === Unités ===
 # Team rouge 
 RED_TEAM_PATH = os.path.join(BASE_DIR, 'assets/Red_team/png/red_team_spritesheet.png')
@@ -284,3 +282,21 @@ UNIT_CONFIGS = {
         }
     }
 }
+
+
+# === Couleurs marines et interface ===
+WHITE = (255, 255, 255)
+GRAY = (100, 100, 100)
+DARK_GRAY = (50, 50, 50)
+BLUE = (0, 120, 215)
+OCEAN_BLUE = (0, 70, 140)
+LIGHT_BLUE = (0, 150, 255)
+WAVE_COLOR = (173, 216, 230)
+
+# === Boutons menu ===
+BUTTON_WIDTH = 300
+BUTTON_HEIGHT = 70
+BUTTON_SPACING = 20
+BUTTON_BORDER_RADIUS = 15
+BUTTON_MARGIN_LEFT = 40
+BUTTON_MARGIN_BOTTOM = 40
