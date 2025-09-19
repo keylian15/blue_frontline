@@ -131,3 +131,10 @@ class Camera(pygame.sprite.Sprite):
         # Appliquer les contraintes
         self.position[0] = max(self.min_x, min(self.max_x, new_x))
         self.position[1] = max(self.min_y, min(self.max_y, new_y))
+    
+    def get_offset(self, screen_size):
+        """Calcule l'offset de la caméra pour le rendu."""
+        return (
+            self.position[0] - (screen_size[0] // 2) / self.zoom_level,
+            self.position[1] - (screen_size[1] // 2) / self.zoom_level
+        )

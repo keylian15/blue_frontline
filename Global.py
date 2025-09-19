@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # === Temps === 
 FPS = 60
 TIME_STEP = 1000 # en ms => 1 seconde
-TIME_SPEED = 10 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
+TIME_SPEED = 1 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
 
 # === MAP ===
 MAP_PATH = "map.tmx"
@@ -297,4 +297,3 @@ BUTTON_SPACING = 20
 BUTTON_BORDER_RADIUS = 15
 BUTTON_MARGIN_LEFT = 40
 BUTTON_MARGIN_BOTTOM = 40
-
