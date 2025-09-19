@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" tiledversion="1.11.2" name="water_spritesheet" tilewidth="32" tileheight="32" tilecount="15" columns="3">
- <image source="png/water_spritesheet.png" width="96" height="160"/>
+<tileset version="1.10" tiledversion="1.11.2" name="water_spritesheet" tilewidth="32" tileheight="32" tilecount="256" columns="16">
+ <image source="png/water_spritesheet.png" width="512" height="512"/>
 </tileset>
