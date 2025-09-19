@@ -1,5 +1,6 @@
 import time
 import pygame, pytmx, pyscroll, math, random
+from Class.Sound import *
 from Class.Camera import *
 from Class.Combat import CombatSystem
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
@@ -53,7 +54,6 @@ class Game :
         # Récupérer les dimensions de la map pour limiter la caméra
         self.map_width =self.tmx_data.width *self.tmx_data.tilewidth
         self.map_height =self.tmx_data.height *self.tmx_data.tileheight
-        print(f"Dimensions de la map: {self.map_width}x{self.map_height}")
         
         # Créer la caméra avec les limites de la map
         camera_position =self.tmx_data.get_object_by_name("spawn") # Récupère la position de la caméra depuis Tiled
@@ -99,6 +99,9 @@ class Game :
         
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
+        
+        # Charger le son
+        self.sound = Sound()
             
     def update_renderer_for_zoom(self):
         """Met à jour le renderer pyscroll pour le nouveau niveau de zoom."""
@@ -189,7 +192,7 @@ class Game :
         # On déplace la caméra seulement si il y a un déplacement
         if dx or dy:  
             self.camera.move(dx, dy)
-            
+                        
     
     def spawn_unit(self, unit_class):
         """Fait apparaître une unité près de la plateforme correspondant à son équipe."""
@@ -328,7 +331,7 @@ class Game :
         # On crée une horloge pour gérer les fps
         clock = pygame.time.Clock()
         running = True
-
+        
         while running: 
             dt = clock.tick(FPS) / TIME_STEP  # Delta time en secondes
             
@@ -499,5 +502,5 @@ class Game :
             # Dessiner le popup de sélection des unités
             self.draw_unit_popup()            
             pygame.display.flip()
-            
+        
         pygame.quit()
