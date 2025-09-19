@@ -10,29 +10,26 @@ FPS = 60
 TIME_STEP = 1000 # en ms => 1 seconde
 TIME_SPEED = 1 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
 
-# Chemin de la map
+# === MAP ===
 MAP_PATH = "map.tmx"
-
-# === Caméra ===
-# Chemin de l'image Bullet
-BULLET_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/entity/png/bullet.png')
+ISLAND_TILESET_PATH = os.path.join(BASE_DIR, 'assets/island/png/island_spritesheet.png')
+DEEP_WATER_TILESET_PATH = os.path.join(BASE_DIR, 'assets/deep_water/png/deep_water_spritesheet.png')
+WATER_TILESET_PATH = os.path.join(BASE_DIR, 'assets/water/png/water_spritesheet.png')
 
 # === HUD === 
-# Chemin des images
 PIECE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/piece.png')
 PETROLE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/petrole.png')
-BATEAU_ROUGE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/Red_team/png/red_team_spritesheet.png')
-BATEAU_VERT_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/Green_team/png/Green_team_spritesheet.png')
-# Événement unique
+
+# === EVENEMENTS ===
 PETROLE_EVENT = pygame.USEREVENT + 1
 TIMER_EVENT = pygame.USEREVENT + 2
 
 # === Ile Quantique ===
 WATER_PATH = os.path.join(BASE_DIR, 'assets/water/png/water.png')
 
-ISLAND_TILESET_PATH = os.path.join(BASE_DIR, 'assets/island/png/island_spritesheet.png')
-DEEP_WATER_TILESET_PATH = os.path.join(BASE_DIR, 'assets/deep_water/png/deep_water_spritesheet.png')
-WATER_TILESET_PATH = os.path.join(BASE_DIR, 'assets/water/png/water_spritesheet.png')
+# === SONS ===
+SOUND = os.path.join(BASE_DIR, 'blue_frontline_sounds/sandy-beach-calm-waves-water-nature-sounds-8052.mp3')
+VOLUME_SOUND = 0.5  # Volume du son (0.0 à 1.0)
 
 # Les images de mapping font 512 pixels par 512 pixels
 # Chaque tuile fait 32 pixels par 32 pixels
@@ -143,26 +140,163 @@ MASK_MAPPING = {
     1 + 2 + 4 : MAPPING["end_right"],
     1 + 2 + 4 + 8 : MAPPING["center"],
     }
+
 # === Unités ===
 # Team rouge 
-RED_TEAM_PATH = os.path.join(BASE_DIR, 'assets/red_team/png/red_team_spritesheet.png')
-RED_TEAM_PATH = os.path.join(BASE_DIR, 'assets/green_team/png/green_team_spritesheet.png')
-# Chaloupes
-RED_CHALOUPE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/boat/png/red_chaloupe.png')
-GREEN_CHALOUPE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/boat/png/green_chaloupe.png')
+RED_TEAM_PATH = os.path.join(BASE_DIR, 'assets/Red_team/png/red_team_spritesheet.png')
+GREEN_TEAM_PATH = os.path.join(BASE_DIR, 'assets/Green_team/png/Green_team_spritesheet.png')
 
-# Bâteaux 
-RED_SHIP_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/boat/png/red_ship.png')
-GREEN_SHIP_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/boat/png/green_ship.png')
 
-#Paquebots
-RED_PAQUEBOT_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/boat/png/red_paquebot.png')
-GREEN_PAQUEBOT_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/boat/png/green_paquebot.png')
+# === Configuration des unités ===
+# Dictionnaire centralisé contenant toutes les statistiques des unités
+UNIT_CONFIGS = {
+    "chaloupe": {
+        "cost": 20,
+        "build_time": 20,
+        "max_speed": 80,
+        "max_health": 20,
+        "range": 2,
+        "damage": 2,
+        "fire_rate": 1.0,
+        "unit_type": "chaloupe",
+        "tile_index": {
+            "red": 0,    # Index de la tuile pour équipe rouge
+            "green": 0   # Index de la tuile pour équipe verte
+        },
+        "tileset_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "image_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "range_color": {
+            "red": (255, 0, 0, 50),    # Rouge semi-transparent
+            "green": (0, 255, 0, 50)   # Vert semi-transparent
+        }
+    },
+    "bateau": {
+        "cost": 60,
+        "build_time": 60,
+        "max_speed": 70,
+        "max_health": 30,
+        "range": 6,
+        "damage": 6,
+        "fire_rate": 1.0,
+        "unit_type": "bateau",
+        "tile_index": {
+            "red": 1,    # Index de la tuile pour équipe rouge
+            "green": 1   # Index de la tuile pour équipe verte
+        },
+        "tileset_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "image_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "range_color": {
+            "red": (255, 0, 0, 50),
+            "green": (0, 255, 0, 50)
+        }
+    },
+    "eclaireur": {
+        "cost": 40,
+        "build_time": 40,
+        "max_speed": 100,
+        "max_health": 15,
+        "range": 4,
+        "damage": 3,
+        "fire_rate": 1.5,
+        "unit_type": "eclaireur",
+        "tile_index": {
+            "red": 3,    # Index de la tuile pour équipe rouge
+            "green": 3   # Index de la tuile pour équipe verte
+        },
+        "tileset_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "image_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "range_color": {
+            "red": (255, 0, 0, 50),
+            "green": (0, 255, 0, 50)
+        }
+    },
+    "paquebot": {
+        "cost": 120,
+        "build_time": 120,
+        "max_speed": 60,
+        "max_health": 50,
+        "range": 8,
+        "damage": 10,
+        "fire_rate": 0.8,
+        "unit_type": "paquebot",
+        "tile_index": {
+            "red": 2,    # Index de la tuile pour équipe rouge
+            "green": 2   # Index de la tuile pour équipe verte
+        },
+        "tileset_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "image_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "range_color": {
+            "red": (255, 0, 0, 50),
+            "green": (0, 255, 0, 50)
+        }
+    },
+    "sousmarin": {
+        "cost": 180,
+        "build_time": 180,
+        "max_speed": 65,
+        "max_health": 35,
+        "range": 5,
+        "damage": 18,
+        "fire_rate": 0.5,
+        "unit_type": "sousmarin",
+        "special_ability": "mines",  # Capacité spéciale
+        "tile_index": {
+            "red": 4,    # Index de la tuile pour équipe rouge
+            "green": 4   # Index de la tuile pour équipe verte
+        },
+        "tileset_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "image_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "range_color": {
+            "red": (255, 0, 0, 50),
+            "green": (0, 255, 0, 50)
+        }
+    }
+}
 
-# Éclaireurs
-RED_ECLAIREUR_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/boat/png/red_eclaireur.png')
-GREEN_ECLAIREUR_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/boat/png/green_eclaireur.png')
 
-# Sous-marins
-RED_SUBMARINE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/boat/png/red_submarine.png')
-GREEN_SUBMARINE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/boat/png/green_submarine.png')
+# === Couleurs marines et interface ===
+WHITE = (255, 255, 255)
+GRAY = (100, 100, 100)
+DARK_GRAY = (50, 50, 50)
+BLUE = (0, 120, 215)
+OCEAN_BLUE = (0, 70, 140)
+LIGHT_BLUE = (0, 150, 255)
+WAVE_COLOR = (173, 216, 230)
+
+# === Boutons menu ===
+BUTTON_WIDTH = 300
+BUTTON_HEIGHT = 70
+BUTTON_SPACING = 20
+BUTTON_BORDER_RADIUS = 15
+BUTTON_MARGIN_LEFT = 40
+BUTTON_MARGIN_BOTTOM = 40
