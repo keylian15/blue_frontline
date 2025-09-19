@@ -17,12 +17,12 @@ class Menu:
 
         # Boutons
         start_x = BUTTON_MARGIN_LEFT
-        start_y = self.HEIGHT - (3 * BUTTON_HEIGHT + 2 * BUTTON_SPACING) - BUTTON_MARGIN_BOTTOM
+        start_y = self.HEIGHT - (4 * BUTTON_HEIGHT + 3 * BUTTON_SPACING) - BUTTON_MARGIN_BOTTOM
         self.buttons = [
             ("Jouer",   start_x, start_y, BUTTON_WIDTH, BUTTON_HEIGHT),
-            ("Succès",  start_x, start_y + BUTTON_HEIGHT + BUTTON_SPACING, BUTTON_WIDTH, BUTTON_HEIGHT),
-            ("Options", start_x, start_y + BUTTON_HEIGHT + BUTTON_SPACING, BUTTON_WIDTH, BUTTON_HEIGHT),
-            ("Quitter", start_x, start_y + 2 * (BUTTON_HEIGHT + BUTTON_SPACING), BUTTON_WIDTH, BUTTON_HEIGHT),
+            ("Succès",  start_x, start_y + (BUTTON_HEIGHT + BUTTON_SPACING) * 1, BUTTON_WIDTH, BUTTON_HEIGHT),
+            ("Options", start_x, start_y + (BUTTON_HEIGHT + BUTTON_SPACING) * 2, BUTTON_WIDTH, BUTTON_HEIGHT),
+            ("Quitter", start_x, start_y + (BUTTON_HEIGHT + BUTTON_SPACING) * 3, BUTTON_WIDTH, BUTTON_HEIGHT),
         ]
 
     def draw_button(self, text, x, y, w, h, hovered):
