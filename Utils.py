@@ -1,4 +1,4 @@
-import pygame
+import sys, pygame
 from Global import *
 def load_tileset(path):
     """
@@ -21,9 +21,8 @@ def load_tileset(path):
 
     return tiles
 
-
-if __name__ == "__main__":
-    pygame.init()
-    tiles = load_tileset(BASE_DIR + "/assets/island/png/island_spritesheet.png")
-    print(f"Nombre de tuiles chargées : {len(tiles)}")
-    pygame.quit()
+def resource_path(relative_path):
+    """Retourne le chemin absolu vers une ressource"""
+    if hasattr(sys, '_MEIPASS'):
+        return os.path.join(sys._MEIPASS, relative_path)  # exe PyInstaller
+    return os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)  # script normal

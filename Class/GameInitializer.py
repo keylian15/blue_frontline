@@ -1,6 +1,7 @@
 import pygame
 import pytmx
 import pyscroll
+from Class.Sound import Sound
 from Class.Camera import Camera
 from Class.Combat import CombatSystem
 from Class.Sound import Sound
