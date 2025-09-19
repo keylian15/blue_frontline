@@ -18,12 +18,14 @@ MAP_PATH = "map.tmx"
 BULLET_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/entity/png/bullet.png')
 
 # === HUD === 
-# Chemin des pièces et du pétrole
+# Chemin des images
 PIECE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/piece.png')
 PETROLE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/petrole.png')
+BATEAU_ROUGE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/Red_team/png/red_team_spritesheet.png')
+BATEAU_VERT_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/Green_team/png/Green_team_spritesheet.png')
 # Événement unique
 PETROLE_EVENT = pygame.USEREVENT + 1
-TIMER_EVENT = pygame.USEREVENT + 1
+TIMER_EVENT = pygame.USEREVENT + 2
 
 # === Ile Quantique ===
 WATER_PATH = os.path.join(BASE_DIR, 'assets/water/png/water.png')

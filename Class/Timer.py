@@ -13,8 +13,6 @@ class Timer:
             self.count += 1
             
     def get_time(self):
-        if self.count % 60 < 10:
-            return f"{self.count // 60} min {self.count % 60} sec"
-        return f"{self.count // 60} min {self.count % 60} sec"
+        return f"{self.count // 60} : {self.count % 60} "
         
     
