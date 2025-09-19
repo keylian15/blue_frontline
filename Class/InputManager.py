@@ -1,5 +1,5 @@
 import pygame
-
+import time
 class InputManager:
     """Gestionnaire des entrées continues pour le jeu."""
     
@@ -15,19 +15,21 @@ class InputManager:
             self._handle_camera_movement()
             self._handle_hud_toggle()
             self._handle_zoom()
+            self._handle_unit_popup()
+            self._handle_unit_popup_navigation()
     
     def _handle_camera_movement(self):
         """Gère le déplacement de la caméra avec les touches directionnelles."""
         pressed = pygame.key.get_pressed()
         
         dx, dy = 0, 0
-        if pressed[pygame.K_UP]:  # Haut
+        if pressed[pygame.K_z]:  # Haut
             dy -= self.game.camera.camera_move
-        if pressed[pygame.K_DOWN]:  # Bas
+        if pressed[pygame.K_s]:  # Bas
             dy += self.game.camera.camera_move
-        if pressed[pygame.K_LEFT]:  # Gauche 
+        if pressed[pygame.K_q]:  # Gauche 
             dx -= self.game.camera.camera_move
-        if pressed[pygame.K_RIGHT]:  # Droite
+        if pressed[pygame.K_d]:  # Droite
             dx += self.game.camera.camera_move
         
         # Déplacer la caméra seulement s'il y a un déplacement
@@ -51,3 +53,17 @@ class InputManager:
             self.game.camera.zoom_out()
         if pressed[pygame.K_m]:  # Touche M pour zoomer
             self.game.camera.zoom_in()
+            
+    def _handle_unit_popup(self):
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_j]:
+            self.game.hud.toggle_popup_team()
+            time.sleep(0.1)
+            
+    def _handle_unit_popup_navigation(self):
+        pressed = pygame.key.get_pressed()
+        if pressed[pygame.K_LEFT]:
+            self.game.hud.popup_selection = (self.game.hud.popup_selection - 1) % len(self.game.hud.unit_names)
+        if pressed[pygame.K_RIGHT]:
+            self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
+        time.sleep(0.1)
