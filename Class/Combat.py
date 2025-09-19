@@ -41,15 +41,6 @@ class Projectile(pygame.sprite.Sprite):
         self.is_active = True
         self.max_distance = 800  # Distance maximale avant disparition
         self.distance_traveled = 0
-        
-    def load_image(self):
-        """Charge l'image du projectile."""
-        try:
-            self.image = pygame.image.load(BULLET_IMAGE_PATH).convert_alpha()
-        except pygame.error:
-            # Image par défaut si l'image n'est pas trouvée
-            self.image = pygame.Surface((8, 8), pygame.SRCALPHA)
-            self.image.fill((255, 255, 0))  # Cercle jaune par défaut
     
     def update(self, dt):
         """Met à jour le projectile."""
