@@ -359,6 +359,19 @@ class Game :
                         self.show_unit_popup = not self.show_unit_popup
                         self.popup_selection = 0
                         print(f"Popup {'ouvert' if self.show_unit_popup else 'fermé'}")
+                    elif event.key == pygame.K_j:
+                        # Bascule l'équipe affichée dans le popup du HUD
+                        if hasattr(self, 'hud') and self.hud:
+                            self.hud.toggle_popup_team()
+                            print(f"Equipe popup: {self.hud.popup_team}")
+                    elif event.key == pygame.K_RIGHT:
+                        # Naviguer à droite dans le popup du HUD
+                        if hasattr(self, 'hud') and self.hud:
+                            self.hud.popup_selection = (self.hud.popup_selection + 1) % 6
+                    elif event.key == pygame.K_LEFT:
+                        # Naviguer à gauche dans le popup du HUD
+                        if hasattr(self, 'hud') and self.hud:
+                            self.hud.popup_selection = (self.hud.popup_selection - 1) % 6
 
                     elif self.show_unit_popup:
                         # Navigation dans le popup
