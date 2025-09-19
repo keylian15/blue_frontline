@@ -49,6 +49,12 @@ class EventHandler:
         elif self.game.show_unit_popup:
             return self._handle_popup_navigation(event)
         
+        elif event.key == pygame.K_UP:
+            self.game.sound.increase_volume()
+        
+        elif event.key == pygame.K_DOWN:
+            self.game.sound.decrease_volume()
+        
         return True
     
     def _handle_popup_navigation(self, event):
