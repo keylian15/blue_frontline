@@ -36,6 +36,7 @@ class Game :
         self.initializer.init_camera()
         self.initializer.init_game_systems()
         self.initializer.init_ui()
+        self.initializer.init_sound()
 
         
         # Variable pour suivre les changements de zoom

@@ -3,6 +3,7 @@ import pytmx
 import pyscroll
 from Class.Camera import Camera
 from Class.Combat import CombatSystem
+from Class.Sound import Sound
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
 from Class.units.Bateau import BateauRouge, BateauVert
 from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
@@ -87,3 +88,8 @@ class GameInitializer:
         pygame.font.init()
         self.game.font = pygame.font.Font(None, 24)
         self.game.hud = Hud(self.game.screen)
+        
+    def init_sound(self):
+        """Initialise le système sonore."""
+        pygame.mixer.init()
+        self.game.sound = Sound()
