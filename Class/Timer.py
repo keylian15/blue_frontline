@@ -1,10 +1,10 @@
 import pygame
-from Global import TIME_SPEED, TIME_STEP
+from Global import TIME_SPEED, TIME_STEP, TIMER_EVENT
 
 class Timer:
     def __init__(self):
         self.count = 0
-        self.TIMER_EVENT = pygame.USEREVENT + 2
+        self.TIMER_EVENT = TIMER_EVENT
         pygame.time.set_timer(self.TIMER_EVENT, int(TIME_STEP / TIME_SPEED))
         
         
