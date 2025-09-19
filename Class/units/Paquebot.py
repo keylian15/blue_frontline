@@ -1,49 +1,49 @@
 import pygame
 from Class.units.Unit import Unit
-from Global import *
+from Global import UNIT_CONFIGS
 
-class ChaloupeRouge(Unit):
-    """Classe pour l'unité Chaloupe Rouge."""
+class Paquebot(Unit):
+    """Classe unifiée pour les unités Paquebot (Rouge et Vert)."""
     
-    def __init__(self, x, y):
-        # Initialiser avec l'image de la chaloupe rouge
-        super().__init__(x, y, RED_CHALOUPE_IMAGE_PATH, team="red")
+    def __init__(self, x, y, team="red"):
+        # Récupérer la configuration depuis Global.py
+        config = UNIT_CONFIGS["paquebot"]
         
-        # === Spécifications de la Chaloupe Rouge ===
-        # Coût : 20 pétroles (20 secondes)
-        self.cost = 20
-        self.build_time = 20  # en secondes
+        # Déterminer le chemin de l'image selon l'équipe
+        image_path = config["image_paths"][team]
         
-        # Vitesse : 80 x/s et 80 y/s
-        self.max_speed = 80  # pixels par seconde
+        # Initialiser avec l'image appropriée et le type d'unité
+        super().__init__(x, y, image_path, team=team, unit_type="paquebot")
         
-        # Blindage : 20
-        self.max_health = 20
+        # === Spécifications du Paquebot depuis Global.py ===
+        self.cost = config["cost"]
+        self.build_time = config["build_time"]
+        self.max_speed = config["max_speed"]
+        self.max_health = config["max_health"]
         self.current_health = self.max_health
-        
-        # Range : 2 cases
-        self.range = 2  # en cases (64 pixels)
-        
-        # Puissance de tir : 2 dégâts / seconde
-        self.damage = 2
-        self.fire_rate = 1.0  # 1 tir par seconde pour faire 2 dégâts/seconde
+        self.range = config["range"]
+        self.damage = config["damage"]
+        self.fire_rate = config["fire_rate"]
         
         # Type d'unité
-        self.unit_type = "chaloupe"
-        self.unit_name = "Chaloupe Rouge"
+        self.unit_type = config["unit_type"]
+        self.unit_name = f"Paquebot {team.capitalize()}"
+        
+        # Couleur de portée selon l'équipe
+        self.range_color = config["range_color"][team]
         
         # État de mouvement
         self.is_moving = False
         self.target_position = None
         
     def move_to_position(self, target_x, target_y):
-        """Déplace la chaloupe vers une position cible."""
+        """Déplace le paquebot vers une position cible."""
         self.target_position = (target_x, target_y)
         self.move_to(target_x, target_y, self.max_speed)
         self.is_moving = True
     
     def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0)):
-        """Met à jour la chaloupe rouge."""
+        """Met à jour le paquebot."""
         # Appeler la mise à jour de la classe parent
         super().update(dt, combat_system)
         
@@ -63,22 +63,22 @@ class ChaloupeRouge(Unit):
             self.draw_range(screen, camera_offset)
     
     def draw_range(self, screen, camera_offset=(0, 0)):
-        """Dessine une zone de portée de tir autour de la chaloupe."""
+        """Dessine une zone de portée de tir autour du paquebot."""
         if not self.is_alive:
             return
 
         # Calculer le rayon en pixels (range en cases * 32 pixels par case)
         range_radius = self.range * 32
 
-        # Position de la chaloupe avec décalage de la caméra
+        # Position du paquebot avec décalage de la caméra
         center_x = int(self.position[0] - camera_offset[0])
         center_y = int(self.position[1] - camera_offset[1])
 
-        # Dessiner un cercle semi-transparent pour la portée
+        # Dessiner un cercle semi-transparent pour la portée avec la couleur de l'équipe
         surface = pygame.Surface((range_radius * 2, range_radius * 2), pygame.SRCALPHA)
-        pygame.draw.circle(surface, (0, 0, 255, 50), (range_radius, range_radius), range_radius)
+        pygame.draw.circle(surface, self.range_color, (range_radius, range_radius), range_radius)
         screen.blit(surface, (center_x - range_radius, center_y - range_radius))
-    
+
     def get_info(self):
         """Retourne les informations de l'unité."""
         return {
@@ -96,8 +96,9 @@ class ChaloupeRouge(Unit):
             "is_moving": self.is_moving
         }
     
+    @staticmethod
     def can_build():
-        """Méthode statique pour vérifier si on peut construire une chaloupe."""
+        """Méthode statique pour vérifier si on peut construire un paquebot."""
         # Cette méthode peut être utilisée pour vérifier les ressources
         # Retourne True si on a assez de pétrole (à implémenter avec le système de ressources)
         return True  # Pour l'instant, toujours possible
@@ -105,8 +106,18 @@ class ChaloupeRouge(Unit):
     @staticmethod
     def get_build_requirements():
         """Retourne les exigences pour construire cette unité."""
+        config = UNIT_CONFIGS["paquebot"]
         return {
-            "cost": 20,
-            "build_time": 20,
-            "required_building": None  # Pas de bâtiment requis pour la chaloupe
+            "cost": config["cost"],
+            "build_time": config["build_time"],
+            "required_building": None  # Pas de bâtiment requis pour le paquebot
         }
+
+# Classes d'alias pour la compatibilité avec l'ancien code
+class PaquebotRouge(Paquebot):
+    def __init__(self, x, y):
+        super().__init__(x, y, team="red")
+
+class PaquebotVert(Paquebot):
+    def __init__(self, x, y):
+        super().__init__(x, y, team="green")

@@ -6,7 +6,7 @@ from Utils import load_tileset
 class Unit(pygame.sprite.Sprite):
     """Classe de base pour toutes les unités du jeu."""
     
-    def __init__(self, x, y, image_path, team="red"):
+    def __init__(self, x, y, image_path, team="red", unit_type=None):
         super().__init__()
         
         # Position et mouvement
@@ -27,15 +27,33 @@ class Unit(pygame.sprite.Sprite):
         self.fire_rate = 1.0  # Tirs par seconde
         
         # Image et sprite
-        # self.load_image(image_path)
-        self.tileset = load_tileset(RED_TEAM_PATH)
-        self.image = self.tileset[0]  # Utiliser la première tuile comme image par défaut
+        self.load_sprite_from_tileset(team, unit_type)
         self.rect = self.image.get_rect()
         self.rect.center = (self.position[0], self.position[1])
         
         # État
         self.is_alive = True
         self.target = None
+    
+    # Chaque unité peut avoir sa propre tuile, pour chaque équipe, et tout est configurable
+    def load_sprite_from_tileset(self, team, unit_type):
+        """Charge l'image de l'unité depuis le tileset approprié."""
+        if unit_type and unit_type in UNIT_CONFIGS:
+            config = UNIT_CONFIGS[unit_type]
+            tileset_path = config["tileset_paths"][team]
+            tile_index = config["tile_index"][team]
+            
+            # Charger le tileset et sélectionner la bonne tuile
+            self.tileset = load_tileset(tileset_path)
+            if tile_index < len(self.tileset):
+                self.image = self.tileset[tile_index]
+            else:
+                # Si l'index est invalide, utiliser la première tuile
+                self.image = self.tileset[0]
+        else:
+            # Fallback vers l'ancien système si unit_type n'est pas fourni
+            self.tileset = load_tileset(RED_TEAM_PATH if team == "red" else GREEN_TEAM_PATH)
+            self.image = self.tileset[0]
         
     def load_image(self, image_path):
         """Charge l'image de l'unité."""

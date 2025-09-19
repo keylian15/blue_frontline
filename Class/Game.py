@@ -2,16 +2,11 @@ import time
 import pygame, pytmx, pyscroll, math, random
 from Class.Camera import *
 from Class.Combat import CombatSystem
-from Class.units.ChaloupeRouge import ChaloupeRouge
-from Class.units.ChaloupeVerte import ChaloupeVerte
-from Class.units.BateauRouge import BateauRouge
-from Class.units.BateauVert import BateauVert
-from Class.units.EclaireurRouge import EclaireurRouge
-from Class.units.EclaireurVert import EclaireurVert
-from Class.units.PaquebotRouge import PaquebotRouge
-from Class.units.PaquebotVert import PaquebotVert
-from Class.units.SousmarinRouge import SousMarinRouge
-from Class.units.SousmarinVert import SousMarinVert
+from Class.units.Chaloupe import Chaloupe, ChaloupeRouge, ChaloupeVerte
+from Class.units.Bateau import Bateau, BateauRouge, BateauVert
+from Class.units.Eclaireur import Eclaireur, EclaireurRouge, EclaireurVert
+from Class.units.Paquebot import Paquebot, PaquebotRouge, PaquebotVert
+from Class.units.Sousmarin import Sousmarin, SousmarinRouge, SousmarinVert, SousMarinRouge, SousMarinVert
 from Global import *
 from Class.Camera import *
 from Class.Perlin import *
