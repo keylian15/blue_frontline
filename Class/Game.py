@@ -13,6 +13,7 @@ from Class.Perlin import *
 from Class.Hud import *
 from Class.Petrole import *
 from Class.Piece import *
+from Class.Timer import *
 from Utils import *
 
 class IslandSprite(pygame.sprite.Sprite):
@@ -126,11 +127,11 @@ class Game :
             self.last_zoom_level = self.camera.zoom_level
             
     def quantique(self):
-        """ Génération de l'île quantique"""
+        """ Génération de l'île quantique pour toutes les îles quantique dans la map."""
         # Générer l'île avec Perlin
         island_position = None
         for obj in self.tmx_data.objects:
-            if obj.name == "ile_quantique" :                         
+            if obj.name.startswith("ile_quantique")  :                         
                 # On récupère la position et on l'aligne à la grille      
                 aligned_x = (obj.x // 32) * 32
                 aligned_y = (obj.y // 32) * 32
@@ -329,7 +330,7 @@ class Game :
         running = True
 
         while running: 
-            dt = clock.tick(60) / 1000.0  # Delta time en secondes
+            dt = clock.tick(FPS) / TIME_STEP  # Delta time en secondes
             
             # Gestion des événements
             for event in pygame.event.get(): 
@@ -339,8 +340,11 @@ class Game :
 
                 # Gere la gestion de pétrole
                 self.hud.petrole.handle_event(event)
+                self.hud.timer.handle_event(event)
 
-                # Clic Droit pour générer l'île
+
+                # Clic droit pour générer l'île
+
                 if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                     self.quantique()            
 
@@ -400,12 +404,8 @@ class Game :
                         else:
                             self.selected_unit = None
             
-            # On gère les entrées pour le déplacement de la caméra
-            if not self.show_unit_popup:
-                self.handle_input()
+
             
-            # Mettre à jour le renderer si le zoom a changé
-            self.update_renderer_for_zoom()
             
             # Mettre à jour la caméra (CRITIQUE : synchronise rect.center avec position)
             self.camera.update()
@@ -446,6 +446,9 @@ class Game :
             
             # On gère les entrées
             self.handle_input()
+            
+            # Mettre à jour le renderer si le zoom a changé
+            self.update_renderer_for_zoom()
             
             # Dessiner les projectiles
             camera_offset = (self.camera.position[0] - (self.screen.get_width() // 2) / self.camera.zoom_level,
@@ -496,6 +499,5 @@ class Game :
             # Dessiner le popup de sélection des unités
             self.draw_unit_popup()            
             pygame.display.flip()
-            clock.tick(FPS)
             
         pygame.quit()

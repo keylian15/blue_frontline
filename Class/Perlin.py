@@ -91,7 +91,173 @@ class Perlin:
         if y < 0 or y >= height or x < 0 or x >= width:
             return 1
         return matrice[y][x]
+    
+    def update_mask(self, matrice: list[list[int]], x:int, y:int, zone_recherche: int) -> int:
+        """Fonction permettant de mettre à jour le mask binaire pour la sélection des tuiles."""
+        # Voir Global.py pour le MASK_MAPPING.
+        mask = 0
+        
+        # Initialisation des voisins (booléens)
+        voisin_gauche = self.get_matrix_value(matrice, y, x-1) == zone_recherche
+        voisin_droite = self.get_matrix_value(matrice, y, x+1) == zone_recherche
+        voisin_haut = self.get_matrix_value(matrice, y-1, x) == zone_recherche
+        voisin_bas = self.get_matrix_value(matrice, y+1, x) == zone_recherche
+        voisin_haut_gauche = self.get_matrix_value(matrice, y-1, x-1) == zone_recherche
+        voisin_haut_droite = self.get_matrix_value(matrice, y-1, x+1) == zone_recherche
+        voisin_bas_gauche = self.get_matrix_value(matrice, y+1, x-1) == zone_recherche
+        voisin_bas_droite = self.get_matrix_value(matrice, y+1, x+1) == zone_recherche
+        
+        # Initialisation des masques pour les bits correspondants
+        mask_voisin_haut = 1
+        mask_voisin_droite = 2
+        mask_voisin_bas = 4
+        mask_voisin_gauche = 8
+        mask_voisin_haut_gauche = 16
+        mask_voisin_haut_droite = 32
+        mask_voisin_bas_gauche = 64
+        mask_voisin_bas_droite = 128
+        
+        # Algorithme de mise à jour du mask binaire (Voir tiles_bitmask.xlsx)
+        if voisin_haut:
+            mask |= mask_voisin_haut
+            
+            if voisin_droite :
+                mask |= mask_voisin_droite
+                
+                if voisin_bas :
+                    mask |= mask_voisin_bas
+                    
+                    if voisin_gauche :
+                        mask |= mask_voisin_gauche
 
+                elif voisin_gauche :
+                    mask |= mask_voisin_gauche
+                
+                elif voisin_bas_gauche :
+                    mask |= mask_voisin_bas_gauche
+                    
+            elif voisin_bas :
+                    mask |= mask_voisin_bas
+                
+                    if voisin_gauche :
+                        mask |= mask_voisin_gauche
+                
+            elif voisin_gauche :
+                    mask |= mask_voisin_gauche
+                    
+                    if voisin_bas_droite:
+                        mask |= mask_voisin_bas_droite
+
+            elif voisin_bas_gauche :
+                    mask |= mask_voisin_bas_gauche
+                    
+                    if voisin_bas_droite:
+                        mask |= mask_voisin_bas_droite
+            
+            elif voisin_bas_droite : 
+                mask |= mask_voisin_bas_droite
+                
+        elif voisin_droite : 
+            mask |= mask_voisin_droite
+            
+            if voisin_bas :
+                mask |= mask_voisin_bas
+                
+                if voisin_gauche :
+                    mask |= mask_voisin_gauche
+                
+                elif voisin_haut_gauche :
+                    mask |= mask_voisin_haut_gauche
+            
+            elif voisin_gauche :
+                mask |= mask_voisin_gauche
+                
+            elif voisin_haut_gauche :
+                mask |= mask_voisin_haut_gauche
+
+                if voisin_bas_gauche :
+                    mask |= mask_voisin_bas_gauche
+            
+            elif voisin_bas_gauche :
+                mask |= mask_voisin_bas_gauche
+        
+        elif voisin_bas : 
+            mask |= mask_voisin_bas
+            
+            if voisin_gauche :
+                mask |= mask_voisin_gauche
+
+                if voisin_haut_droite : 
+                    mask |= mask_voisin_haut_droite
+        
+            elif voisin_haut_gauche : 
+                mask |= mask_voisin_haut_gauche
+                
+                if voisin_haut_droite :
+                    mask |= mask_voisin_haut_droite
+            
+            elif voisin_haut_droite : 
+                mask |= mask_voisin_haut_droite
+
+        elif voisin_gauche :
+            mask |= mask_voisin_gauche
+            
+            if voisin_haut_droite :
+                mask |= mask_voisin_haut_droite
+                
+                if voisin_bas_droite :
+                    mask |= mask_voisin_bas_droite
+
+            elif voisin_bas_droite :
+                mask |= mask_voisin_bas_droite
+                
+        elif voisin_haut_gauche :
+            mask |= mask_voisin_haut_gauche
+            
+            if voisin_haut_droite :
+                mask |= mask_voisin_haut_droite
+
+                if voisin_bas_gauche :
+                    mask |= mask_voisin_bas_gauche
+
+                    if voisin_bas_droite :
+                        mask |= mask_voisin_bas_droite
+                        
+                elif voisin_bas_droite :
+                    mask |= mask_voisin_bas_droite
+
+            elif voisin_bas_gauche :
+                mask |= mask_voisin_bas_gauche
+                
+                if voisin_bas_droite :
+                    mask |= mask_voisin_bas_droite
+        
+            elif voisin_bas_droite :
+                mask |= mask_voisin_bas_droite
+                
+        elif voisin_haut_droite :
+            mask |= mask_voisin_haut_droite
+            
+            if voisin_bas_gauche :
+                mask |= mask_voisin_bas_gauche
+                
+                if voisin_bas_droite :
+                    mask |= mask_voisin_bas_droite
+            
+            elif voisin_bas_droite :
+                mask |= mask_voisin_bas_droite
+                
+        elif voisin_bas_gauche :
+            mask |= mask_voisin_bas_gauche
+
+            if voisin_bas_droite :
+                mask |= mask_voisin_bas_droite
+                
+        elif voisin_bas_droite :
+            mask |= mask_voisin_bas_droite
+
+        return mask
+    
     def smooth_map(self, matrice: list[list[int]], tilesets : list):
         """
         Génère une surface avec transitions (edges, corners, L-shapes).
@@ -123,52 +289,8 @@ class Perlin:
                         zone_recherche = 1  # recherche l'eau peu profonde autour
 
                     # On utilise un mask pour du binaire afin de savoir quelle tuile prendre.
-                    # Voir Global.py pour le MASK_MAPPING.
-                    mask = 0
-
-                    # En haut : y-1, x 
-                    # En bas : y+1, x
-                    # A gauche : y, x-1
-                    # A droite : y, x+1
-                    # Haut a Gauche : y-1, x-1
-                    # Haut a Droite : y-1, x+1
-                    # Bas a Gauche : y+1, x-1
-                    # Bas a Droite : y+1, x+1
+                    mask = self.update_mask(matrice, x, y, zone_recherche)
                     
-                    
-                        
-                    
-                    # Vérifie le voisin au-dessus (Nord)
-                    if self.get_matrix_value(matrice, y-1, x) == zone_recherche:
-                        mask |= 1 # On active le Bit 1 
-
-                    # Vérifie le voisin à droite (Est)
-                    if self.get_matrix_value(matrice, y, x+1) == zone_recherche:
-                        mask |= 2 # On active le Bit 2
-
-                    # Vérifie le voisin en dessous (Sud)
-                    if self.get_matrix_value(matrice, y+1, x) == zone_recherche:
-                        mask |= 4 # On active le Bit 4
-
-                    # Vérifie le voisin à gauche (Ouest)
-                    if self.get_matrix_value(matrice, y, x-1) == zone_recherche:
-                        mask |= 8 # On active le Bit 8
-                        
-                    if self.get_matrix_value(matrice, y-1, x-1) == zone_recherche :
-                        mask |= 16
-                    
-                    if self.get_matrix_value(matrice, y-1, x+1) == zone_recherche :
-                        mask |= 32
-                    
-                    if self.get_matrix_value(matrice, y+1, x-1) == zone_recherche :
-                        mask |= 64
-                        
-                    if self.get_matrix_value(matrice, y+1, x+1) == zone_recherche : 
-                        mask |= 128
-                        
-                        
-                    # === Test algo === 
-
                     tile_index = MASK_MAPPING.get(mask, MAPPING["full"])
                 tile = spritesheet[tile_index]
                 surface.blit(tile, (x * 32, y * 32))

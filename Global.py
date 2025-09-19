@@ -18,11 +18,14 @@ MAP_PATH = "map.tmx"
 BULLET_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/entity/png/bullet.png')
 
 # === HUD === 
-# Chemin des pièces et du pétrole
+# Chemin des images
 PIECE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/piece.png')
 PETROLE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/petrole.png')
+BATEAU_ROUGE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/Red_team/png/red_team_spritesheet.png')
+BATEAU_VERT_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/Green_team/png/Green_team_spritesheet.png')
 # Événement unique
 PETROLE_EVENT = pygame.USEREVENT + 1
+TIMER_EVENT = pygame.USEREVENT + 2
 
 # === Ile Quantique ===
 WATER_PATH = os.path.join(BASE_DIR, 'assets/water/png/water.png')
@@ -40,7 +43,7 @@ MAPPING = {
     "edge_top": 1,
     "corner_top_right": 2,
     "end_top": 3,
-    "d_shape_top_left": 4,
+    "d_shape_top_right": 4,
     "center": 5,
     "corner_top_left_l_shape_bottom_right": 6,
     "corner_top_right_l_shape_bottom_left": 7,
@@ -51,7 +54,7 @@ MAPPING = {
     "full" : 17,
     "edge_right": 18,
     "edge_vertical": 19,
-    "d_shape_top_right": 20,
+    "d_shape_top_left": 20,
     "les_avengers": 21,
     "corner_bottom_left_l_shape_top_right": 22,
     "corner_bottom_right_l_shape_top_left": 23,
@@ -94,7 +97,7 @@ MASK_MAPPING = {
     # Centre (aucun voisin de transition)
     0: MAPPING["full"],
     128 : MAPPING["l_shape_bottom_right"],
-    64 : MAPPING["l_shape_top_left"],
+    64 : MAPPING["l_shape_bottom_left"],
     64 + 128 : MAPPING["t_shape_bottom"],
     32 : MAPPING["l_shape_top_right"],
     32 + 128 : MAPPING["t_shape_right"],
