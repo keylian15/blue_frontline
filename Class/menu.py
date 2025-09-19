@@ -10,7 +10,7 @@ class Menu:
         pygame.display.set_caption("Blue Frontline")
         self.WIDTH, self.HEIGHT = self.screen.get_size()
 
-        self.background = pygame.image.load("./assets/menu/menu.png")
+        self.background = pygame.image.load(MENU_PATH).convert_alpha()
         self.background = pygame.transform.scale(self.background, (self.WIDTH, self.HEIGHT))
 
         self.font = pygame.font.SysFont(None, 60)

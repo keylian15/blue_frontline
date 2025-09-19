@@ -1,6 +1,6 @@
 # Fichier des variables globales (Chemin, variables, etc.)
-import os
-import pygame 
+import os, pygame
+from Utils import resource_path  
 
 # Chemin du dossier courant
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -11,24 +11,24 @@ TIME_STEP = 1000 # en ms => 1 seconde
 TIME_SPEED = 1 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
 
 # === MAP ===
-MAP_PATH = "map.tmx"
-ISLAND_TILESET_PATH = os.path.join(BASE_DIR, 'assets/island/png/island_spritesheet.png')
-DEEP_WATER_TILESET_PATH = os.path.join(BASE_DIR, 'assets/deep_water/png/deep_water_spritesheet.png')
-WATER_TILESET_PATH = os.path.join(BASE_DIR, 'assets/water/png/water_spritesheet.png')
+MAP_PATH = resource_path("map.tmx")
+ISLAND_TILESET_PATH = resource_path('assets/island/png/island_spritesheet.png')
+DEEP_WATER_TILESET_PATH = resource_path('assets/deep_water/png/deep_water_spritesheet.png')
+WATER_TILESET_PATH = resource_path('assets/water/png/water_spritesheet.png')
 
 # === HUD === 
-PIECE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/piece.png')
-PETROLE_IMAGE_PATH = os.path.join(BASE_DIR, 'assets/HUD/petrole.png')
+PIECE_IMAGE_PATH = resource_path('assets/HUD/piece.png')
+PETROLE_IMAGE_PATH = resource_path('assets/HUD/petrole.png')
 
 # === EVENEMENTS ===
 PETROLE_EVENT = pygame.USEREVENT + 1
 TIMER_EVENT = pygame.USEREVENT + 2
 
 # === Ile Quantique ===
-WATER_PATH = os.path.join(BASE_DIR, 'assets/water/png/water.png')
+WATER_PATH = resource_path('assets/water/png/water.png')
 
 # === SONS ===
-SOUND = os.path.join(BASE_DIR, 'blue_frontline_sounds/sandy-beach-calm-waves-water-nature-sounds-8052.mp3')
+SOUND = resource_path('blue_frontline_sounds/sandy-beach-calm-waves-water-nature-sounds-8052.mp3')
 VOLUME_SOUND = 0.5  # Volume du son (0.0 à 1.0)
 
 # Les images de mapping font 512 pixels par 512 pixels
@@ -142,8 +142,8 @@ MASK_MAPPING = {
     }
 
 # === Unités ===
-RED_TEAM_PATH = os.path.join(BASE_DIR, 'assets/Red_team/png/red_team_spritesheet.png')
-GREEN_TEAM_PATH = os.path.join(BASE_DIR, 'assets/Green_team/png/Green_team_spritesheet.png')
+RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
+GREEN_TEAM_PATH = resource_path('assets/Green_team/png/Green_team_spritesheet.png')
 
 # Dictionnaire centralisé contenant toutes les statistiques des unités
 UNIT_CONFIGS = {
@@ -297,3 +297,6 @@ BUTTON_SPACING = 20
 BUTTON_BORDER_RADIUS = 15
 BUTTON_MARGIN_LEFT = 40
 BUTTON_MARGIN_BOTTOM = 40
+
+# === IMAGES ===
+MENU_PATH = resource_path('assets/menu/menu.png')
