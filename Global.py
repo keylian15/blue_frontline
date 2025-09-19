@@ -142,12 +142,9 @@ MASK_MAPPING = {
     }
 
 # === Unités ===
-# Team rouge 
 RED_TEAM_PATH = os.path.join(BASE_DIR, 'assets/Red_team/png/red_team_spritesheet.png')
 GREEN_TEAM_PATH = os.path.join(BASE_DIR, 'assets/Green_team/png/Green_team_spritesheet.png')
 
-
-# === Configuration des unités ===
 # Dictionnaire centralisé contenant toutes les statistiques des unités
 UNIT_CONFIGS = {
     "chaloupe": {

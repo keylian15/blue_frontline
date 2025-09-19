@@ -1,7 +1,6 @@
 import pygame
 import math
 import random
-
 from Global import *
 from Class.Perlin import Perlin
 
