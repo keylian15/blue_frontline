@@ -1,7 +1,9 @@
 import pygame
-from Class.Game import *
+from Class.menu import *
+
 
 if __name__ == "__main__":
     pygame.init()
-    game = Game()
-    game.run()
+    pygame.display.set_caption("Menu du jeu")
+    menu = Menu()
+    menu.run()
