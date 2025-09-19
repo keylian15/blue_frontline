@@ -2,11 +2,11 @@ import time
 import pygame, pytmx, pyscroll, math, random
 from Class.Camera import *
 from Class.Combat import CombatSystem
-from Class.units.Chaloupe import Chaloupe, ChaloupeRouge, ChaloupeVerte
-from Class.units.Bateau import Bateau, BateauRouge, BateauVert
-from Class.units.Eclaireur import Eclaireur, EclaireurRouge, EclaireurVert
-from Class.units.Paquebot import Paquebot, PaquebotRouge, PaquebotVert
-from Class.units.Sousmarin import Sousmarin, SousmarinRouge, SousmarinVert, SousMarinRouge, SousMarinVert
+from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
+from Class.units.Bateau import BateauRouge, BateauVert
+from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
+from Class.units.Paquebot import PaquebotRouge, PaquebotVert
+from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
 from Global import *
 from Class.Camera import *
 from Class.Perlin import *
@@ -38,7 +38,8 @@ class Game :
         
         # Les data de la map
         map_data = pyscroll.data.TiledMapData(self.tmx_data)
-        map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size()) 
+        # Créer le renderer avec la taille initiale, sera mis à jour avec le zoom
+        self.map_layer = pyscroll.orthographic.BufferedRenderer(map_data, self.screen.get_size()) 
         
         # Les data de tilesets
         self.island_tileset = load_tileset(ISLAND_TILESET_PATH)
@@ -58,7 +59,7 @@ class Game :
         self.camera = Camera(camera_position.x, camera_position.y, self.screen.get_size(), (self.map_width, self.map_height))
         
         # Dessiner le groupe de calques
-        self.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
+        self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer, default_layer=3)
         self.group.add(self.camera)
         
         # === Système de combat et unités ===
@@ -94,6 +95,35 @@ class Game :
 
         # HUD
         self.hud = Hud(self.screen)
+        
+        # Variable pour suivre les changements de zoom
+        self.last_zoom_level = self.camera.zoom_level
+            
+    def update_renderer_for_zoom(self):
+        """Met à jour le renderer pyscroll pour le nouveau niveau de zoom."""
+        if self.camera.zoom_level != self.last_zoom_level:
+            # Calculer la nouvelle taille effective de rendu
+            effective_width = int(self.screen.get_width() / self.camera.zoom_level)
+            effective_height = int(self.screen.get_height() / self.camera.zoom_level)
+            
+            # Récréer le renderer avec la nouvelle taille
+            map_data = pyscroll.data.TiledMapData(self.tmx_data)
+            self.map_layer = pyscroll.orthographic.BufferedRenderer(map_data, (effective_width, effective_height))
+            
+            # Recréer le groupe avec le nouveau map_layer
+            self.group = pyscroll.PyscrollGroup(map_layer=self.map_layer, default_layer=3)
+            self.group.add(self.camera)
+            
+            # Ajouter tous les sprites existants au nouveau groupe
+            for unit in self.units:
+                if unit.is_alive:
+                    self.group.add(unit)
+            
+            # Ajouter l'île quantique si elle existe
+            if hasattr(self, 'island_sprite'):
+                self.group.add(self.island_sprite)
+            
+            self.last_zoom_level = self.camera.zoom_level
             
     def quantique(self):
         """ Génération de l'île quantique"""
@@ -124,14 +154,14 @@ class Game :
                 
                 # Créer le sprite et l'ajouter au groupe
                 if island_position:
-                    island_sprite = IslandSprite(island_surface, island_position[0], island_position[1])
+                    self.island_sprite = IslandSprite(island_surface, island_position[0], island_position[1])
                 else:
-                    island_sprite = IslandSprite(island_surface, 100, 100)
+                    self.island_sprite = IslandSprite(island_surface, 100, 100)
                     
-                self.group.add(island_sprite)
+                self.group.add(self.island_sprite)
                 
     def handle_input(self):
-        """Gère les entrées clavier pour déplacer la caméra."""
+        """Gère les entrées clavier pour déplacer la caméra et gérer le zoom."""
         # On récupère les touches appuyées
         pressed = pygame.key.get_pressed()
         
@@ -148,6 +178,12 @@ class Game :
         if pressed[pygame.K_h]:
             self.hud.switch()
             time.sleep(0.2)
+
+        # === Gestion du zoom ===
+        if pressed[pygame.K_p]:  # Touche P pour dézoomer
+            self.camera.zoom_out()
+        if pressed[pygame.K_m]:  # Touche M pour zoomer
+            self.camera.zoom_in()
 
         # On déplace la caméra seulement si il y a un déplacement
         if dx or dy:  
@@ -339,14 +375,16 @@ class Game :
                     if event.button == 1 and not self.show_unit_popup:  # Clic gauche
                         mouse_x, mouse_y = pygame.mouse.get_pos()
                         
-                        # Conversion screen vers world coordinates
+                        # Conversion screen vers world coordinates avec zoom
                         camera_center = self.camera.rect.center
                         screen_center_x = self.screen.get_width() // 2
                         screen_center_y = self.screen.get_height() // 2
                         
-                        # Transformation inverse exacte de pyscroll
-                        world_x = mouse_x - screen_center_x + camera_center[0]
-                        world_y = mouse_y - screen_center_y + camera_center[1]
+                        # Transformation inverse adaptée au zoom
+                        offset_x = (mouse_x - screen_center_x) / self.camera.zoom_level
+                        offset_y = (mouse_y - screen_center_y) / self.camera.zoom_level
+                        world_x = camera_center[0] + offset_x
+                        world_y = camera_center[1] + offset_y
                         
                         # Chercher une unité à cette position
                         clicked_unit = self.find_unit_at_position(world_x, world_y)
@@ -366,14 +404,17 @@ class Game :
             if not self.show_unit_popup:
                 self.handle_input()
             
+            # Mettre à jour le renderer si le zoom a changé
+            self.update_renderer_for_zoom()
+            
             # Mettre à jour la caméra (CRITIQUE : synchronise rect.center avec position)
             self.camera.update()
             
             # Mettre à jour les unités
             for unit in self.units:
                 unit.update(dt, self.combat_system, self.screen, 
-                          (self.camera.position[0] - self.screen.get_width() // 2,
-                           self.camera.position[1] - self.screen.get_height() // 2))
+                          (self.camera.position[0] - (self.screen.get_width() // 2) / self.camera.zoom_level,
+                           self.camera.position[1] - (self.screen.get_height() // 2) / self.camera.zoom_level))
             
             # Mettre à jour le système de combat
             self.combat_system.update(dt)
@@ -382,8 +423,22 @@ class Game :
             self.group.update()
             # On centre le groupe sur la caméra
             self.group.center(self.camera.rect.center)
-            # On dessine le groupe
-            self.group.draw(self.screen)
+            
+            # Rendu avec mise à l'échelle pour le zoom
+            if self.camera.zoom_level != 1.0:
+                # Créer une surface temporaire à la taille effective
+                temp_surface = pygame.Surface((int(self.screen.get_width() / self.camera.zoom_level), 
+                                             int(self.screen.get_height() / self.camera.zoom_level)))
+                
+                # Dessiner le groupe sur la surface temporaire
+                self.group.draw(temp_surface)
+                
+                # Redimensionner et dessiner sur l'écran principal
+                scaled_surface = pygame.transform.scale(temp_surface, self.screen.get_size())
+                self.screen.blit(scaled_surface, (0, 0))
+            else:
+                # Rendu normal sans zoom
+                self.group.draw(self.screen)
             # On dessine le hud
             if self.hud.show :
                 self.hud.draw(self.screen)
@@ -393,14 +448,21 @@ class Game :
             self.handle_input()
             
             # Dessiner les projectiles
-            camera_offset = (self.camera.position[0] - self.screen.get_width() // 2,
-                           self.camera.position[1] - self.screen.get_height() // 2)
+            camera_offset = (self.camera.position[0] - (self.screen.get_width() // 2) / self.camera.zoom_level,
+                           self.camera.position[1] - (self.screen.get_height() // 2) / self.camera.zoom_level)
             
             for projectile in self.combat_system.projectiles:
-                projectile_screen_x = projectile.position[0] - camera_offset[0]
-                projectile_screen_y = projectile.position[1] - camera_offset[1]
-                projectile_rect = projectile.image.get_rect(center=(projectile_screen_x, projectile_screen_y))
-                self.screen.blit(projectile.image, projectile_rect)
+                projectile_screen_x = (projectile.position[0] - camera_offset[0]) * self.camera.zoom_level
+                projectile_screen_y = (projectile.position[1] - camera_offset[1]) * self.camera.zoom_level
+                
+                # Adapter la taille du projectile au zoom
+                scaled_image = pygame.transform.scale(
+                    projectile.image, 
+                    (int(projectile.image.get_width() * self.camera.zoom_level),
+                     int(projectile.image.get_height() * self.camera.zoom_level))
+                )
+                projectile_rect = scaled_image.get_rect(center=(projectile_screen_x, projectile_screen_y))
+                self.screen.blit(scaled_image, projectile_rect)
             
             # Dessiner les barres de vie des unités
             for unit in self.units:
@@ -408,8 +470,8 @@ class Game :
             
             # Surligner l'unité sélectionnée avec un cercle jaune qui suit l'unité
             if self.selected_unit and self.selected_unit.is_alive:
-                unit_screen_x = self.selected_unit.position[0] - camera_offset[0]
-                unit_screen_y = self.selected_unit.position[1] - camera_offset[1]
+                unit_screen_x = (self.selected_unit.position[0] - camera_offset[0]) * self.camera.zoom_level
+                unit_screen_y = (self.selected_unit.position[1] - camera_offset[1]) * self.camera.zoom_level
                 
                 # Vérifier que l'unité est visible à l'écran
                 if (-50 <= unit_screen_x <= self.screen.get_width() + 50 and 
@@ -418,17 +480,18 @@ class Game :
                     # Cercle jaune extérieur (plus visible avec animation)
                     import time
                     pulse = abs(math.sin(time.time() * 3)) * 5 + 20  # Animation de pulsation
+                    pulse_scaled = pulse * self.camera.zoom_level
                     
                     pygame.draw.circle(self.screen, (255, 255, 0), 
-                                     (int(unit_screen_x), int(unit_screen_y)), int(pulse + 8), 3)
+                                     (int(unit_screen_x), int(unit_screen_y)), int(pulse_scaled + 8 * self.camera.zoom_level), 3)
                     
                     # Cercle jaune intérieur (fixe)
                     pygame.draw.circle(self.screen, (255, 255, 0), 
-                                     (int(unit_screen_x), int(unit_screen_y)), 18, 2)
+                                     (int(unit_screen_x), int(unit_screen_y)), int(18 * self.camera.zoom_level), 2)
                     
                     # Point central pour bien marquer la position
                     pygame.draw.circle(self.screen, (255, 255, 0), 
-                                     (int(unit_screen_x), int(unit_screen_y)), 3, 0)
+                                     (int(unit_screen_x), int(unit_screen_y)), int(3 * self.camera.zoom_level), 0)
             
             # Dessiner le popup de sélection des unités
             self.draw_unit_popup()            

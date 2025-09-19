@@ -54,15 +54,6 @@ class Unit(pygame.sprite.Sprite):
             # Fallback vers l'ancien système si unit_type n'est pas fourni
             self.tileset = load_tileset(RED_TEAM_PATH if team == "red" else GREEN_TEAM_PATH)
             self.image = self.tileset[0]
-        
-    def load_image(self, image_path):
-        """Charge l'image de l'unité."""
-        try:
-            self.image = pygame.image.load(image_path).convert_alpha()
-        except pygame.error:
-            # Image par défaut si l'image n'est pas trouvée
-            self.image = pygame.Surface((32, 32), pygame.SRCALPHA)
-            self.image.fill((255, 0, 0))  # Rectangle rouge par défaut
     
     def update(self, dt=0, combat_system=None):
         """Met à jour l'unité (mouvement, combat, etc.)."""

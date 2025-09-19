@@ -95,23 +95,6 @@ class Bateau(Unit):
             "is_alive": self.is_alive,
             "is_moving": self.is_moving
         }
-    
-    @staticmethod
-    def can_build():
-        """Méthode statique pour vérifier si on peut construire un bateau."""
-        # Cette méthode peut être utilisée pour vérifier les ressources
-        # Retourne True si on a assez de pétrole (à implémenter avec le système de ressources)
-        return True  # Pour l'instant, toujours possible
-    
-    @staticmethod
-    def get_build_requirements():
-        """Retourne les exigences pour construire cette unité."""
-        config = UNIT_CONFIGS["bateau"]
-        return {
-            "cost": config["cost"],
-            "build_time": config["build_time"],
-            "required_building": None  # Pas de bâtiment requis pour le bateau
-        }
 
 # Classes d'alias pour la compatibilité avec l'ancien code
 class BateauRouge(Bateau):
