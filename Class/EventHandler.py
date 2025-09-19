@@ -1,5 +1,4 @@
 import pygame
-import math
 
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
@@ -18,6 +17,13 @@ class EventHandler:
             self.game.hud.petrole.handle_event(event)
             self.game.hud.timer.handle_event(event)
 
+            
+            # Gestion du changement de marée 
+            if self.game.hud.timer.maree_changed:
+                self.game.initializer.switch_layer()
+                # Marquer le changement comme traité
+                self.game.hud.timer.maree_changed = False
+                        
             # Clic droit pour générer l'île
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
                 self.game.quantique()
@@ -43,6 +49,12 @@ class EventHandler:
 
         elif self.game.show_unit_popup:
             return self._handle_popup_navigation(event)
+        
+        elif event.key == pygame.K_UP:
+            self.game.sound.increase_volume()
+        
+        elif event.key == pygame.K_DOWN:
+            self.game.sound.decrease_volume()
         
         return True
     

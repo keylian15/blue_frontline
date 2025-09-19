@@ -3,6 +3,8 @@ import pytmx
 import pyscroll
 from Class.Camera import Camera
 from Class.Combat import CombatSystem
+from Class.Sound import Sound
+
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
 from Class.units.Bateau import BateauRouge, BateauVert
 from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
@@ -87,3 +89,32 @@ class GameInitializer:
         pygame.font.init()
         self.game.font = pygame.font.Font(None, 24)
         self.game.hud = Hud(self.game.screen)
+        
+    def init_sound(self):
+        """Initialise le système sonore."""
+        pygame.mixer.init()
+        self.game.sound = Sound()
+    
+    def switch_layer(self):
+        """Fonction permettant de switcher entre les calques de marée haute et basse."""
+        if self.game.hud.timer.maree_haute:
+            self.toggle_layer("Maree_Haute", True)
+            self.toggle_layer("Maree_Basse", False)
+        else:
+            self.toggle_layer("Maree_Haute", False)
+            self.toggle_layer("Maree_Basse", True)
+        
+        # Marquer la map pour reconstruction au prochain rendu
+        self.game.renderer.map_needs_refresh = True        
+
+    def toggle_layer(self, layer_name: str, visible: bool):
+        """
+        Active ou désactive un calque de la carte par son nom.
+        
+        :param layer_name: Nom du calque dans Tiled (.tmx)
+        :param visible: True pour afficher, False pour cacher
+        """
+        for layer in self.game.tmx_data.layers:
+            if layer.name == layer_name:
+                layer.visible = visible
+                return
