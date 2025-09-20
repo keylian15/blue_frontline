@@ -118,4 +118,3 @@ class GameInitializer:
             if layer.name == layer_name:
                 layer.visible = visible
                 return
-

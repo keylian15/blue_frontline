@@ -46,6 +46,7 @@ class Renderer:
         """Effectue tout le rendu du jeu."""
 
 
+
         # Rendu de la map avec zoom
         self._render_map()
         
@@ -68,7 +69,6 @@ class Renderer:
     def _render_map(self):
         """Rend la map avec gestion du zoom et reconstruction si nécessaire."""
         
-
         if self.game.camera.zoom_level != 1.0:
             # Rendu avec zoom
             temp_surface = pygame.Surface((

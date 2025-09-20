@@ -31,6 +31,7 @@ class EventHandler:
                 if self.game.hud.timer.maree_haute:
                     self.game.quantique()
 
+
             # Gestion des touches
             elif event.type == pygame.KEYDOWN:
                 if not self._handle_keydown_events(event):
@@ -54,6 +55,7 @@ class EventHandler:
             return self._handle_popup_navigation(event)
         
         elif event.key == pygame.K_UP:  
+
             self.game.sound.increase_volume()
         
         elif event.key == pygame.K_DOWN:
