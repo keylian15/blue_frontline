@@ -27,25 +27,23 @@ class Renderer:
         elif hasattr(self.game, 'map_layer'):
             self.game.map_layer = map_layer
         
-        # Reconstruire le PyscrollGroup avec le nouveau map_layer
-        # Sauvegarder les sprites existants
-        existing_sprites = list(self.game.group.sprites())
-
         # Créer un nouveau PyscrollGroup
         self.game.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=1)
+                
+        # Remettre les iles quantiques SI BESOIN
+        # if self.game.hud.timer.maree_haute:
+            # self._restore_quantum_islands()
 
-        # Remettre tous les sprites
-        for sprite in existing_sprites:
-            if not hasattr(sprite, '__dict__') or 'map_layer' not in str(type(sprite)):
-                self.game.group.add(sprite)
+    # def _restore_quantum_islands(self):
+    #     """Réstaure les iles quantiques SI BESOIN."""
+    #     if hasattr(self.game, 'quantum_islands'):
+    #         for island in self.game.quantum_islands:
+    #             if island not in self.game.group.sprites():
+    #                 self.game.group.add(island)
 
-    
     def render(self):
         """Effectue tout le rendu du jeu."""
-        # Vérifier si la map doit être reconstruite
-        if self.map_needs_refresh:
-            self.refresh_map()
-            self.map_needs_refresh = False
+
 
         # Rendu de la map avec zoom
         self._render_map()
@@ -69,11 +67,6 @@ class Renderer:
     def _render_map(self):
         """Rend la map avec gestion du zoom et reconstruction si nécessaire."""
         
-        # Vérifier si la map doit être reconstruite
-        if self.map_needs_refresh:
-            self.refresh_map()
-            self.map_needs_refresh = False
-
         if self.game.camera.zoom_level != 1.0:
             # Rendu avec zoom
             temp_surface = pygame.Surface((
