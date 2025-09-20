@@ -17,12 +17,19 @@ class EventHandler:
             self.game.hud.petrole.handle_event(event)
             self.game.hud.timer.handle_event(event)
 
-            
-            # Gestion du changement de marée 
+            # Gestion du changement de marée                   
             if self.game.hud.timer.maree_changed:
                 self.game.initializer.switch_layer()
+                
+                # Reconstruire la map
+                if hasattr(self.game.renderer, 'map_needs_refresh') and self.game.renderer.map_needs_refresh:
+                    self.game.renderer.refresh_map()  
+                    
                 # Marquer le changement comme traité
                 self.game.hud.timer.maree_changed = False
+                
+                if self.game.hud.timer.maree_haute:
+                    self.game.quantique()
 
             # Gestion des touches
             elif event.type == pygame.KEYDOWN:

@@ -214,7 +214,7 @@
   </object>
   <object id="2" name="ile_quantique_1" type="ile_quantique" x="448" y="1024" width="640.003" height="512.003"/>
   <object id="4" name="ile_quantique_2" type="ile_quantique" x="1440" y="2272" width="672" height="608"/>
-  <object id="5" name="ile_quantique_3" type="ile_quantique" x="2752" y="1408" width="544.005" height="415.997"/>
+  <object id="5" name="ile_quantique_5" type="ile_quantique" x="2752" y="1408" width="544.005" height="416"/>
   <object id="6" name="ile_quantique_4" type="ile_quantique" x="1248" y="192" width="832" height="416"/>
   <object id="8" name="Collision" type="Collision" x="0" y="0" width="32" height="3072"/>
   <object id="9" name="Collision" type="Collision" x="0" y="3040" width="3840" height="32"/>
