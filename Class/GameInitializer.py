@@ -1,10 +1,10 @@
 import pygame
 import pytmx
 import pyscroll
+from Class.Sound import Sound
 from Class.Camera import Camera
 from Class.Combat import CombatSystem
 from Class.Sound import Sound
-
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
 from Class.units.Bateau import BateauRouge, BateauVert
 from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
