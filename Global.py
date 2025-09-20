@@ -11,6 +11,7 @@ TIME_STEP = 1000 # en ms => 1 seconde
 TIME_SPEED = 10 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
 TIME_MAREE = 180
 
+
 # === MAP ===
 MAP_PATH = resource_path("map.tmx")
 ISLAND_TILESET_PATH = resource_path('assets/island/png/island_spritesheet.png')
