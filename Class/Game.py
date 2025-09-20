@@ -20,7 +20,6 @@ class IslandSprite(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
 
-
 class Game : 
     """Classe principale du jeu."""
 
@@ -36,8 +35,9 @@ class Game :
         self.initializer.init_camera()
         self.initializer.init_game_systems()
         self.initializer.init_ui()
+        self.initializer.init_sound()
 
-        
+
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
         
@@ -49,10 +49,19 @@ class Game :
             
     def quantique(self):
         """ Génération de l'île quantique pour toutes les îles quantique dans la map."""
-        # Générer l'île avec Perlin
-        island_position = None
+        # Initialiser la liste des îles si elle n'existe pas
+        if not hasattr(self, 'quantum_islands'):
+            self.quantum_islands = []
+        
+        # Nettoyer les anciennes îles
+        for old_island in self.quantum_islands:
+            if old_island in self.group:
+                self.group.remove(old_island)
+        self.quantum_islands.clear()
+        
+        # Générer toutes les îles
         for obj in self.tmx_data.objects:
-            if obj.name.startswith("ile_quantique")  :                         
+            if obj.name.startswith("ile_quantique"):                         
                 # On récupère la position et on l'aligne à la grille      
                 aligned_x = (obj.x // 32) * 32
                 aligned_y = (obj.y // 32) * 32
@@ -64,23 +73,23 @@ class Game :
                         
                 # Créer le tileset final avec les tuiles centrales
                 tileset_surface_smooth = [
-                        self.deep_water_tileset,# Index 0: Eau profonde (centre du tileset)
-                        self.water_tileset,     # Index 1: Eau peu profonde (le png en lui même)
-                        self.island_tileset     # Index 2: Île (centre du tileset)
-                    ]
+                    self.deep_water_tileset,  # Index 0: Eau profonde
+                    self.water_tileset,       # Index 1: Eau peu profonde
+                    self.island_tileset       # Index 2: Île
+                ]
         
                 # Générer et créer le sprite de l'île
                 self.perlin = Perlin()
                 island_matrix = self.perlin.generate_island(island_height_tiles, island_width_tiles)
                 island_surface = self.perlin.smooth_map(island_matrix, tileset_surface_smooth)
                 
-                # Créer le sprite et l'ajouter au groupe
-                if island_position:
-                    self.island_sprite = IslandSprite(island_surface, island_position[0], island_position[1])
-                else:
-                    self.island_sprite = IslandSprite(island_surface, 100, 100)
-                    
-                self.group.add(self.island_sprite)
+                # Créer le sprite
+                island_sprite = IslandSprite(island_surface, island_position[0], island_position[1])
+                
+                # Ajouter à la liste ET au groupe
+                self.quantum_islands.append(island_sprite)
+                self.group.add(island_sprite)
+
     
     def spawn_unit(self, unit_class):
         """Fait apparaître une unité près de la plateforme correspondant à son équipe."""
