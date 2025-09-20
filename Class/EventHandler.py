@@ -61,6 +61,7 @@ class EventHandler:
         elif event.key == pygame.K_DOWN:
             self.game.sound.decrease_volume()
 
+
         return True
     
     def _handle_popup_navigation(self, event):

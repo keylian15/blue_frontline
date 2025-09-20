@@ -54,4 +54,5 @@ class GameUpdater:
                         if island not in self.game.group.sprites():
                             self.game.group.add(island)
 
+
             self.game.last_zoom_level = self.game.camera.zoom_level

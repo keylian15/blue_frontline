@@ -8,6 +8,7 @@
  <tileset firstgid="68" source="assets/deep_water/deep_water_spritesheet.tsx"/>
  <tileset firstgid="324" source="assets/water/water_spritesheet.tsx"/>
  <tileset firstgid="580" source="assets/island/island_spritesheet.tsx"/>
+
  <layer id="4" name="Maree_Haute" width="120" height="96">
   <data encoding="csv">
 1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,
