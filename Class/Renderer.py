@@ -1,5 +1,6 @@
 import pygame, pyscroll, time, math
 
+
 class Renderer:
     """Gestionnaire de rendu pour le jeu."""
     
@@ -67,6 +68,7 @@ class Renderer:
     def _render_map(self):
         """Rend la map avec gestion du zoom et reconstruction si nécessaire."""
         
+
         if self.game.camera.zoom_level != 1.0:
             # Rendu avec zoom
             temp_surface = pygame.Surface((

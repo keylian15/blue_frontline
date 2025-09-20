@@ -44,7 +44,7 @@ class InputManager:
             if current_time - self.last_hud_toggle_time > self.hud_toggle_cooldown:
                 self.game.hud.switch()
                 self.last_hud_toggle_time = current_time
-                
+
     def _handle_unit_popup(self, pressed):
         if pressed[pygame.K_j]:
             self.game.hud.toggle_popup_team()

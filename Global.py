@@ -302,3 +302,4 @@ BUTTON_MARGIN_BOTTOM = 40
 
 # === IMAGES ===
 MENU_PATH = resource_path('assets/menu/menu.png')
+
