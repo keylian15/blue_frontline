@@ -47,8 +47,12 @@ class GameUpdater:
                 if unit.is_alive:
                     self.game.group.add(unit)
             
-            # Ajouter l'île quantique si elle existe
-            if hasattr(self.game, 'island_sprite'):
-                self.game.group.add(self.game.island_sprite)
-            
+            # Ajouter les îles quantiques si elles existent
+            if self.game.hud.timer.maree_haute:
+                if hasattr(self.game, 'quantum_islands') and self.game.quantum_islands:
+                    for island in self.game.quantum_islands:
+                        if island not in self.game.group.sprites():
+                            self.game.group.add(island)
+
+
             self.game.last_zoom_level = self.game.camera.zoom_level
