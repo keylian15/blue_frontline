@@ -45,14 +45,7 @@ class InputManager:
             if current_time - self.last_hud_toggle_time > self.hud_toggle_cooldown:
                 self.game.hud.switch()
                 self.last_hud_toggle_time = current_time
-    
-    def _handle_zoom(self, pressed):
-        """Gère le zoom avec les touches P et M."""
-        if pressed[pygame.K_p]:  # Touche P pour dézoomer
-            self.game.camera.zoom_out()
-        if pressed[pygame.K_m]:  # Touche M pour zoomer
-            self.game.camera.zoom_in()
-            
+                
     def _handle_unit_popup(self, pressed):
         if pressed[pygame.K_j]:
             self.game.hud.toggle_popup_team()

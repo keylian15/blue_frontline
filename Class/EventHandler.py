@@ -23,10 +23,6 @@ class EventHandler:
                 self.game.initializer.switch_layer()
                 # Marquer le changement comme traité
                 self.game.hud.timer.maree_changed = False
-                        
-            # Clic droit pour générer l'île
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 3:
-                self.game.quantique()
 
             # Gestion des touches
             elif event.type == pygame.KEYDOWN:
@@ -50,12 +46,12 @@ class EventHandler:
         elif self.game.show_unit_popup:
             return self._handle_popup_navigation(event)
         
-        elif event.key == pygame.K_UP:
+        elif event.key == pygame.K_UP:  
             self.game.sound.increase_volume()
         
         elif event.key == pygame.K_DOWN:
             self.game.sound.decrease_volume()
-        
+
         return True
     
     def _handle_popup_navigation(self, event):
@@ -78,6 +74,7 @@ class EventHandler:
     
     def _handle_mouse_events(self, event):
         """Gère les événements de souris."""
+        # Clic gauche
         if event.button == 1 and not self.game.show_unit_popup:  # Clic gauche
             world_x, world_y = self._screen_to_world_coordinates(pygame.mouse.get_pos())
             
@@ -94,6 +91,18 @@ class EventHandler:
                     print(f"Déplacement de {self.game.selected_unit.__class__.__name__}")
             else:
                 self.game.selected_unit = None
+        
+        # Clic droit
+        elif event.button == 3 and self.game.hud.timer.maree_haute:
+            self.game.quantique()
+        
+        # Molette haut
+        elif event.button == 4:
+            self.game.camera.zoom_in()
+        
+        # Molette bas
+        elif event.button == 5:
+            self.game.camera.zoom_out()
     
     def _screen_to_world_coordinates(self, mouse_pos):
         """Convertit les coordonnées écran en coordonnées monde."""

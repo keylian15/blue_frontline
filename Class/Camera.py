@@ -26,13 +26,6 @@ class Camera(pygame.sprite.Sprite):
         self.update_zoom_limits()
         
         print(f"Limites caméra: X({self.min_x}-{self.max_x}), Y({self.min_y}-{self.max_y})")
-
-        # === Test visuel de la caméra ===
-        # On fait un sprite pour la caméra (image de munitions pour l'instant)
-        # self.sprite_sheet = pygame.image.load(BULLET_IMAGE_PATH)
-        # self.image = self.get_image(x, y)
-        # self.image.set_colorkey([0, 0, 0]) # On enleve le noir
-        # === Test visuel de la caméra ===
         
         self.image = pygame.Surface((32, 32), pygame.SRCALPHA)
         self.rect = self.image.get_rect()
@@ -43,12 +36,6 @@ class Camera(pygame.sprite.Sprite):
             max(self.min_y, min(self.max_y, y))
         ]
         
-    # === Test visuel de la caméra ===
-    def get_image(self, x, y):
-        """Récupère une image de la sprite sheet."""
-        image = pygame.Surface([32, 32], pygame.SRCALPHA)
-        image.blit(self.sprite_sheet, (0, 0), (x, y, 32, 32))
-        return image
     
     def calculate_min_zoom_for_full_map(self):
         """Calcule le niveau de zoom minimum nécessaire pour voir toute la map."""
