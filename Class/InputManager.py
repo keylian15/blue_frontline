@@ -17,7 +17,6 @@ class InputManager:
             self._handle_hud_toggle(pressed)
 
             self._handle_unit_popup(pressed)
-            self._handle_unit_popup_navigation(pressed)
     
     def _handle_camera_movement(self, pressed):
         """Gère le déplacement de la caméra avec les touches directionnelles."""
@@ -49,11 +48,3 @@ class InputManager:
         if pressed[pygame.K_j]:
             self.game.hud.toggle_popup_team()
             time.sleep(0.2)
-            
-    def _handle_unit_popup_navigation(self, pressed):
-        if pressed[pygame.K_LEFT]:
-            self.game.hud.popup_selection = (self.game.hud.popup_selection - 1) % len(self.game.hud.unit_names)
-            time.sleep(0.1)
-        if pressed[pygame.K_RIGHT]:
-            self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
-            time.sleep(0.1)
