@@ -1,5 +1,6 @@
 import pygame
 import time
+
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
     
@@ -81,6 +82,7 @@ class EventHandler:
         if event.key == pygame.K_RIGHT:
             self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
             time.sleep(0.1)
+
         return True
     
     
