@@ -1,5 +1,5 @@
 import pygame
-
+import time
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
     
@@ -45,6 +45,20 @@ class EventHandler:
     
     def _handle_keydown_events(self, event):
         """Gère les événements de touches pressées."""
+        if event.key == pygame.K_p:
+            # Toggle pause
+            self.game.paused = not self.game.paused
+            if self.game.paused:
+                # Mettre les timers en pause
+                self.game.hud.timer.pause()
+                self.game.hud.petrole.pause()
+            else:
+                # Reprendre les timers
+                self.game.hud.timer.resume()
+                self.game.hud.petrole.resume()
+            print(f"Pause: {'ON' if self.game.paused else 'OFF'}")
+            return True
+
         if event.key == pygame.K_e:
             self.game.show_unit_popup = not self.game.show_unit_popup
             self.game.popup_selection = 0
@@ -61,8 +75,14 @@ class EventHandler:
         elif event.key == pygame.K_DOWN:
             self.game.sound.decrease_volume()
 
-
+        if event.key == pygame.K_LEFT:
+            self.game.hud.popup_selection = (self.game.hud.popup_selection - 1) % len(self.game.hud.unit_names)
+            time.sleep(0.1)
+        if event.key == pygame.K_RIGHT:
+            self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
+            time.sleep(0.1)
         return True
+    
     
     def _handle_popup_navigation(self, event):
         """Gère la navigation dans le popup d'unités."""
@@ -108,11 +128,13 @@ class EventHandler:
         
         # Molette haut
         elif event.button == 4:
-            self.game.camera.zoom_in()
+            if not getattr(self.game, 'paused', False):
+                self.game.camera.zoom_in()
         
         # Molette bas
         elif event.button == 5:
-            self.game.camera.zoom_out()
+            if not getattr(self.game, 'paused', False):
+                self.game.camera.zoom_out()
     
     def _screen_to_world_coordinates(self, mouse_pos):
         """Convertit les coordonnées écran en coordonnées monde."""
