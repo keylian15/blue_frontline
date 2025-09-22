@@ -38,6 +38,7 @@ class Game :
         self.initializer.init_sound()
 
 
+
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
         
@@ -89,6 +90,7 @@ class Game :
                 # Ajouter à la liste ET au groupe
                 self.quantum_islands.append(island_sprite)
                 self.group.add(island_sprite)
+
 
     
     def spawn_unit(self, unit_class):

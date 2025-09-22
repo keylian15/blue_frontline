@@ -16,6 +16,7 @@ class InputManager:
         # if not self.game.show_unit_popup:
         self._handle_camera_movement(pressed)
         self._handle_hud_toggle(pressed)
+
         self._handle_unit_popup(pressed)
         self._handle_unit_popup_navigation(pressed)
     

@@ -22,6 +22,7 @@ WATER_TILESET_PATH = resource_path('assets/water/png/water_spritesheet.png')
 PIECE_IMAGE_PATH = resource_path('assets/HUD/piece.png')
 PETROLE_IMAGE_PATH = resource_path('assets/HUD/petrole.png')
 
+
 # === EVENEMENTS ===
 PETROLE_EVENT = pygame.USEREVENT + 1
 TIMER_EVENT = pygame.USEREVENT + 2
@@ -142,6 +143,13 @@ MASK_MAPPING = {
     1 + 2 + 4 : MAPPING["end_right"],
     1 + 2 + 4 + 8 : MAPPING["center"],
     }
+
+
+# === Unités ===
+
+RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
+GREEN_TEAM_PATH = resource_path('assets/Green_team/png/Green_team_spritesheet.png')
+
 
 # === Unités ===
 RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
@@ -302,4 +310,6 @@ BUTTON_MARGIN_BOTTOM = 40
 
 # === IMAGES ===
 MENU_PATH = resource_path('assets/menu/menu.png')
+ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
+
 
