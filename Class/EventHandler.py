@@ -45,6 +45,20 @@ class EventHandler:
     
     def _handle_keydown_events(self, event):
         """Gère les événements de touches pressées."""
+        if event.key == pygame.K_p:
+            # Toggle pause
+            self.game.paused = not self.game.paused
+            if self.game.paused:
+                # Mettre les timers en pause
+                self.game.hud.timer.pause()
+                self.game.hud.petrole.pause()
+            else:
+                # Reprendre les timers
+                self.game.hud.timer.resume()
+                self.game.hud.petrole.resume()
+            print(f"Pause: {'ON' if self.game.paused else 'OFF'}")
+            return True
+
         if event.key == pygame.K_e:
             self.game.show_unit_popup = not self.game.show_unit_popup
             self.game.popup_selection = 0
@@ -108,11 +122,13 @@ class EventHandler:
         
         # Molette haut
         elif event.button == 4:
-            self.game.camera.zoom_in()
+            if not getattr(self.game, 'paused', False):
+                self.game.camera.zoom_in()
         
         # Molette bas
         elif event.button == 5:
-            self.game.camera.zoom_out()
+            if not getattr(self.game, 'paused', False):
+                self.game.camera.zoom_out()
     
     def _screen_to_world_coordinates(self, mouse_pos):
         """Convertit les coordonnées écran en coordonnées monde."""
