@@ -107,12 +107,6 @@ class EventHandler:
         elif event.key == pygame.K_DOWN:
             self.game.sound.decrease_volume()
 
-        if event.key == pygame.K_LEFT:
-            self.game.hud.popup_selection = (self.game.hud.popup_selection - 1) % len(self.game.hud.unit_names)
-            time.sleep(0.1)
-        if event.key == pygame.K_RIGHT:
-            self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
-            time.sleep(0.1)
 
         return True
     
