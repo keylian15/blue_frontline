@@ -15,17 +15,40 @@ class GameUpdater:
         # Mettre à jour le renderer si le zoom a changé
         self._update_renderer_for_zoom()
         
+        # S'assurer que toutes les unités sont dans le système de combat
+        self._sync_units_with_combat_system()
+        
         # Mettre à jour les unités
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
         for unit in self.game.units:
-            unit.update(dt, self.game.combat_system, self.game.screen, camera_offset)
+            # Mettre à jour l'unité avec toutes les informations nécessaires
+            unit.update(dt, self.game.combat_system, self.game.screen, camera_offset, self.game.units)
+            
+            # Marquer l'unité comme sélectionnée si c'est l'unité active
+            if hasattr(unit, 'is_selected'):
+                unit.is_selected = (unit == self.game.selected_unit)
         
         # Mettre à jour le système de combat
-        self.game.combat_system.update(dt)
+        if hasattr(self.game, 'combat_system'):
+            self.game.combat_system.update(dt)
+        
+        # Mettre à jour les projectiles
+        if hasattr(self.game, 'update_bullets'):
+            self.game.update_bullets(dt)
         
         # Mettre à jour les groupes
         self.game.group.update()
         self.game.group.center(self.game.camera.rect.center)
+
+    def _sync_units_with_combat_system(self):
+        """Synchronise les unités avec le système de combat."""
+        if not hasattr(self.game, 'combat_system'):
+            return
+            
+        # Ajouter toutes les unités vivantes au système de combat si elles n'y sont pas
+        for unit in self.game.units:
+            if unit.is_alive and unit not in self.game.combat_system.units:
+                self.game.combat_system.add_unit(unit)
     
     def _update_renderer_for_zoom(self):
         """Met à jour le renderer pyscroll pour le nouveau niveau de zoom."""

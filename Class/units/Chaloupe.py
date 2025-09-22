@@ -42,10 +42,10 @@ class Chaloupe(Unit):
         self.move_to(target_x, target_y, self.max_speed)
         self.is_moving = True
     
-    def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0)):
+    def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
         """Met à jour la chaloupe."""
         # Appeler la mise à jour de la classe parent
-        super().update(dt, combat_system)
+        super().update(dt, combat_system, screen, camera_offset, all_units)
         
         # Vérifier si on a atteint la destination
         if self.target_position and self.is_moving:
@@ -57,27 +57,6 @@ class Chaloupe(Unit):
                 self.stop()
                 self.is_moving = False
                 self.target_position = None
-
-        # Dessiner la portée en permanence
-        if screen:
-            self.draw_range(screen, camera_offset)
-    
-    def draw_range(self, screen, camera_offset=(0, 0)):
-        """Dessine une zone de portée de tir autour de la chaloupe."""
-        if not self.is_alive:
-            return
-
-        # Calculer le rayon en pixels (range en cases * 32 pixels par case)
-        range_radius = self.range * 32
-
-        # Position de la chaloupe avec décalage de la caméra
-        center_x = int(self.position[0] - camera_offset[0])
-        center_y = int(self.position[1] - camera_offset[1])
-
-        # Dessiner un cercle semi-transparent pour la portée avec la couleur de l'équipe
-        surface = pygame.Surface((range_radius * 2, range_radius * 2), pygame.SRCALPHA)
-        pygame.draw.circle(surface, self.range_color, (range_radius, range_radius), range_radius)
-        screen.blit(surface, (center_x - range_radius, center_y - range_radius))
     
     def get_info(self):
         """Retourne les informations de l'unité."""
@@ -93,7 +72,9 @@ class Chaloupe(Unit):
             "fire_rate": self.fire_rate,
             "position": (int(self.position[0]), int(self.position[1])),
             "is_alive": self.is_alive,
-            "is_moving": self.is_moving
+            "is_moving": self.is_moving,
+            "is_selected": self.is_selected,
+            "enemies_in_range": len(self.enemies_in_range)
         }
     
     @staticmethod

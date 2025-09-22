@@ -37,10 +37,12 @@ class Game :
         self.initializer.init_ui()
         self.initializer.init_sound()
 
-
-
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
+        
+        # Système de combat et projectiles
+        self.bullets = []  # Liste des projectiles actifs
+        self.selected_unit = None  # Unité actuellement sélectionnée
         
         # Initialiser les gestionnaires après que les composants soient créés
         self.event_handler = EventHandler(self)
@@ -95,18 +97,14 @@ class Game :
     
     def spawn_unit(self, unit_class):
         """Fait apparaître une unité près de la plateforme correspondant à son équipe."""
-        try:
-            print(f"Tentative de création de l'unité: {unit_class.__name__}")
-            
+        try:            
             # Déterminer l'équipe de l'unité à partir du nom de la classe
             if "Rouge" in unit_class.__name__:
                 team = "red"
                 base_spawn = self.red_platform_spawn
-                print(f"Unité rouge -> plateforme rouge à {base_spawn}")
             else :
                 team = "green"
                 base_spawn = self.green_platform_spawn
-                print(f"Unité verte -> plateforme verte à {base_spawn}")
             
             # Essayer plusieurs positions jusqu'à en trouver une libre
             max_attempts = 20
@@ -140,7 +138,6 @@ class Game :
             
             # Créer l'unité à la position de spawn calculée
             unit = unit_class(spawn_x, spawn_y)
-            print(f"Unité créée avec succès: {unit} à la position ({spawn_x:.1f}, {spawn_y:.1f})")
 
             # Ajouter au système de combat et au groupe de sprites
             self.combat_system.add_unit(unit)
@@ -224,6 +221,42 @@ class Game :
                 min_distance = distance
         
         return closest_unit
+
+    def select_unit(self, unit):
+        """Sélectionne une unité et désélectionne les autres."""
+        # Désélectionner toutes les unités
+        for u in self.units:
+            if hasattr(u, 'is_selected'):
+                u.is_selected = False
+        
+        # Sélectionner la nouvelle unité
+        if unit and hasattr(unit, 'is_selected'):
+            unit.is_selected = True
+            self.selected_unit = unit
+        else:
+            self.selected_unit = None
+
+    def update_bullets(self, dt):
+        """Met à jour tous les projectiles."""
+        bullets_to_remove = []
+        
+        for bullet in self.bullets:
+            if not bullet.is_alive:
+                bullets_to_remove.append(bullet)
+                continue
+                
+            # Mettre à jour le projectile
+            bullet.update(dt)
+            
+            # Vérifier les collisions avec les unités
+            for unit in self.units:
+                if bullet.check_collision(unit):
+                    break  # Le projectile s'est détruit lors de la collision
+        
+        # Supprimer les projectiles morts
+        for bullet in bullets_to_remove:
+            self.bullets.remove(bullet)
+
 
     def run(self): 
         """Boucle principale du jeu."""

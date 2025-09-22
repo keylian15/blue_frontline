@@ -42,7 +42,6 @@ class GameInitializer:
         # Récupérer les dimensions de la map
         self.game.map_width = self.game.tmx_data.width * self.game.tmx_data.tilewidth
         self.game.map_height = self.game.tmx_data.height * self.game.tmx_data.tileheight
-        print(f"Dimensions de la map: {self.game.map_width}x{self.game.map_height}")
     
     def init_camera(self):
         """Initialise la caméra et les groupes de sprites."""

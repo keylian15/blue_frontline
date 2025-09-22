@@ -48,7 +48,6 @@ class EventHandler:
         if event.key == pygame.K_e:
             self.game.show_unit_popup = not self.game.show_unit_popup
             self.game.popup_selection = 0
-            print(f"Popup {'ouvert' if self.game.show_unit_popup else 'fermé'}")
             return True
 
         elif self.game.show_unit_popup:
@@ -68,14 +67,11 @@ class EventHandler:
         """Gère la navigation dans le popup d'unités."""
         if event.key == pygame.K_UP:
             self.game.popup_selection = (self.game.popup_selection - 1) % len(self.game.unit_classes)
-            print(f"Sélection précédente: {self.game.popup_selection}")
         elif event.key == pygame.K_DOWN:
             self.game.popup_selection = (self.game.popup_selection + 1) % len(self.game.unit_classes)
-            print(f"Sélection suivante: {self.game.popup_selection}")
         elif event.key == pygame.K_RETURN:
             try:
                 unit_name, unit_class = self.game.unit_classes[self.game.popup_selection]
-                print(f"Unité sélectionnée: {unit_name}")
                 self.game.spawn_unit(unit_class)
                 self.game.show_unit_popup = False
             except Exception as e:
@@ -92,15 +88,13 @@ class EventHandler:
             clicked_unit = self.game.find_unit_at_position(world_x, world_y)
             
             if clicked_unit:
-                self.game.selected_unit = clicked_unit
-                print(f"Unité sélectionnée: {clicked_unit.__class__.__name__}")
+                self.game.select_unit(clicked_unit)
             elif self.game.selected_unit and self.game.selected_unit.is_alive:
                 # Déplacer l'unité sélectionnée vers la position cliquée
                 if hasattr(self.game.selected_unit, 'move_to_position'):
                     self.game.selected_unit.move_to_position(world_x, world_y)
-                    print(f"Déplacement de {self.game.selected_unit.__class__.__name__}")
             else:
-                self.game.selected_unit = None
+                self.game.select_unit(None)
         
         # Clic droit
         elif event.button == 3 and self.game.hud.timer.maree_haute:

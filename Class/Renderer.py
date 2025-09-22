@@ -35,6 +35,11 @@ class Renderer:
         # if self.game.hud.timer.maree_haute:
             # self._restore_quantum_islands()
 
+        if self.game.units:
+            for unit in self.game.units:
+                if unit.is_alive:
+                    self.game.group.add(unit)
+
     # def _restore_quantum_islands(self):
     #     """Réstaure les iles quantiques SI BESOIN."""
     #     if hasattr(self.game, 'quantum_islands'):
@@ -84,20 +89,9 @@ class Renderer:
 
     def _render_projectiles(self):
         """Rend tous les projectiles."""
-        camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
-        
-        for projectile in self.game.combat_system.projectiles:
-            projectile_screen_x = (projectile.position[0] - camera_offset[0]) * self.game.camera.zoom_level
-            projectile_screen_y = (projectile.position[1] - camera_offset[1]) * self.game.camera.zoom_level
-            
-            # Adapter la taille du projectile au zoom
-            scaled_image = pygame.transform.scale(
-                projectile.image, 
-                (int(projectile.image.get_width() * self.game.camera.zoom_level),
-                 int(projectile.image.get_height() * self.game.camera.zoom_level))
-            )
-            projectile_rect = scaled_image.get_rect(center=(projectile_screen_x, projectile_screen_y))
-            self.game.screen.blit(scaled_image, projectile_rect)
+        if hasattr(self.game, 'combat_system'):
+            camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
+            self.game.combat_system.draw(self.game.screen, camera_offset)
     
     def _render_unit_health_bars(self):
         """Rend les barres de vie des unités."""
@@ -106,7 +100,7 @@ class Renderer:
             unit.draw_health_bar(self.game.screen, camera_offset)
     
     def _render_selected_unit_highlight(self):
-        """Rend la surbrillance de l'unité sélectionnée."""
+        """Rend la surbrillance de l'unité sélectionnée et son cercle de portée."""
         if not (self.game.selected_unit and self.game.selected_unit.is_alive):
             return
         
@@ -118,11 +112,24 @@ class Renderer:
         if (-50 <= unit_screen_x <= self.game.screen.get_width() + 50 and 
             -50 <= unit_screen_y <= self.game.screen.get_height() + 50):
             
-            # Animation de pulsation
+            # CERCLE DE PORTÉE ROUGE (en premier pour être sous la sélection)
+            range_radius = self.game.selected_unit.range * 32 * self.game.camera.zoom_level  # Portée en pixels avec zoom
+            
+            # Surface semi-transparente pour le cercle de portée
+            range_surface = pygame.Surface((range_radius * 2, range_radius * 2), pygame.SRCALPHA)
+            pygame.draw.circle(range_surface, (255, 0, 0, 30), (range_radius, range_radius), range_radius)
+            self.game.screen.blit(range_surface, (unit_screen_x - range_radius, unit_screen_y - range_radius))
+            
+            # Contour rouge pour la portée
+            pygame.draw.circle(self.game.screen, (255, 0, 0), 
+                             (int(unit_screen_x), int(unit_screen_y)), 
+                             int(range_radius), 2)
+            
+            # Animation de pulsation pour la sélection
             pulse = abs(math.sin(time.time() * 3)) * 5 + 20
             pulse_scaled = pulse * self.game.camera.zoom_level
             
-            # Cercles de sélection
+            # Cercles de sélection jaunes
             pygame.draw.circle(self.game.screen, (255, 255, 0), 
                              (int(unit_screen_x), int(unit_screen_y)), 
                              int(pulse_scaled + 8 * self.game.camera.zoom_level), 3)
@@ -132,3 +139,19 @@ class Renderer:
             pygame.draw.circle(self.game.screen, (255, 255, 0), 
                              (int(unit_screen_x), int(unit_screen_y)), 
                              int(3 * self.game.camera.zoom_level), 0)
+            
+            # AFFICHAGE DU MESSAGE DE TIR si des ennemis sont dans la portée
+            if hasattr(self.game.selected_unit, 'enemies_in_range') and self.game.selected_unit.enemies_in_range:
+                font = pygame.font.Font(None, 32)
+                message = f"Ennemis en vue: {len(self.game.selected_unit.enemies_in_range)} - Appuyez sur 'T' pour tirer"
+                text_surface = font.render(message, True, (255, 255, 255))
+                
+                # Position du texte au-dessus du cercle de portée
+                text_x = int(unit_screen_x - text_surface.get_width() // 2)
+                text_y = int(unit_screen_y - range_radius - 50)
+                
+                # Fond semi-transparent pour le texte
+                text_bg = pygame.Surface((text_surface.get_width() + 20, text_surface.get_height() + 10), pygame.SRCALPHA)
+                text_bg.fill((0, 0, 0, 180))
+                self.game.screen.blit(text_bg, (text_x - 10, text_y - 5))
+                self.game.screen.blit(text_surface, (text_x, text_y))
