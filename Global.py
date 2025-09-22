@@ -308,5 +308,6 @@ BUTTON_MARGIN_BOTTOM = 40
 
 # === IMAGES ===
 MENU_PATH = resource_path('assets/menu/menu.png')
+ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
 
 
