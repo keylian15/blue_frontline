@@ -15,6 +15,10 @@ class Menu:
 
         self.font = pygame.font.SysFont(None, 60)
 
+        # Ajout : chargement de l'image d'ancre
+        self.anchor_img = pygame.image.load("./assets/menu/NotoV1Anchor.png").convert_alpha()
+        self.anchor_img = pygame.transform.smoothscale(self.anchor_img, (40, 40))
+
         # Boutons
         start_x = BUTTON_MARGIN_LEFT
         start_y = self.HEIGHT - (4 * BUTTON_HEIGHT + 3 * BUTTON_SPACING) - BUTTON_MARGIN_BOTTOM
@@ -55,15 +59,11 @@ class Menu:
 
         pygame.draw.rect(self.screen, BORDER_COLOR, (x, y, w, h), 4, border_radius=BUTTON_BORDER_RADIUS)
 
-        anchor = "⚓"
-        try:
-            anchor_font = pygame.font.SysFont("DejaVu Sans", 50)
-        except:
-            anchor_font = pygame.font.SysFont(None, 50)
-        anchor_surf = anchor_font.render(anchor, True, WHITE)
-        anchor_rect = anchor_surf.get_rect(midleft=(x + 30, y + h // 2))
-        self.screen.blit(anchor_surf, anchor_rect)
+        # Utilisation de l'image d'ancre
+        anchor_rect = self.anchor_img.get_rect(midleft=(x + 30, y + h // 2))
+        self.screen.blit(self.anchor_img, anchor_rect)
 
+        # Texte centré à droite de l'ancre
         txt = self.font.render(text, True, WHITE)
         txt_rect = txt.get_rect(midleft=(anchor_rect.right + 20, y + h // 2))
         self.screen.blit(txt, txt_rect)
