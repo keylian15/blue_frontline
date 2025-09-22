@@ -187,26 +187,26 @@ class Unit(pygame.sprite.Sprite):
         if target and target.team != self.team:
             self.target = target
     
-    def draw_health_bar(self, screen, camera_offset=(0, 0)):
-        """Dessine une barre de vie au-dessus de l'unité."""
+    def draw_health_bar(self, screen, camera_offset=(0, 0), zoom=1.0):
+        """Dessine une barre de vie au-dessus de l'unité, qui suit le zoom et la caméra."""
         if not self.is_alive or self.current_health == self.max_health:
             return
-            
-        bar_width = 30
-        bar_height = 4
-        bar_x = self.rect.centerx - bar_width // 2 - camera_offset[0]
-        bar_y = self.rect.top - 10 - camera_offset[1]
-        
+        # Position monde -> écran avec zoom
+        screen_x = (self.position[0] - camera_offset[0]) * zoom
+        screen_y = (self.position[1] - camera_offset[1]) * zoom
+        # Adapter la largeur/hauteur de la barre au zoom
+        bar_width = int(30 * zoom)
+        bar_height = max(2, int(4 * zoom))
+        bar_x = int(screen_x - bar_width // 2)
+        bar_y = int(screen_y - 30 * zoom)  # 30 pixels au-dessus du centre du sprite
         # Barre de fond (rouge)
         background_rect = pygame.Rect(bar_x, bar_y, bar_width, bar_height)
         pygame.draw.rect(screen, (255, 0, 0), background_rect)
-        
         # Barre de vie (verte)
         health_percentage = self.get_health_percentage()
         health_width = int(bar_width * health_percentage)
         health_rect = pygame.Rect(bar_x, bar_y, health_width, bar_height)
         pygame.draw.rect(screen, (0, 255, 0), health_rect)
-        
         # Contour
         pygame.draw.rect(screen, (0, 0, 0), background_rect, 1)
 

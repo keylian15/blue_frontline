@@ -163,16 +163,22 @@ class CombatSystem:
                 if projectile.check_collision(unit):
                     break  # Projectile détruit, passer au suivant
     
-    def draw(self, screen, camera_offset=(0, 0)):
-        """Dessine tous les projectiles."""
+    def draw(self, screen, camera_offset=(0, 0), zoom=1.0):
+        """Dessine tous les projectiles en tenant compte du zoom."""
         for projectile in self.projectiles:
             if projectile.is_active:
-                # Position avec décalage de caméra
-                screen_x = int(projectile.position[0] - camera_offset[0])
-                screen_y = int(projectile.position[1] - camera_offset[1])
-                
-                # Dessiner le projectile
-                screen.blit(projectile.image, (screen_x - projectile.rect.width//2, screen_y - projectile.rect.height//2))
+                # Position avec décalage de caméra et zoom
+                screen_x = (projectile.position[0] - camera_offset[0]) * zoom
+                screen_y = (projectile.position[1] - camera_offset[1]) * zoom
+                # Adapter la taille du projectile au zoom
+                if zoom != 1.0:
+                    scaled_image = pygame.transform.scale(
+                        projectile.image,
+                        (max(1, int(projectile.image.get_width() * zoom)), max(1, int(projectile.image.get_height() * zoom)))
+                    )
+                else:
+                    scaled_image = projectile.image
+                screen.blit(scaled_image, (screen_x - scaled_image.get_width()//2, screen_y - scaled_image.get_height()//2))
     
     def get_projectile_count(self):
         """Retourne le nombre de projectiles actifs."""

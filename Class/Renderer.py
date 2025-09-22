@@ -91,13 +91,15 @@ class Renderer:
         """Rend tous les projectiles."""
         if hasattr(self.game, 'combat_system'):
             camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
-            self.game.combat_system.draw(self.game.screen, camera_offset)
+            zoom = self.game.camera.zoom_level
+            self.game.combat_system.draw(self.game.screen, camera_offset, zoom)
     
     def _render_unit_health_bars(self):
         """Rend les barres de vie des unités."""
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
+        zoom = self.game.camera.zoom_level
         for unit in self.game.units:
-            unit.draw_health_bar(self.game.screen, camera_offset)
+            unit.draw_health_bar(self.game.screen, camera_offset, zoom)
     
     def _render_selected_unit_highlight(self):
         """Rend la surbrillance de l'unité sélectionnée et son cercle de portée."""
