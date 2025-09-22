@@ -97,8 +97,16 @@ class Game :
 
     
     def spawn_unit(self, unit_class):
-        """Fait apparaître une unité près de la plateforme correspondant à son équipe."""
+        """Fait apparaître une unité près de la plateforme correspondant à son équipe, en gérant le coût en pétrole.
+
+        Retourne l'unité créée si succès, sinon None (pétrole insuffisant ou erreur).
+        """
         try:
+            # Bloquer la production si le jeu est en pause
+            if getattr(self, 'paused', False):
+                print("Production interdite pendant la pause.")
+                return None
+
             print(f"Tentative de création de l'unité: {unit_class.__name__}")
             
             # Déterminer l'équipe de l'unité à partir du nom de la classe
@@ -110,6 +118,30 @@ class Game :
                 team = "green"
                 base_spawn = self.green_platform_spawn
                 print(f"Unité verte -> plateforme verte à {base_spawn}")
+
+            # Déterminer la clé de config (type d'unité) depuis le nom de la classe
+            name_lower = unit_class.__name__.lower()
+            if "chaloupe" in name_lower:
+                config_key = 'chaloupe'
+            elif "paquebot" in name_lower:
+                config_key = 'paquebot'
+            elif "eclaireur" in name_lower or "éclaireur" in unit_class.__name__:
+                config_key = 'eclaireur'
+            elif "sousmarin" in name_lower or "sous_marin" in name_lower or "sousmarin" in name_lower:
+                config_key = 'sousmarin'
+            elif "bateau" in name_lower:
+                config_key = 'bateau'
+            else:
+                config_key = None
+
+            # Vérifier le coût en pétrole
+            cost = UNIT_CONFIGS.get(config_key, {}).get('cost') if config_key else None
+            if cost is None:
+                print("Coût indisponible pour cette unité.")
+                return None
+            if self.hud.petrole.count < cost:
+                print("Pétrole insuffisant pour produire cette unité.")
+                return None
             
             # Essayer plusieurs positions jusqu'à en trouver une libre
             max_attempts = 20
@@ -149,6 +181,10 @@ class Game :
             self.combat_system.add_unit(unit)
             self.units.append(unit)
             self.group.add(unit)
+
+            # Débiter le pétrole après création réussie
+            self.hud.petrole.count -= cost
+            print(f"Pétrole débité: -{cost}. Nouveau solde: {self.hud.petrole.count}")
 
             return unit
         #Gestion erreurs
