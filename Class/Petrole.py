@@ -8,7 +8,8 @@ class Petrole:
 
         # On crée un événement unique pour incrémenter le pétrole
         self.PETROLE_EVENT = PETROLE_EVENT
-        pygame.time.set_timer(self.PETROLE_EVENT, int(TIME_STEP / TIME_SPEED))  # On fait le timer en fonction de la vitesse du temps 
+        self.current_speed = TIME_SPEED
+        pygame.time.set_timer(self.PETROLE_EVENT, int(TIME_STEP / self.current_speed))  # On fait le timer en fonction de la vitesse du temps 
 
     def handle_event(self, event):
         """À appeler dans la boucle principale pour gérer l'auto-incrément"""
@@ -21,4 +22,20 @@ class Petrole:
             return
         else:
             self.count -= 1
+
+    def set_speed(self, speed):
+        """Ajuste la vitesse d'auto-incrément. Si speed == 0, met en pause (désactive l'événement)."""
+        self.current_speed = speed
+        if speed <= 0:
+            pygame.time.set_timer(self.PETROLE_EVENT, 0)
+        else:
+            pygame.time.set_timer(self.PETROLE_EVENT, int(TIME_STEP / speed))
+
+    def pause(self):
+        self.set_speed(0)
+
+    def resume(self):
+        if self.current_speed <= 0:
+            self.current_speed = TIME_SPEED
+        self.set_speed(self.current_speed)
     
