@@ -11,6 +11,7 @@ TIME_STEP = 1000 # en ms => 1 seconde
 TIME_SPEED = 10 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
 TIME_MAREE = 180
 
+
 # === MAP ===
 MAP_PATH = resource_path("map.tmx")
 ISLAND_TILESET_PATH = resource_path('assets/island/png/island_spritesheet.png')
@@ -145,9 +146,10 @@ MASK_MAPPING = {
 
 
 # === Unités ===
-# Team rouge 
-RED_TEAM_PATH = os.path.join(BASE_DIR, 'assets/Red_team/png/red_team_spritesheet.png')
-GREEN_TEAM_PATH = os.path.join(BASE_DIR, 'assets/Green_team/png/Green_team_spritesheet.png')
+
+RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
+GREEN_TEAM_PATH = resource_path('assets/Green_team/png/Green_team_spritesheet.png')
+
 
 # === Unités ===
 RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
