@@ -1,6 +1,11 @@
 import pygame
 import time
-
+from Global import UNIT_CONFIGS
+from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
+from Class.units.Bateau import BateauRouge, BateauVert
+from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
+from Class.units.Paquebot import PaquebotRouge, PaquebotVert
+from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
     
@@ -65,6 +70,33 @@ class EventHandler:
             self.game.popup_selection = 0
             return True
 
+        # Entrée via le HUD (bandeau bas) pour spawn l'unité sélectionnée (coût géré dans Game.spawn_unit)
+        if event.key == pygame.K_RETURN and not self.game.show_unit_popup:
+                hud = self.game.hud
+                selection_index = hud.popup_selection
+                team_key = hud.popup_team  # 'red' ou 'green'
+                # Récupérer la clé de config de l'unité
+                if selection_index < 0 or selection_index >= len(hud.unit_config_keys):
+                    return True
+                config_key = hud.unit_config_keys[selection_index]
+
+                # Mapping type + équipe -> classe
+                class_map = {
+                    'chaloupe': {'red': ChaloupeRouge, 'green': ChaloupeVerte},
+                    'bateau': {'red': BateauRouge, 'green': BateauVert},
+                    'paquebot': {'red': PaquebotRouge, 'green': PaquebotVert},
+                    'eclaireur': {'red': EclaireurRouge, 'green': EclaireurVert},
+                    'sousmarin': {'red': SousMarinRouge, 'green': SousMarinVert},
+                }
+                team_to_class = class_map.get(config_key)
+
+                unit_class = team_to_class[team_key]
+                unit = self.game.spawn_unit(unit_class)
+                if unit is not None:
+                    print(f"Unité produite: {unit_class.__name__}")
+                return True
+
+
         elif self.game.show_unit_popup:
             return self._handle_popup_navigation(event)
         
@@ -94,8 +126,11 @@ class EventHandler:
         elif event.key == pygame.K_RETURN:
             try:
                 unit_name, unit_class = self.game.unit_classes[self.game.popup_selection]
-                self.game.spawn_unit(unit_class)
-                self.game.show_unit_popup = False
+                print(f"Unité sélectionnée: {unit_name}")
+                unit = self.game.spawn_unit(unit_class)
+                if unit is not None:
+                    print(f"Unité produite: {unit_class.__name__}")
+                    self.game.show_unit_popup = False
             except Exception as e:
                 print(f"Erreur lors de la sélection de l'unité: {e}")
         return True
