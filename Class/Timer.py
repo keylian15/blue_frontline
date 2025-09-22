@@ -7,7 +7,8 @@ class Timer:
         self.maree_changed = False  # Flag pour détecter un changement
         self.count = 0
         self.TIMER_EVENT = TIMER_EVENT
-        pygame.time.set_timer(self.TIMER_EVENT, int(TIME_STEP / TIME_SPEED))
+        self.current_speed = TIME_SPEED
+        pygame.time.set_timer(self.TIMER_EVENT, int(TIME_STEP / self.current_speed))
 
     def handle_event(self, event):
         if event.type == self.TIMER_EVENT:
@@ -25,3 +26,22 @@ class Timer:
 
     def get_time(self):
         return f"{self.count // 60} : {self.count % 60}"
+
+    def set_speed(self, speed):
+        """Ajuste la vitesse du timer. Si speed == 0, met en pause (désactive l'événement)."""
+        # Clamp minimal pour éviter division par zéro
+        self.current_speed = speed
+        if speed <= 0:
+            pygame.time.set_timer(self.TIMER_EVENT, 0)
+        else:
+            pygame.time.set_timer(self.TIMER_EVENT, int(TIME_STEP / speed))
+
+    def pause(self):
+        """Met en pause le timer."""
+        self.set_speed(0)
+
+    def resume(self):
+        """Relance le timer à la vitesse actuelle (ou par défaut)."""
+        if self.current_speed <= 0:
+            self.current_speed = TIME_SPEED
+        self.set_speed(self.current_speed)

@@ -145,9 +145,10 @@ MASK_MAPPING = {
 
 
 # === Unités ===
-# Team rouge 
-RED_TEAM_PATH = os.path.join(BASE_DIR, 'assets/Red_team/png/red_team_spritesheet.png')
-GREEN_TEAM_PATH = os.path.join(BASE_DIR, 'assets/Green_team/png/Green_team_spritesheet.png')
+
+RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
+GREEN_TEAM_PATH = resource_path('assets/Green_team/png/Green_team_spritesheet.png')
+
 
 # === Unités ===
 RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
@@ -308,5 +309,6 @@ BUTTON_MARGIN_BOTTOM = 40
 
 # === IMAGES ===
 MENU_PATH = resource_path('assets/menu/menu.png')
+ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
 
 

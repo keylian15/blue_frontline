@@ -46,8 +46,6 @@ class Renderer:
         """Effectue tout le rendu du jeu."""
 
 
-
-
         # Rendu de la map avec zoom
         self._render_map()
         

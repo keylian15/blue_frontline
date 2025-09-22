@@ -47,6 +47,9 @@ class Game :
         self.renderer = Renderer(self)
         self.input_manager = InputManager(self)
         self.updater = GameUpdater(self)
+
+        # État de pause
+        self.paused = False
             
     def quantique(self):
         """ Génération de l'île quantique pour toutes les îles quantique dans la map."""
@@ -237,10 +240,12 @@ class Game :
             running = self.event_handler.handle_events()
             
             # Gestion des entrées continues
-            self.input_manager.handle_continuous_input()
+            if not self.paused:
+                self.input_manager.handle_continuous_input()
             
             # Mise à jour des systèmes
-            self.updater.update_systems(dt)
+            if not self.paused:
+                self.updater.update_systems(dt)
             
             # Rendu
             self.renderer.render()

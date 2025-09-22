@@ -35,6 +35,10 @@ class Hud:
             "Sous-marin",
             "Plateforme"
         ]
+        # Clés de config correspondant aux icônes (la plateforme n'a pas de config pour l'instant)
+        self.unit_config_keys = [
+            'chaloupe', 'bateau', 'paquebot', 'eclaireur', 'sousmarin', None
+        ]
                 
 
         # Instance unique de ton compteur de pétrole
@@ -193,6 +197,65 @@ class Hud:
         
         # Affichage de la bande
         self.screen.blit(band_surface, (int(band_x), int(band_y)))
+
+        # Affichage d'un panneau de stats pour l'icône actuellement sélectionnée
+        self._draw_unit_popup_stats(self.popup_selection, band_x, band_y, band_width)
+
+    def _draw_unit_popup_stats(self, selection_index, band_x, band_y, band_width):
+        """Dessine un panneau de stats au-dessus du bandeau pour l'unité sélectionnée dans le popup."""
+        # Trouver la clé de config
+        if selection_index < 0 or selection_index >= len(self.unit_config_keys):
+            return
+        config_key = self.unit_config_keys[selection_index]
+
+        # Si pas de config (ex: Plateforme), on affiche un message minimal
+        from Global import UNIT_CONFIGS
+        config = UNIT_CONFIGS.get(config_key) if config_key else None
+
+        title_font = pygame.font.Font(None, 26)
+        text_font = pygame.font.Font(None, 22)
+
+        if config:
+            title = self.unit_names[selection_index]
+            lines = [
+                f"Coût: {config.get('cost', '?')}",
+                f"Temps: {config.get('build_time', '?')} s",
+                f"PV max: {config.get('max_health', '?')}",
+                f"Vitesse: {config.get('max_speed', '?')} px/s",
+                f"Portée: {config.get('range', '?')}",
+                f"Dégâts: {config.get('damage', '?')}",
+                f"Cadence: {config.get('fire_rate', '?')}/s",
+            ]
+        else:
+            title = self.unit_names[selection_index]
+            lines = ["Aucune statistique disponible"]
+
+        title_surf = title_font.render(title, True, (255, 255, 255))
+        text_surfs = [text_font.render(t, True, (230, 230, 230)) for t in lines]
+
+        padding = 10
+        inner_w = max(title_surf.get_width(), max((s.get_width() for s in text_surfs), default=0))
+        inner_h = title_surf.get_height() + 6 + sum(s.get_height() for s in text_surfs)
+        panel_w = inner_w + padding * 2
+        panel_h = inner_h + padding * 2
+
+        # Positionner centré par rapport à la bande, au-dessus
+        panel_x = int(band_x + (band_width - panel_w) / 2)
+        panel_y = int(band_y - panel_h - 10)
+        panel_x = max(6, min(panel_x, self.width - panel_w - 6))
+        panel_y = max(6, panel_y)
+
+        panel = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
+        panel.fill((0, 0, 0, 180))
+        pygame.draw.rect(panel, (255, 255, 255), panel.get_rect(), 2)
+
+        panel.blit(title_surf, (padding, padding))
+        y = padding + title_surf.get_height() + 6
+        for s in text_surfs:
+            panel.blit(s, (padding, y))
+            y += s.get_height()
+
+        self.screen.blit(panel, (panel_x, panel_y))
 
     def toggle_popup_team(self):
         """Bascule l'équipe affichée dans le popup (rouge <-> vert)."""
