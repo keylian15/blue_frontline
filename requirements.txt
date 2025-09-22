@@ -4,3 +4,4 @@ pyscroll
 perlin-noise
 auto-py-to-exe
 pyinstaller
+shapely

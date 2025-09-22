@@ -10,6 +10,7 @@ from Class.Renderer import Renderer
 from Class.InputManager import InputManager
 from Class.GameUpdater import GameUpdater
 from Class.GameInitializer import GameInitializer
+from Utils import random_point_in_polygon
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
@@ -144,35 +145,42 @@ class Game :
                 print("Pétrole insuffisant pour produire cette unité.")
                 return None
             
-            # Essayer plusieurs positions jusqu'à en trouver une libre
-            max_attempts = 20
-            for attempt in range(max_attempts):
-                # Angle aléatoire en radians
-                angle = random.uniform(0, 2 * math.pi)
-                # Distance aléatoire entre 60 et 120 pixels de la plateforme
-                distance = random.uniform(60, 120)
+            # # Essayer plusieurs positions jusqu'à en trouver une libre
+            # max_attempts = 20
+            # for attempt in range(max_attempts):
+            #     # Angle aléatoire en radians
+            #     angle = random.uniform(0, 2 * math.pi)
+            #     # Distance aléatoire entre 60 et 120 pixels de la plateforme
+            #     distance = random.uniform(60, 120)
                 
-                # Calculer les coordonnées avec trigonométrie correcte
-                spawn_x = base_spawn[0] + distance * math.cos(angle)
-                spawn_y = base_spawn[1] + distance * math.sin(angle)
+            #     # Calculer les coordonnées avec trigonométrie correcte
+            #     spawn_x = base_spawn[0] + distance * math.cos(angle)
+            #     spawn_y = base_spawn[1] + distance * math.sin(angle)
                 
-                # Vérifier que la position est libre (pas de collision avec d'autres unités)
-                position_libre = True
-                for existing_unit in self.units:
-                    if existing_unit.is_alive:
-                        dist_to_unit = math.sqrt((spawn_x - existing_unit.position[0])**2 + 
-                                               (spawn_y - existing_unit.position[1])**2)
-                        if dist_to_unit < 40:  # Distance minimale entre unités
-                            position_libre = False
-                            break
+            #     # Vérifier que la position est libre (pas de collision avec d'autres unités)
+            #     position_libre = True
+            #     for existing_unit in self.units:
+            #         if existing_unit.is_alive:
+            #             dist_to_unit = math.sqrt((spawn_x - existing_unit.position[0])**2 + 
+            #                                    (spawn_y - existing_unit.position[1])**2)
+            #             if dist_to_unit < 40:  # Distance minimale entre unités
+            #                 position_libre = False
+            #                 break
                 
-                # Vérifier que l'unité n'est pas trop proche de la plateforme
-                dist_to_platform = math.sqrt((spawn_x - base_spawn[0])**2 + (spawn_y - base_spawn[1])**2)
-                if dist_to_platform < self.spawn_radius:  # Utilisation de spawn_radius
-                    position_libre = False
+            #     # Vérifier que l'unité n'est pas trop proche de la plateforme
+            #     dist_to_platform = math.sqrt((spawn_x - base_spawn[0])**2 + (spawn_y - base_spawn[1])**2)
+            #     if dist_to_platform < self.spawn_radius:  # Utilisation de spawn_radius
+            #         position_libre = False
+            
+            # else:
+            #     # Si aucune position libre n'a été trouvée, utiliser la dernière calculée
+            #     print("Aucune position libre trouvée, utilisation de la dernière position calculée")
+            
+            # Générer le point de spawn dans la zone définie par le polygone
+            if team == "red":
+                spawn_x, spawn_y = random_point_in_polygon(self.red_platform_zone)
             else:
-                # Si aucune position libre n'a été trouvée, utiliser la dernière calculée
-                print("Aucune position libre trouvée, utilisation de la dernière position calculée")
+                spawn_x, spawn_y = random_point_in_polygon(self.green_platform_zone)
             
             # Créer l'unité à la position de spawn calculée
             unit = unit_class(spawn_x, spawn_y)
