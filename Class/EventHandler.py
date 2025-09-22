@@ -1,5 +1,6 @@
 import pygame
 import time
+from Class.options import OptionsMenu
 
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
@@ -64,6 +65,11 @@ class EventHandler:
             self.game.show_unit_popup = not self.game.show_unit_popup
             self.game.popup_selection = 0
             print(f"Popup {'ouvert' if self.game.show_unit_popup else 'fermé'}")
+            return True
+        
+        elif event.key == pygame.K_ESCAPE:
+            options_menu = OptionsMenu(self.game.screen)
+            options_menu.run()
             return True
 
         elif self.game.show_unit_popup:

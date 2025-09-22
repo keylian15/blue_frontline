@@ -23,8 +23,9 @@ class IslandSprite(pygame.sprite.Sprite):
 class Game : 
     """Classe principale du jeu."""
 
-    def __init__(self): 
+    def __init__(self, screen): 
         """Initialisation du jeu."""
+        self.screen = screen
         
         # Initialiser les gestionnaires
         self.initializer = GameInitializer(self)

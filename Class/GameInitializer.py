@@ -23,8 +23,7 @@ class GameInitializer:
     
     def init_display(self):
         """Initialise l'affichage et la fenêtre."""
-        self.game.screen = pygame.display.set_mode((0, 0), pygame.NOFRAME)        
-        pygame.display.set_caption("Blue Frontline")
+        pass
     
     def init_map(self):
         """Initialise les données de la map et les tilesets."""
