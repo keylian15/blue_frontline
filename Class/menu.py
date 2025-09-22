@@ -16,7 +16,7 @@ class Menu:
         self.font = pygame.font.SysFont(None, 60)
 
         # Ajout : chargement de l'image d'ancre
-        self.anchor_img = pygame.image.load("./assets/menu/NotoV1Anchor.png").convert_alpha()
+        self.anchor_img = pygame.image.load(ANCHOR_PATH).convert_alpha()
         self.anchor_img = pygame.transform.smoothscale(self.anchor_img, (40, 40))
 
         # Boutons
