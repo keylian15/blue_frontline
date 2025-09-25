@@ -30,7 +30,7 @@ TIMER_EVENT = pygame.USEREVENT + 2
 WATER_PATH = resource_path('assets/water/png/water.png')
 
 # === SONS ===
-SOUND = resource_path('blue_frontline_sounds/sandy-beach-calm-waves-water-nature-sounds-8052.mp3')
+SOUND = resource_path('blue_frontline_sounds/son_base.mp3')
 VOLUME_SOUND = 0.5  # Volume du son (0.0 à 1.0)
 
 # Les images de mapping font 512 pixels par 512 pixels
