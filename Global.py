@@ -311,7 +311,7 @@ MENU_PATH = resource_path('assets/menu/menu.png')
 ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
 
 # === Contrôles du jeu ===
-CONTROLS_DESCRIPTION = {
+CONTROLS = {
     "CREATE_UNIT": "Ouvrir/Fermer le menu de création d'unités",
     "OPTIONS": "Ouvrir/Fermer le menu options", 
     "VOLUME_UP": "Augmenter le volume",

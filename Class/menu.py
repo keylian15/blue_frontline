@@ -3,7 +3,11 @@ import sys
 import math
 from Global import *
 from Class.Game import Game
+<<<<<<< Updated upstream
 from Class.OptionsMenu import OptionsMenu
+=======
+from Class.options import OptionsMenu
+>>>>>>> Stashed changes
 
 class Menu:
     def __init__(self):

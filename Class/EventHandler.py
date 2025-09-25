@@ -1,5 +1,6 @@
 import pygame
 import time
+<<<<<<< Updated upstream
 from Class.OptionsMenu import OptionsMenu
 from Global import UNIT_CONFIGS
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
@@ -7,6 +8,9 @@ from Class.units.Bateau import BateauRouge, BateauVert
 from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
 from Class.units.Paquebot import PaquebotRouge, PaquebotVert
 from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
+=======
+from Class.options import OptionsMenu
+>>>>>>> Stashed changes
 
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
@@ -76,6 +80,7 @@ class EventHandler:
             options_menu = OptionsMenu(self.game.screen)
             options_menu.run()
             return True
+<<<<<<< Updated upstream
 
         # Entrée via le HUD (bandeau bas) pour spawn l'unité sélectionnée (coût géré dans Game.spawn_unit)
         if event.key == pygame.K_RETURN and not self.game.show_unit_popup:
@@ -103,6 +108,8 @@ class EventHandler:
                     print(f"Unité produite: {unit_class.__name__}")
                 return True
 
+=======
+>>>>>>> Stashed changes
 
         elif self.game.show_unit_popup:
             return self._handle_popup_navigation(event)
