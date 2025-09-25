@@ -142,7 +142,9 @@ class Game :
             if cost is None:
                 print("Coût indisponible pour cette unité.")
                 return None
-            if self.hud.petrole.count < cost:
+            # Regarde si quelle équipe a choisi de faire spawn une troupe
+            petrole_counter = self.hud.petrole_red if team == "red" else self.hud.petrole_green
+            if petrole_counter.count < cost:
                 print("Pétrole insuffisant pour produire cette unité.")
                 return None
             
@@ -161,8 +163,8 @@ class Game :
             self.group.add(unit)
 
             # Débiter le pétrole après création réussie
-            self.hud.petrole.count -= cost
-            print(f"Pétrole débité: -{cost}. Nouveau solde: {self.hud.petrole.count}")
+            petrole_counter.count -= cost
+            print(f"Pétrole débité ({team}): -{cost}. Nouveau solde: {petrole_counter.count}")
 
             return unit
         #Gestion erreurs

@@ -21,8 +21,9 @@ class EventHandler:
             if event.type == pygame.QUIT: 
                 return False
 
-            # Gestion des événements HUD
-            self.game.hud.petrole.handle_event(event)
+            # Gestion des événements HUD (selon les équipes)
+            self.game.hud.petrole_red.handle_event(event)
+            self.game.hud.petrole_green.handle_event(event)
             self.game.hud.timer.handle_event(event)
 
             # Gestion du changement de marée                   
@@ -59,13 +60,16 @@ class EventHandler:
             if self.game.paused:
                 # Mettre les timers en pause
                 self.game.hud.timer.pause()
-                self.game.hud.petrole.pause()
+                self.game.hud.petrole_red.pause()
+                self.game.hud.petrole_green.pause()
             else:
                 # Reprendre les timers
                 self.game.hud.timer.resume()
-                self.game.hud.petrole.resume()
+                self.game.hud.petrole_red.resume()
+                self.game.hud.petrole_green.resume()
             print(f"Pause: {'ON' if self.game.paused else 'OFF'}")
             return True
+
 
         if event.key == pygame.K_e:
             self.game.show_unit_popup = not self.game.show_unit_popup
