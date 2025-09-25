@@ -311,15 +311,13 @@ MENU_PATH = resource_path('assets/menu/menu.png')
 ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
 
 # === Contrôles du jeu ===
-CONTROLS = {
-    "CREATE_UNIT": "Ouvrir/Fermer le menu de création d'unités",
-    "OPTIONS": "Ouvrir/Fermer le menu options", 
-    "VOLUME_UP": "Augmenter le volume",
-    "VOLUME_DOWN": "Diminuer le volume",
-    "SELECT_MOVE": "Sélectionner/Déplacer une unité",
-    "QUANTUM_ISLAND": "Activer l'île quantique (marée haute)",
-    "ZOOM_IN": "Zoom avant",
-    "ZOOM_OUT": "Zoom arrière"
+dico_keys = {
+    "CREATE_UNIT": pygame.K_e,
+    "OPTIONS": pygame.K_ESCAPE,
+    "VOLUME_UP": pygame.K_UP,
+    "VOLUME_DOWN": pygame.K_DOWN,
+    "ZOOM_IN": 4,  # Molette haut
+    "ZOOM_OUT": 5  # Molette bas
 }
 
 

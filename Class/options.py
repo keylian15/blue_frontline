@@ -99,31 +99,28 @@ class OptionsMenu:
         subtitle_rect = subtitle_surf.get_rect(topleft=(self.MARGIN_LEFT, 120))
         self.screen.blit(subtitle_surf, subtitle_rect)
 
-        # Récupération et affichage des contrôles depuis Global
         y_pos = 180
+        
         controls_list = [
-            ("E", CONTROLS["CREATE_UNIT"]),
-            ("ÉCHAP", CONTROLS["OPTIONS"]),
-            ("FLÈCHE HAUT", CONTROLS["VOLUME_UP"]),
-            ("FLÈCHE BAS", CONTROLS["VOLUME_DOWN"]),
-            ("CLIC GAUCHE", CONTROLS["SELECT_MOVE"]),
-            ("CLIC DROIT", CONTROLS["QUANTUM_ISLAND"]),
-            ("MOLETTE HAUT", CONTROLS["ZOOM_IN"]),
-            ("MOLETTE BAS", CONTROLS["ZOOM_OUT"])
+            ("Z", "Avancer"),
+            ("S", "Reculer"),
+            ("Q", "Gauche"),
+            ("D", "Droite"),
+            ("Clic gauche", "Sélectionner/Déplacer"),
+            ("Molette haut/bas", "Zoomer/Dézoomer"),
+            ("Échap", "Options/Pause"),
         ]
 
-        # Affichage des contrôles avec largeur adaptée
         for key, action in controls_list:
             base_rect = pygame.Rect(
                 self.MARGIN_LEFT, 
                 y_pos - 5, 
-                self.MIN_BUTTON_WIDTH,  # La largeur sera ajustée dans draw_control_button
+                self.MIN_BUTTON_WIDTH,
                 self.BUTTON_HEIGHT
             )
             self.draw_control_button(key, base_rect, action)
             y_pos += self.VERTICAL_SPACING
 
-        # Dessin du bouton retour
         self._draw_back_button()
 
     def _draw_back_button(self):
@@ -135,13 +132,11 @@ class OptionsMenu:
         pygame.draw.rect(self.screen, WHITE, self.back_button['rect'], 4, 
                         border_radius=BUTTON_BORDER_RADIUS)
         
-        # Ajout de l'ancre avec l'image
         anchor_rect = self.anchor_img.get_rect(
             midleft=(self.back_button['rect'].left + 20, self.back_button['rect'].centery)
         )
         self.screen.blit(self.anchor_img, anchor_rect)
         
-        # Texte du bouton retour
         back_text = self.font.render(self.back_button['text'], True, WHITE)
         back_rect = back_text.get_rect(
             midleft=(anchor_rect.right + 10, self.back_button['rect'].centery)
