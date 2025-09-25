@@ -3,6 +3,7 @@ import sys
 import math
 from Global import *
 from Class.Game import Game
+from Class.OptionsMenu import OptionsMenu
 
 class Menu:
     def __init__(self):
@@ -91,14 +92,14 @@ class Menu:
                         pygame.quit()
                         sys.exit()
                     elif text == "Jouer":
-                        pygame.init()
-                        game = Game()
+                        game = Game(self.screen)
                         game.run()
                         menu = False
                     elif text == "Succès":
                         print("Menu succès...")
                     elif text == "Options":
-                        print("Menu options...")
+                        options_menu = OptionsMenu(self.screen)
+                        options_menu.run()
 
             pygame.display.flip()
 

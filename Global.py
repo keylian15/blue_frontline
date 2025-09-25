@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # === Temps === 
 FPS = 60
 TIME_STEP = 1000 # en ms => 1 seconde
-TIME_SPEED = 10 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
+TIME_SPEED = 20 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
 TIME_MAREE = 180
 
 # === MAP ===
@@ -101,7 +101,7 @@ MASK_MAPPING = {
     32 : MAPPING["l_shape_top_right"],
     32 + 128 : MAPPING["t_shape_right"],
     32 + 64 : MAPPING["d_shape_top_left"],
-    32 + 64 + 128 : MAPPING["missing_corner_bottom_left"],
+    32 + 64 + 128 : MAPPING["missing_corner_top_left"],
     16 : MAPPING["l_shape_top_left"],
     16 + 128 : MAPPING["d_shape_top_right"],
     16 + 64 : MAPPING["t_shape_left"],
@@ -149,10 +149,9 @@ MASK_MAPPING = {
 RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
 GREEN_TEAM_PATH = resource_path('assets/Green_team/png/Green_team_spritesheet.png')
 
-
-# === Unités ===
-RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
-GREEN_TEAM_PATH = resource_path('assets/Green_team/png/Green_team_spritesheet.png')
+# === BASE ===
+RED_BASE_TEAM_PATH = resource_path('assets/Red_team/png/red_base.png')
+GREEN_BASE_TEAM_PATH = resource_path('assets/Green_team/png/Green_base.png')
 
 # Dictionnaire centralisé contenant toutes les statistiques des unités
 UNIT_CONFIGS = {
@@ -310,5 +309,17 @@ BUTTON_MARGIN_BOTTOM = 40
 # === IMAGES ===
 MENU_PATH = resource_path('assets/menu/menu.png')
 ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
+
+# === Contrôles du jeu ===
+CONTROLS_DESCRIPTION = {
+    "CREATE_UNIT": "Ouvrir/Fermer le menu de création d'unités",
+    "OPTIONS": "Ouvrir/Fermer le menu options", 
+    "VOLUME_UP": "Augmenter le volume",
+    "VOLUME_DOWN": "Diminuer le volume",
+    "SELECT_MOVE": "Sélectionner/Déplacer une unité",
+    "QUANTUM_ISLAND": "Activer l'île quantique (marée haute)",
+    "ZOOM_IN": "Zoom avant",
+    "ZOOM_OUT": "Zoom arrière"
+}
 
 
