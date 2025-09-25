@@ -30,6 +30,8 @@ class EventHandler:
                 # Reconstruire la map
                 if hasattr(self.game.renderer, 'map_needs_refresh') and self.game.renderer.map_needs_refresh:
                     self.game.renderer.refresh_map()  
+                    # Actualiser toutes les références après reconstruction
+                    self.game.refresh_all_references()
                     
                 # Marquer le changement comme traité
                 self.game.hud.timer.maree_changed = False
@@ -62,7 +64,6 @@ class EventHandler:
                 # Reprendre les timers
                 self.game.hud.timer.resume()
                 self.game.hud.petrole.resume()
-            print(f"Pause: {'ON' if self.game.paused else 'OFF'}")
             return True
 
         if event.key == pygame.K_e:
@@ -92,8 +93,6 @@ class EventHandler:
 
                 unit_class = team_to_class[team_key]
                 unit = self.game.spawn_unit(unit_class)
-                if unit is not None:
-                    print(f"Unité produite: {unit_class.__name__}")
                 return True
 
 
@@ -106,6 +105,9 @@ class EventHandler:
         
         elif event.key == pygame.K_DOWN:
             self.game.sound.decrease_volume()
+        
+        elif event.key == pygame.K_t:
+            return True
 
 
         return True
@@ -120,17 +122,21 @@ class EventHandler:
         elif event.key == pygame.K_RETURN:
             try:
                 unit_name, unit_class = self.game.unit_classes[self.game.popup_selection]
-                print(f"Unité sélectionnée: {unit_name}")
                 unit = self.game.spawn_unit(unit_class)
                 if unit is not None:
-                    print(f"Unité produite: {unit_class.__name__}")
                     self.game.show_unit_popup = False
             except Exception as e:
-                print(f"Erreur lors de la sélection de l'unité: {e}")
+                # Erreur silencieuse lors de la sélection
+                return True
         return True
     
     def _handle_mouse_events(self, event):
         """Gère les événements de souris."""
+        # Si le jeu est gagné, gérer les clics sur l'écran de victoire
+        if self.game.game_won and event.button == 1:
+            self.game.handle_victory_click(pygame.mouse.get_pos())
+            return
+        
         # Clic gauche
         if event.button == 1 and not self.game.show_unit_popup:  # Clic gauche
             world_x, world_y = self._screen_to_world_coordinates(pygame.mouse.get_pos())

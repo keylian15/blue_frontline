@@ -77,5 +77,6 @@ class GameUpdater:
                         if island not in self.game.group.sprites():
                             self.game.group.add(island)
 
-
+            # Actualiser toutes les références des gestionnaires
+            self.game.refresh_all_references()
             self.game.last_zoom_level = self.game.camera.zoom_level

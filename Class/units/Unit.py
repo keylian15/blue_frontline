@@ -119,16 +119,31 @@ class Unit(pygame.sprite.Sprite):
         self.speed_x = 0
         self.speed_y = 0
     
-    def take_damage(self, damage):
-        """Inflige des dégâts à l'unité."""
+    def take_damage(self, damage, killer=None):
+        """Inflige des dégâts à l'unité. killer = unité qui inflige le coup fatal (pour récompense)."""
         self.current_health -= damage
         if self.current_health <= 0:
             self.current_health = 0
             self.is_alive = False
-            self.die()
+            self.die(killer=killer)
     
-    def die(self):
-        """Gère la mort de l'unité."""
+    def die(self, killer=None):
+        """Gère la mort de l'unité et attribue des pièces à l'ennemi si applicable."""
+        # Attribution des pièces uniquement si tué par un ennemi
+        if killer and hasattr(killer, 'team') and killer.team != self.team and hasattr(self, 'game') and hasattr(self.game, 'hud'):
+            # Détermination du type d'unité pour la récompense
+            unit_type = getattr(self, 'unit_type', None)
+            if unit_type in ['chaloupe', 'bateau', 'eclaireur']:
+                coins = 1
+            elif unit_type in ['paquebot', 'sousmarin']:
+                coins = 3
+            else:
+                coins = 0
+            # Ajout des pièces au HUD et synchronisation
+            if coins > 0:
+                self.game.hud.piece.count += coins
+                self.game.coins = self.game.hud.piece.count
+                #print(f"[DEBUG] Pièces ajoutées: +{coins} | Total: {self.game.hud.piece.count}")
         self.kill()  # Retire l'unité du groupe pygame
     
     def heal(self, amount):
@@ -168,7 +183,7 @@ class Unit(pygame.sprite.Sprite):
                 combat_system.fire_projectile(self, target)
             else:
                 # Attaque directe (sans projectile)
-                target.take_damage(self.damage)
+                target.take_damage(self.damage, killer=self)
             
             self.last_shot_time = time.time()
             return True
@@ -247,27 +262,40 @@ class Unit(pygame.sprite.Sprite):
                 screen.blit(text, text_rect)
 
     def update_enemies_in_range(self, all_units):
-        """Met à jour la liste des ennemis dans la portée de tir."""
+        """Met à jour la liste des ennemis dans la portée de tir (collision cercle-rectangle pour plateformes)."""
         self.enemies_in_range = []
-        range_pixels = self.range * 32  # Conversion en pixels
-        
+        range_pixels = self.range * 32  # Rayon du cercle de portée
+
         for unit in all_units:
             if not unit.is_alive or unit.team == self.team:
                 continue
-                
-            # Calculer la distance entre cette unité et l'autre unité
-            distance = math.sqrt(
-                (self.position[0] - unit.position[0])**2 + 
-                (self.position[1] - unit.position[1])**2
-            )
-            
-            # Si l'unité est dans la portée, l'ajouter à la liste
-            if distance <= range_pixels:
-                self.enemies_in_range.append(unit)
+
+            # Si la cible a un rect (plateforme ou autre sprite), on fait une collision cercle-rectangle
+            if hasattr(unit, 'rect'):
+                # Centre du cercle
+                cx, cy = self.position[0], self.position[1]
+                # Rectangle cible
+                rx, ry, rw, rh = unit.rect.left, unit.rect.top, unit.rect.width, unit.rect.height
+
+                # Trouver le point du rectangle le plus proche du centre du cercle
+                closest_x = max(rx, min(cx, rx + rw))
+                closest_y = max(ry, min(cy, ry + rh))
+                # Calculer la distance entre ce point et le centre du cercle
+                distance = math.hypot(cx - closest_x, cy - closest_y)
+                if distance <= range_pixels:
+                    self.enemies_in_range.append(unit)
+            else:
+                # Fallback : distance centre-centre
+                distance = math.sqrt(
+                    (self.position[0] - unit.position[0])**2 + 
+                    (self.position[1] - unit.position[1])**2
+                )
+                if distance <= range_pixels:
+                    self.enemies_in_range.append(unit)
     
     def can_shoot(self, current_time):
-        """Vérifie si l'unité peut tirer (cooldown respecté)."""
-        cooldown = 1000 / self.fire_rate  # Cooldown en millisecondes
+        """Vérifie si l'unité peut tirer (cooldown de 1 seconde)."""
+        cooldown = 1000  # Cooldown d'1 seconde entre chaque tir
         return current_time - self.last_shot_time >= cooldown
     
     def get_closest_enemy_in_range(self):

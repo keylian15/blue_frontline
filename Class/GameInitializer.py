@@ -13,6 +13,7 @@ from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
 from Class.Hud import Hud
 from Global import *
 from Utils import *
+from Class.PlateformePetroliere import PlateformePetroliere
 
 class GameInitializer:
     """Gestionnaire d'initialisation des composants du jeu."""
@@ -58,6 +59,7 @@ class GameInitializer:
         """Initialise les systèmes de jeu (combat, unités, etc.)."""
         # Système de combat et unités
         self.game.combat_system = CombatSystem()
+        self.game.combat_system.game = self.game
         self.game.units = []
         self.game.selected_unit = None
         
@@ -75,6 +77,40 @@ class GameInitializer:
                 self.game.green_platform_zone = obj.points  # Récupérer les points du polygone
             elif obj.name == "Spawn_base_rouge":
                 self.game.red_platform_zone = obj.points  # Récupérer les points du polygone
+        
+        # Position hitbox plateformes rouge
+        platform_rouge_x = 144
+        platform_rouge_y = 1500 
+        
+        # Position hitbox plateforme verte
+        platform_verte_x = 3700  
+        platform_verte_y = 1500 
+        
+        plateforme_rouge = PlateformePetroliere(
+            platform_rouge_x, platform_rouge_y,
+            team="red", max_health=1000)
+        plateforme_verte = PlateformePetroliere(
+            platform_verte_x, platform_verte_y,
+            team="green", max_health=1000)
+                
+        # Ajouter les références au jeu
+        plateforme_rouge.game = self.game
+        plateforme_verte.game = self.game
+        
+        # Stocker les plateformes
+        self.game.plateformes = {"red": plateforme_rouge, "green": plateforme_verte}
+        
+        # Ajouter les plateformes à la liste des unités pour la détection/tir/dégâts
+        self.game.units.append(plateforme_rouge)
+        self.game.units.append(plateforme_verte)
+        
+        # Ajouter au système de combat
+        self.game.combat_system.add_unit(plateforme_rouge)
+        self.game.combat_system.add_unit(plateforme_verte)
+        
+        # Ajouter au groupe de sprites
+        self.game.group.add(plateforme_rouge)
+        self.game.group.add(plateforme_verte)
 
     def init_ui(self):
         """Initialise l'interface utilisateur."""

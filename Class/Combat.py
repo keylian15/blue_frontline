@@ -47,7 +47,7 @@ class Projectile(pygame.sprite.Sprite):
         try:
             # Essayer de charger l'image bullet.png
             from Utils import resource_path
-            self.image = pygame.image.load(resource_path('Class/bullet.png')).convert_alpha()
+            self.image = pygame.image.load(resource_path('assets/entity/png/bullet.png')).convert_alpha()
         except (pygame.error, FileNotFoundError):
             # Si l'image n'existe pas, créer un projectile simple
             self.image = pygame.Surface((8, 8), pygame.SRCALPHA)
@@ -108,7 +108,9 @@ class Projectile(pygame.sprite.Sprite):
         
         # Si la distance est suffisamment petite (collision)
         if distance < 25:  # Rayon de collision
-            target.take_damage(self.damage)
+            # Inflige les dégâts et passe le tireur comme killer
+            if hasattr(target, 'take_damage'):
+                target.take_damage(self.damage, killer=self.shooter)
             self.destroy()
             return True
             

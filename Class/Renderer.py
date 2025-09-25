@@ -39,6 +39,9 @@ class Renderer:
             for unit in self.game.units:
                 if unit.is_alive:
                     self.game.group.add(unit)
+                    
+        # Marquer comme terminé
+        self.map_needs_refresh = False
 
     # def _restore_quantum_islands(self):
     #     """Réstaure les iles quantiques SI BESOIN."""
@@ -106,6 +109,10 @@ class Renderer:
         if not (self.game.selected_unit and self.game.selected_unit.is_alive):
             return
         
+        # Ne pas afficher les cercles et la portée pour les plateformes
+        if hasattr(self.game.selected_unit, 'is_platform') and self.game.selected_unit.is_platform:
+            return
+        
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
         unit_screen_x = (self.game.selected_unit.position[0] - camera_offset[0]) * self.game.camera.zoom_level
         unit_screen_y = (self.game.selected_unit.position[1] - camera_offset[1]) * self.game.camera.zoom_level
@@ -114,7 +121,7 @@ class Renderer:
         if (-50 <= unit_screen_x <= self.game.screen.get_width() + 50 and 
             -50 <= unit_screen_y <= self.game.screen.get_height() + 50):
             
-            # CERCLE DE PORTÉE ROUGE (en premier pour être sous la sélection)
+            # Cercle de portée rouge 
             range_radius = self.game.selected_unit.range * 32 * self.game.camera.zoom_level  # Portée en pixels avec zoom
             
             # Surface semi-transparente pour le cercle de portée
@@ -142,13 +149,21 @@ class Renderer:
                              (int(unit_screen_x), int(unit_screen_y)), 
                              int(3 * self.game.camera.zoom_level), 0)
             
-            # AFFICHAGE DU MESSAGE DE TIR si des ennemis sont dans la portée
+            # Affichage du message de tir si des ennemis sont dans la portée
             if hasattr(self.game.selected_unit, 'enemies_in_range') and self.game.selected_unit.enemies_in_range:
                 font = pygame.font.Font(None, 32)
                 message = f"Ennemis en vue: {len(self.game.selected_unit.enemies_in_range)} - Appuyez sur 'T' pour tirer"
                 text_surface = font.render(message, True, (255, 255, 255))
                 
                 # Position du texte au-dessus du cercle de portée
+                text_x = int(unit_screen_x - text_surface.get_width() // 2)
+                text_y = int(unit_screen_y - range_radius - 50)
+                
+                # Fond semi-transparent pour le texte
+                text_bg = pygame.Surface((text_surface.get_width() + 20, text_surface.get_height() + 10), pygame.SRCALPHA)
+                text_bg.fill((0, 0, 0, 180))
+                self.game.screen.blit(text_bg, (text_x - 10, text_y - 5))
+                self.game.screen.blit(text_surface, (text_x, text_y))
                 text_x = int(unit_screen_x - text_surface.get_width() // 2)
                 text_y = int(unit_screen_y - range_radius - 50)
                 

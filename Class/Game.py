@@ -10,6 +10,9 @@ from Class.Renderer import Renderer
 from Class.InputManager import InputManager
 from Class.GameUpdater import GameUpdater
 from Class.GameInitializer import GameInitializer
+from Class.Petrole import Petrole
+from Class.Piece import Piece
+from Class.Timer import Timer
 from Utils import random_point_in_polygon
 
 class IslandSprite(pygame.sprite.Sprite):
@@ -53,6 +56,12 @@ class Game :
 
         # État de pause
         self.paused = False
+        
+        # État de victoire
+        self.game_won = False
+        self.winner_team = None
+        self.victory_font = pygame.font.Font(None, 72)
+        self.button_font = pygame.font.Font(None, 36)
             
     def quantique(self):
         """ Génération de l'île quantique pour toutes les îles quantique dans la map."""
@@ -139,10 +148,8 @@ class Game :
             # Vérifier le coût en pétrole
             cost = UNIT_CONFIGS.get(config_key, {}).get('cost') if config_key else None
             if cost is None:
-                print("Coût indisponible pour cette unité.")
                 return None
             if self.hud.petrole.count < cost:
-                print("Pétrole insuffisant pour produire cette unité.")
                 return None
             
             # Générer le point de spawn dans la zone définie par le polygone
@@ -220,10 +227,10 @@ class Game :
 
     def find_unit_at_position(self, world_x, world_y):
         """
-        Trouve l'unité la plus proche de la position donnée dans le monde.
+        Trouve l'unité (ou plateforme) la plus proche de la position donnée dans le monde.
         Retourne l'unité si elle est dans la zone de tolérance, sinon None.
         """
-        click_tolerance = 40  # Tolérance raisonnable maintenant que les coordonnées sont fixes
+        click_tolerance = 60 
         closest_unit = None
         min_distance = float('inf')
         
@@ -234,8 +241,11 @@ class Game :
             # Distance entre le clic et le centre de l'unité
             distance = math.sqrt((unit.position[0] - world_x) ** 2 + (unit.position[1] - world_y) ** 2)
             
+            # Ajuster la tolérance selon le type d'unité
+            tolerance = 60 if hasattr(unit, 'is_platform') and unit.is_platform else 40
+            
             # Si l'unité est dans la zone de tolérance et plus proche que les autres
-            if distance <= click_tolerance and distance < min_distance:
+            if distance <= tolerance and distance < min_distance:
                 closest_unit = unit
                 min_distance = distance
         
@@ -276,13 +286,155 @@ class Game :
         for bullet in bullets_to_remove:
             self.bullets.remove(bullet)
 
+    def on_platform_destroyed(self, platform):
+        """Appelé quand une plateforme pétrolière est détruite."""
+        # Déterminer l'équipe gagnante
+        if platform.team == "red":
+            self.winner_team = "green"
+            print("Équipe VERTE a gagné !")
+        else:
+            self.winner_team = "red"
+            print("Équipe ROUGE a gagné !")
+        
+        self.game_won = True
+        self.paused = True  # Mettre le jeu en pause
+    
+    def draw_victory_screen(self):
+        """Dessine l'écran de victoire."""
+        if not self.game_won:
+            return
+        
+        # Overlay semi-transparent
+        overlay = pygame.Surface((self.screen.get_width(), self.screen.get_height()), pygame.SRCALPHA)
+        overlay.fill((0, 0, 0, 180))
+        self.screen.blit(overlay, (0, 0))
+        
+        # Message de victoire
+        winner_text = "ÉQUIPE VERTE" if self.winner_team == "green" else "ÉQUIPE ROUGE"
+        victory_message = f"{winner_text} A GAGNÉ !"
+        victory_surface = self.victory_font.render(victory_message, True, (255, 255, 0))
+        victory_rect = victory_surface.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2 - 100))
+        self.screen.blit(victory_surface, victory_rect)
+        
+        # Sous-message
+        sub_message = "Plateforme pétrolière adverse détruite !"
+        sub_surface = self.button_font.render(sub_message, True, (255, 255, 255))
+        sub_rect = sub_surface.get_rect(center=(self.screen.get_width() // 2, self.screen.get_height() // 2 - 50))
+        self.screen.blit(sub_surface, sub_rect)
+        
+        # Position pour les boutons
+        mouse_pos = pygame.mouse.get_pos()
+        button_width, button_height = 300, 60
+        center_x = self.screen.get_width() // 2
+        
+        # Bouton "Nouvelle partie"
+        restart_button_x = center_x - button_width // 2
+        restart_button_y = self.screen.get_height() // 2 + 30
+        
+        mouse_on_restart = (restart_button_x <= mouse_pos[0] <= restart_button_x + button_width and 
+                           restart_button_y <= mouse_pos[1] <= restart_button_y + button_height)
+        
+        restart_color = (100, 200, 100) if mouse_on_restart else (50, 150, 50)
+        restart_border = (150, 255, 150) if mouse_on_restart else (100, 200, 100)
+        
+        restart_rect = pygame.Rect(restart_button_x, restart_button_y, button_width, button_height)
+        pygame.draw.rect(self.screen, restart_color, restart_rect)
+        pygame.draw.rect(self.screen, restart_border, restart_rect, 3)
+        
+        restart_text = "Nouvelle Partie"
+        restart_surface = self.button_font.render(restart_text, True, (255, 255, 255))
+        restart_text_rect = restart_surface.get_rect(center=restart_rect.center)
+        self.screen.blit(restart_surface, restart_text_rect)
+        
+        # Bouton "Retour au menu"
+        menu_button_x = center_x - button_width // 2
+        menu_button_y = restart_button_y + button_height + 20
+        
+        mouse_on_menu = (menu_button_x <= mouse_pos[0] <= menu_button_x + button_width and 
+                        menu_button_y <= mouse_pos[1] <= menu_button_y + button_height)
+        
+        menu_color = (200, 100, 100) if mouse_on_menu else (150, 50, 50)
+        menu_border = (255, 150, 150) if mouse_on_menu else (200, 100, 100)
+        
+        menu_rect = pygame.Rect(menu_button_x, menu_button_y, button_width, button_height)
+        pygame.draw.rect(self.screen, menu_color, menu_rect)
+        pygame.draw.rect(self.screen, menu_border, menu_rect, 3)
+        
+        menu_text = "Retour au Menu"
+        menu_surface = self.button_font.render(menu_text, True, (255, 255, 255))
+        menu_text_rect = menu_surface.get_rect(center=menu_rect.center)
+        self.screen.blit(menu_surface, menu_text_rect)
+        
+        # Stocker les positions des boutons pour la détection de clic
+        self.restart_button_rect = restart_rect
+        self.menu_button_rect = menu_rect
+    
+    def handle_victory_click(self, mouse_pos):
+        """Gère les clics sur l'écran de victoire."""
+        if hasattr(self, 'restart_button_rect') and self.restart_button_rect.collidepoint(mouse_pos):
+            self.restart_game()
+        elif hasattr(self, 'menu_button_rect') and self.menu_button_rect.collidepoint(mouse_pos):
+            self.return_to_menu()
+    
+    def refresh_all_references(self):
+        """Actualise toutes les références des gestionnaires après reconstruction de la map."""
+        # Réinitialiser les gestionnaires pour qu'ils utilisent les nouvelles références
+        self.event_handler.game = self
+        self.renderer.game = self
+        self.input_manager.game = self
+        self.updater.game = self
+        
+        # S'assurer que les unités sont dans le nouveau groupe
+        if hasattr(self, 'units') and self.units:
+            for unit in self.units:
+                if unit.is_alive and unit not in self.group.sprites():
+                    self.group.add(unit)
+        
+        # S'assurer que la caméra est dans le nouveau groupe
+        if hasattr(self, 'camera') and self.camera not in self.group.sprites():
+            self.group.add(self.camera)
+    
+    def restart_game(self):
+        """Redémarre le jeu."""
+        print("Redémarrage du jeu...")
+        # Réinitialiser les variables de victoire
+        self.game_won = False
+        self.winner_team = None
+        self.paused = False
+        
+        # Vider toutes les listes
+        self.units.clear()
+        self.bullets.clear()
+        if hasattr(self, 'plateformes'):
+            self.plateformes.clear()
+        
+        # Vider le groupe de sprites
+        self.group.empty()
+        self.combat_system.projectiles.empty()
+        self.combat_system.units.empty()
+        
+        # Réinitialiser les systèmes de jeu
+        self.initializer.init_camera()
+        self.initializer.init_game_systems()
+        
+        # Remettre les compteurs à zéro
+        self.hud.petrole = Petrole()  # Valeur de départ pétrole
+        self.hud.piece = Piece()      # Valeur de départ pièces
+        self.hud.timer = Timer()      # Réinstancie le timer
+    
+    def return_to_menu(self):
+        """Retourne au menu principal."""
+        print("Retour au menu principal...")
+        self.game_running = False
+
 
     def run(self): 
         """Boucle principale du jeu."""
         clock = pygame.time.Clock()
         running = True
+        self.game_running = True  # Variable pour contrôler le retour au menu
         
-        while running: 
+        while running and self.game_running: 
             dt = clock.tick(FPS) / TIME_STEP
             
             # Gestion des événements
@@ -299,6 +451,13 @@ class Game :
             # Rendu
             self.renderer.render()
             
+            # Afficher l'écran de victoire si le jeu est gagné
+            if self.game_won:
+                self.draw_victory_screen()
+            
             pygame.display.flip()
+        
+        if not self.game_running:
+            return  # Retourner au menu
         
         pygame.quit()

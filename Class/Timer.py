@@ -45,3 +45,12 @@ class Timer:
         if self.current_speed <= 0:
             self.current_speed = TIME_SPEED
         self.set_speed(self.current_speed)
+
+    def reset(self):
+        """Remet le timer à zéro."""
+        self.count = 0
+        self.maree_haute = False
+        self.maree_changed = False
+        # Relancer le timer avec la vitesse par défaut
+        self.current_speed = TIME_SPEED
+        self.set_speed(self.current_speed)

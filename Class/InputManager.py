@@ -1,5 +1,6 @@
 import pygame
 import time
+
 class InputManager:
     """Gestionnaire des entrées continues pour le jeu."""
     
@@ -8,6 +9,8 @@ class InputManager:
         self.game = game
         self.last_hud_toggle_time = 0
         self.hud_toggle_cooldown = 200  # 200ms de cooldown
+        self.last_shoot_time = 0  # Cooldown pour la touche T
+        self.shoot_cooldown = 1000  # 1 seconde de cooldown pour la touche T
     
     def handle_continuous_input(self):
         """Gère les entrées continues (touches maintenues)."""
@@ -61,13 +64,16 @@ class InputManager:
             time.sleep(0.1)
 
     def _handle_shooting(self, pressed):
-        """Gère le tir avec la touche T."""
+        """Gère le tir avec la touche T avec cooldown strict de 1 seconde."""
         if pressed[pygame.K_t]:
-            self._trigger_shooting()
-            time.sleep(0.2)  # Cooldown pour éviter les tirs en rafale
+            current_time = pygame.time.get_ticks()
+            # Vérifier le cooldown au niveau de l'InputManager
+            if current_time - self.last_shoot_time >= self.shoot_cooldown:
+                self._trigger_shooting()
+                self.last_shoot_time = current_time
     
     def _trigger_shooting(self):
-        """Déclenche le tir si les conditions sont remplies."""
+        """Déclenche le tir si toutes les conditions sont remplies."""
         # Vérifier s'il y a une unité sélectionnée
         if not hasattr(self.game, 'selected_unit') or not self.game.selected_unit:
             print("Aucune unité sélectionnée")
@@ -94,16 +100,14 @@ class InputManager:
         # Vérifier le cooldown de tir
         current_time = pygame.time.get_ticks()
         if not selected_unit.can_shoot(current_time):
-            print("Cooldown de tir en cours")
             return
+        
+        # Mettre à jour immédiatement le temps du dernier tir pour empêcher le spam
+        selected_unit.last_shot_time = current_time
             
         # Tirer sur la cible en utilisant le système de combat
         if hasattr(self.game, 'combat_system'):
             projectile = self.game.combat_system.fire_projectile(selected_unit, target)
-            if projectile:
-                selected_unit.last_shot_time = current_time
-            else:
-                print("Échec de création du projectile")
-        else:
-            print("Système de combat non disponible")
+
+            
 

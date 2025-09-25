@@ -94,7 +94,6 @@ class Menu:
                         pygame.init()
                         game = Game()
                         game.run()
-                        menu = False
                     elif text == "Succès":
                         print("Menu succès...")
                     elif text == "Options":
