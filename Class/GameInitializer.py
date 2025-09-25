@@ -41,7 +41,6 @@ class GameInitializer:
         # Récupérer les dimensions de la map
         self.game.map_width = self.game.tmx_data.width * self.game.tmx_data.tilewidth
         self.game.map_height = self.game.tmx_data.height * self.game.tmx_data.tileheight
-        print(f"Dimensions de la map: {self.game.map_width}x{self.game.map_height}")
     
     def init_camera(self):
         """Initialise la caméra et les groupes de sprites."""
@@ -60,12 +59,18 @@ class GameInitializer:
         self.game.combat_system = CombatSystem()
         self.game.units = []
         self.game.selected_unit = None
-        
-        # Positions de spawn des unités
-        self.game.green_platform_spawn = (96, 512)
-        self.game.red_platform_spawn = (1824, 512)
-        self.game.spawn_radius = 80
     
+        # Récupérer les points du polygone
+        for obj in self.game.tmx_data.objects:
+            if obj.name == "Base_verte":
+                self.game.green_platform_spawn = obj.points
+            elif obj.name == "Base_rouge":
+                self.game.red_platform_spawn = obj.points
+            elif obj.name == "Spawn_base_verte":
+                self.game.green_platform_zone = obj.points  
+            elif obj.name == "Spawn_base_rouge":
+                self.game.red_platform_zone = obj.points  
+
     def init_ui(self):
         """Initialise l'interface utilisateur."""
         # Système de popup pour sélection d'unités

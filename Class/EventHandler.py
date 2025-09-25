@@ -1,6 +1,12 @@
 import pygame
 import time
 from Class.options import OptionsMenu
+from Global import UNIT_CONFIGS
+from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
+from Class.units.Bateau import BateauRouge, BateauVert
+from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
+from Class.units.Paquebot import PaquebotRouge, PaquebotVert
+from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
 
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
@@ -64,13 +70,39 @@ class EventHandler:
         if event.key == pygame.K_e:
             self.game.show_unit_popup = not self.game.show_unit_popup
             self.game.popup_selection = 0
-            print(f"Popup {'ouvert' if self.game.show_unit_popup else 'fermé'}")
             return True
         
         elif event.key == pygame.K_ESCAPE:
             options_menu = OptionsMenu(self.game.screen)
             options_menu.run()
             return True
+
+        # Entrée via le HUD (bandeau bas) pour spawn l'unité sélectionnée (coût géré dans Game.spawn_unit)
+        if event.key == pygame.K_RETURN and not self.game.show_unit_popup:
+                hud = self.game.hud
+                selection_index = hud.popup_selection
+                team_key = hud.popup_team  # 'red' ou 'green'
+                # Récupérer la clé de config de l'unité
+                if selection_index < 0 or selection_index >= len(hud.unit_config_keys):
+                    return True
+                config_key = hud.unit_config_keys[selection_index]
+
+                # Mapping type + équipe -> classe
+                class_map = {
+                    'chaloupe': {'red': ChaloupeRouge, 'green': ChaloupeVerte},
+                    'bateau': {'red': BateauRouge, 'green': BateauVert},
+                    'paquebot': {'red': PaquebotRouge, 'green': PaquebotVert},
+                    'eclaireur': {'red': EclaireurRouge, 'green': EclaireurVert},
+                    'sousmarin': {'red': SousMarinRouge, 'green': SousMarinVert},
+                }
+                team_to_class = class_map.get(config_key)
+
+                unit_class = team_to_class[team_key]
+                unit = self.game.spawn_unit(unit_class)
+                if unit is not None:
+                    print(f"Unité produite: {unit_class.__name__}")
+                return True
+
 
         elif self.game.show_unit_popup:
             return self._handle_popup_navigation(event)
@@ -96,16 +128,16 @@ class EventHandler:
         """Gère la navigation dans le popup d'unités."""
         if event.key == pygame.K_UP:
             self.game.popup_selection = (self.game.popup_selection - 1) % len(self.game.unit_classes)
-            print(f"Sélection précédente: {self.game.popup_selection}")
         elif event.key == pygame.K_DOWN:
             self.game.popup_selection = (self.game.popup_selection + 1) % len(self.game.unit_classes)
-            print(f"Sélection suivante: {self.game.popup_selection}")
         elif event.key == pygame.K_RETURN:
             try:
                 unit_name, unit_class = self.game.unit_classes[self.game.popup_selection]
                 print(f"Unité sélectionnée: {unit_name}")
-                self.game.spawn_unit(unit_class)
-                self.game.show_unit_popup = False
+                unit = self.game.spawn_unit(unit_class)
+                if unit is not None:
+                    print(f"Unité produite: {unit_class.__name__}")
+                    self.game.show_unit_popup = False
             except Exception as e:
                 print(f"Erreur lors de la sélection de l'unité: {e}")
         return True
@@ -120,15 +152,13 @@ class EventHandler:
             clicked_unit = self.game.find_unit_at_position(world_x, world_y)
             
             if clicked_unit:
-                self.game.selected_unit = clicked_unit
-                print(f"Unité sélectionnée: {clicked_unit.__class__.__name__}")
+                self.game.select_unit(clicked_unit)
             elif self.game.selected_unit and self.game.selected_unit.is_alive:
                 # Déplacer l'unité sélectionnée vers la position cliquée
                 if hasattr(self.game.selected_unit, 'move_to_position'):
                     self.game.selected_unit.move_to_position(world_x, world_y)
-                    print(f"Déplacement de {self.game.selected_unit.__class__.__name__}")
             else:
-                self.game.selected_unit = None
+                self.game.select_unit(None)
         
         # Clic droit
         elif event.button == 3 and self.game.hud.timer.maree_haute:

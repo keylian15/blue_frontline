@@ -16,7 +16,10 @@ class InputManager:
             self._handle_camera_movement(pressed)
             self._handle_hud_toggle(pressed)
 
-            self._handle_unit_popup(pressed)
+        self._handle_unit_popup(pressed)
+        self._handle_unit_popup_navigation(pressed)
+        self._handle_shooting(pressed)
+
     
     def _handle_camera_movement(self, pressed):
         """Gère le déplacement de la caméra avec les touches directionnelles."""
@@ -48,3 +51,59 @@ class InputManager:
         if pressed[pygame.K_j]:
             self.game.hud.toggle_popup_team()
             time.sleep(0.2)
+            
+    def _handle_unit_popup_navigation(self, pressed):
+        if pressed[pygame.K_LEFT]:
+            self.game.hud.popup_selection = (self.game.hud.popup_selection - 1) % len(self.game.hud.unit_names)
+            time.sleep(0.1)
+        if pressed[pygame.K_RIGHT]:
+            self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
+            time.sleep(0.1)
+
+    def _handle_shooting(self, pressed):
+        """Gère le tir avec la touche T."""
+        if pressed[pygame.K_t]:
+            self._trigger_shooting()
+            time.sleep(0.2)  # Cooldown pour éviter les tirs en rafale
+    
+    def _trigger_shooting(self):
+        """Déclenche le tir si les conditions sont remplies."""
+        # Vérifier s'il y a une unité sélectionnée
+        if not hasattr(self.game, 'selected_unit') or not self.game.selected_unit:
+            print("Aucune unité sélectionnée")
+            return
+            
+        selected_unit = self.game.selected_unit
+        
+        # Vérifier que l'unité sélectionnée est vivante
+        if not selected_unit.is_alive:
+            print("L'unité sélectionnée n'est pas vivante")
+            return
+            
+        # Vérifier s'il y a des ennemis dans la portée
+        if not hasattr(selected_unit, 'enemies_in_range') or not selected_unit.enemies_in_range:
+            print("Aucun ennemi dans la portée")
+            return
+            
+        # Obtenir l'ennemi le plus proche
+        target = selected_unit.get_closest_enemy_in_range()
+        if not target:
+            print("Aucune cible valide trouvée")
+            return
+            
+        # Vérifier le cooldown de tir
+        current_time = pygame.time.get_ticks()
+        if not selected_unit.can_shoot(current_time):
+            print("Cooldown de tir en cours")
+            return
+            
+        # Tirer sur la cible en utilisant le système de combat
+        if hasattr(self.game, 'combat_system'):
+            projectile = self.game.combat_system.fire_projectile(selected_unit, target)
+            if projectile:
+                selected_unit.last_shot_time = current_time
+            else:
+                print("Échec de création du projectile")
+        else:
+            print("Système de combat non disponible")
+

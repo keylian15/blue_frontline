@@ -10,6 +10,7 @@ from Class.Renderer import Renderer
 from Class.InputManager import InputManager
 from Class.GameUpdater import GameUpdater
 from Class.GameInitializer import GameInitializer
+from Utils import random_point_in_polygon
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
@@ -38,10 +39,12 @@ class Game :
         self.initializer.init_ui()
         self.initializer.init_sound()
 
-
-
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
+        
+        # Système de combat et projectiles
+        self.bullets = []  # Liste des projectiles actifs
+        self.selected_unit = None  # Unité actuellement sélectionnée
         
         # Initialiser les gestionnaires après que les composants soient créés
         self.event_handler = EventHandler(self)
@@ -98,58 +101,68 @@ class Game :
 
     
     def spawn_unit(self, unit_class):
-        """Fait apparaître une unité près de la plateforme correspondant à son équipe."""
+        """Fait apparaître une unité près de la plateforme correspondant à son équipe, en gérant le coût en pétrole.
+
+        Retourne l'unité créée si succès, sinon None (pétrole insuffisant ou erreur).
+        """
         try:
+            # Bloquer la production si le jeu est en pause
+            if getattr(self, 'paused', False):
+                print("Production interdite pendant la pause.")
+                return None
+
             print(f"Tentative de création de l'unité: {unit_class.__name__}")
             
             # Déterminer l'équipe de l'unité à partir du nom de la classe
             if "Rouge" in unit_class.__name__:
                 team = "red"
                 base_spawn = self.red_platform_spawn
-                print(f"Unité rouge -> plateforme rouge à {base_spawn}")
             else :
                 team = "green"
                 base_spawn = self.green_platform_spawn
                 print(f"Unité verte -> plateforme verte à {base_spawn}")
-            
-            # Essayer plusieurs positions jusqu'à en trouver une libre
-            max_attempts = 20
-            for attempt in range(max_attempts):
-                # Angle aléatoire en radians
-                angle = random.uniform(0, 2 * math.pi)
-                # Distance aléatoire entre 60 et 120 pixels de la plateforme
-                distance = random.uniform(60, 120)
-                
-                # Calculer les coordonnées avec trigonométrie correcte
-                spawn_x = base_spawn[0] + distance * math.cos(angle)
-                spawn_y = base_spawn[1] + distance * math.sin(angle)
-                
-                # Vérifier que la position est libre (pas de collision avec d'autres unités)
-                position_libre = True
-                for existing_unit in self.units:
-                    if existing_unit.is_alive:
-                        dist_to_unit = math.sqrt((spawn_x - existing_unit.position[0])**2 + 
-                                               (spawn_y - existing_unit.position[1])**2)
-                        if dist_to_unit < 40:  # Distance minimale entre unités
-                            position_libre = False
-                            break
-                
-                # Vérifier que l'unité n'est pas trop proche de la plateforme
-                dist_to_platform = math.sqrt((spawn_x - base_spawn[0])**2 + (spawn_y - base_spawn[1])**2)
-                if dist_to_platform < self.spawn_radius:  # Utilisation de spawn_radius
-                    position_libre = False
+
+            # Déterminer la clé de config (type d'unité) depuis le nom de la classe
+            name_lower = unit_class.__name__.lower()
+            if "chaloupe" in name_lower:
+                config_key = 'chaloupe'
+            elif "paquebot" in name_lower:
+                config_key = 'paquebot'
+            elif "eclaireur" in name_lower or "éclaireur" in unit_class.__name__:
+                config_key = 'eclaireur'
+            elif "sousmarin" in name_lower or "sous_marin" in name_lower or "sousmarin" in name_lower:
+                config_key = 'sousmarin'
+            elif "bateau" in name_lower:
+                config_key = 'bateau'
             else:
-                # Si aucune position libre n'a été trouvée, utiliser la dernière calculée
-                print("Aucune position libre trouvée, utilisation de la dernière position calculée")
+                config_key = None
+
+            # Vérifier le coût en pétrole
+            cost = UNIT_CONFIGS.get(config_key, {}).get('cost') if config_key else None
+            if cost is None:
+                print("Coût indisponible pour cette unité.")
+                return None
+            if self.hud.petrole.count < cost:
+                print("Pétrole insuffisant pour produire cette unité.")
+                return None
+            
+            # Générer le point de spawn dans la zone définie par le polygone
+            if team == "red":
+                spawn_x, spawn_y = random_point_in_polygon(self.red_platform_zone)
+            else:
+                spawn_x, spawn_y = random_point_in_polygon(self.green_platform_zone)
             
             # Créer l'unité à la position de spawn calculée
             unit = unit_class(spawn_x, spawn_y)
-            print(f"Unité créée avec succès: {unit} à la position ({spawn_x:.1f}, {spawn_y:.1f})")
 
             # Ajouter au système de combat et au groupe de sprites
             self.combat_system.add_unit(unit)
             self.units.append(unit)
             self.group.add(unit)
+
+            # Débiter le pétrole après création réussie
+            self.hud.petrole.count -= cost
+            print(f"Pétrole débité: -{cost}. Nouveau solde: {self.hud.petrole.count}")
 
             return unit
         #Gestion erreurs
@@ -228,6 +241,42 @@ class Game :
                 min_distance = distance
         
         return closest_unit
+
+    def select_unit(self, unit):
+        """Sélectionne une unité et désélectionne les autres."""
+        # Désélectionner toutes les unités
+        for u in self.units:
+            if hasattr(u, 'is_selected'):
+                u.is_selected = False
+        
+        # Sélectionner la nouvelle unité
+        if unit and hasattr(unit, 'is_selected'):
+            unit.is_selected = True
+            self.selected_unit = unit
+        else:
+            self.selected_unit = None
+
+    def update_bullets(self, dt):
+        """Met à jour tous les projectiles."""
+        bullets_to_remove = []
+        
+        for bullet in self.bullets:
+            if not bullet.is_alive:
+                bullets_to_remove.append(bullet)
+                continue
+                
+            # Mettre à jour le projectile
+            bullet.update(dt)
+            
+            # Vérifier les collisions avec les unités
+            for unit in self.units:
+                if bullet.check_collision(unit):
+                    break  # Le projectile s'est détruit lors de la collision
+        
+        # Supprimer les projectiles morts
+        for bullet in bullets_to_remove:
+            self.bullets.remove(bullet)
+
 
     def run(self): 
         """Boucle principale du jeu."""

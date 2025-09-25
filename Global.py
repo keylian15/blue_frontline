@@ -101,7 +101,7 @@ MASK_MAPPING = {
     32 : MAPPING["l_shape_top_right"],
     32 + 128 : MAPPING["t_shape_right"],
     32 + 64 : MAPPING["d_shape_top_left"],
-    32 + 64 + 128 : MAPPING["missing_corner_bottom_left"],
+    32 + 64 + 128 : MAPPING["missing_corner_top_left"],
     16 : MAPPING["l_shape_top_left"],
     16 + 128 : MAPPING["d_shape_top_right"],
     16 + 64 : MAPPING["t_shape_left"],
@@ -149,10 +149,9 @@ MASK_MAPPING = {
 RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
 GREEN_TEAM_PATH = resource_path('assets/Green_team/png/Green_team_spritesheet.png')
 
-
-# === Unités ===
-RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
-GREEN_TEAM_PATH = resource_path('assets/Green_team/png/Green_team_spritesheet.png')
+# === BASE ===
+RED_BASE_TEAM_PATH = resource_path('assets/Red_team/png/red_base.png')
+GREEN_BASE_TEAM_PATH = resource_path('assets/Green_team/png/Green_base.png')
 
 # Dictionnaire centralisé contenant toutes les statistiques des unités
 UNIT_CONFIGS = {
@@ -334,5 +333,6 @@ CONTROLS = {
     "ZOOM_IN": "Zoom avant",
     "ZOOM_OUT": "Zoom arrière"
 }
+
 
 

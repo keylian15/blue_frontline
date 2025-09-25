@@ -43,10 +43,10 @@ class Sousmarin(Unit):
         self.move_to(target_x, target_y, self.max_speed)
         self.is_moving = True
     
-    def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0)):
+    def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
         """Met à jour le sous-marin."""
         # Appeler la mise à jour de la classe parent
-        super().update(dt, combat_system)
+        super().update(dt, combat_system, screen, camera_offset, all_units)
         
         # Vérifier si on a atteint la destination
         if self.target_position and self.is_moving:

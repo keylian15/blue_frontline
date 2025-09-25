@@ -24,9 +24,7 @@ class Camera(pygame.sprite.Sprite):
         
         # Calculer les limites pour centrer la caméra
         self.update_zoom_limits()
-        
-        print(f"Limites caméra: X({self.min_x}-{self.max_x}), Y({self.min_y}-{self.max_y})")
-        
+                
         self.image = pygame.Surface((32, 32), pygame.SRCALPHA)
         self.rect = self.image.get_rect()
         
@@ -48,9 +46,7 @@ class Camera(pygame.sprite.Sprite):
         
         # Ajouter une petite marge pour éviter les effets de bord
         min_zoom = min_zoom * 0.95
-        
-        print(f"Zoom minimum calculé: {min_zoom:.3f} (pour voir map {self.map_width}x{self.map_height} sur écran {self.screen_width}x{self.screen_height})")
-        
+                
         return min_zoom
 
     def update_zoom_limits(self):

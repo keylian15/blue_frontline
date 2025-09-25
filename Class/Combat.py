@@ -42,6 +42,18 @@ class Projectile(pygame.sprite.Sprite):
         self.max_distance = 800  # Distance maximale avant disparition
         self.distance_traveled = 0
     
+    def load_image(self):
+        """Charge l'image du projectile."""
+        try:
+            # Essayer de charger l'image bullet.png
+            from Utils import resource_path
+            self.image = pygame.image.load(resource_path('Class/bullet.png')).convert_alpha()
+        except (pygame.error, FileNotFoundError):
+            # Si l'image n'existe pas, créer un projectile simple
+            self.image = pygame.Surface((8, 8), pygame.SRCALPHA)
+            pygame.draw.circle(self.image, (255, 255, 0), (4, 4), 4)  # Projectile jaune
+            pygame.draw.circle(self.image, (255, 165, 0), (4, 4), 2)  # Centre orange
+    
     def update(self, dt):
         """Met à jour le projectile."""
         if not self.is_active:
@@ -67,7 +79,7 @@ class Projectile(pygame.sprite.Sprite):
         # Vérifier si le projectile a atteint sa cible (approximativement)
         distance_to_target = math.sqrt((self.position[0] - self.target_x)**2 + 
                                      (self.position[1] - self.target_y)**2)
-        if distance_to_target < 10:  # 10 pixels de tolérance
+        if distance_to_target < 15:  # 15 pixels de tolérance
             self.on_impact()
     
     def on_impact(self):
@@ -84,13 +96,22 @@ class Projectile(pygame.sprite.Sprite):
         if not self.is_active or not target.is_alive:
             return False
             
-        # Vérifier si le projectile touche la cible
-        if self.rect.colliderect(target.rect):
-            # Vérifier que c'est un ennemi
-            if self.shooter and target.team != self.shooter.team:
-                target.take_damage(self.damage)
-                self.destroy()
-                return True
+        # Vérifier que l'unité cible n'est pas de la même équipe
+        if self.shooter and target.team == self.shooter.team:
+            return False
+            
+        # Calculer la distance entre le projectile et l'unité
+        distance = math.sqrt(
+            (self.position[0] - target.position[0])**2 + 
+            (self.position[1] - target.position[1])**2
+        )
+        
+        # Si la distance est suffisamment petite (collision)
+        if distance < 25:  # Rayon de collision
+            target.take_damage(self.damage)
+            self.destroy()
+            return True
+            
         return False
 
 
@@ -135,17 +156,33 @@ class CombatSystem:
         
         # Vérifier les collisions entre projectiles et unités
         for projectile in self.projectiles:
+            if not projectile.is_active:
+                continue
+                
             for unit in self.units:
                 if projectile.check_collision(unit):
                     break  # Projectile détruit, passer au suivant
     
-    def draw(self, screen):
-        """Dessine tous les projectiles."""
-        self.projectiles.draw(screen)
+    def draw(self, screen, camera_offset=(0, 0), zoom=1.0):
+        """Dessine tous les projectiles en tenant compte du zoom."""
+        for projectile in self.projectiles:
+            if projectile.is_active:
+                # Position avec décalage de caméra et zoom
+                screen_x = (projectile.position[0] - camera_offset[0]) * zoom
+                screen_y = (projectile.position[1] - camera_offset[1]) * zoom
+                # Adapter la taille du projectile au zoom
+                if zoom != 1.0:
+                    scaled_image = pygame.transform.scale(
+                        projectile.image,
+                        (max(1, int(projectile.image.get_width() * zoom)), max(1, int(projectile.image.get_height() * zoom)))
+                    )
+                else:
+                    scaled_image = projectile.image
+                screen.blit(scaled_image, (screen_x - scaled_image.get_width()//2, screen_y - scaled_image.get_height()//2))
     
     def get_projectile_count(self):
         """Retourne le nombre de projectiles actifs."""
-        return len(self.projectiles)
+        return len([p for p in self.projectiles if p.is_active])
     
     def clear_projectiles(self):
         """Supprime tous les projectiles."""
