@@ -21,8 +21,9 @@ class EventHandler:
             if event.type == pygame.QUIT: 
                 return False
 
-            # Gestion des événements HUD
-            self.game.hud.petrole.handle_event(event)
+            # Gestion des événements HUD (selon les équipes)
+            self.game.hud.petrole_red.handle_event(event)
+            self.game.hud.petrole_green.handle_event(event)
             self.game.hud.timer.handle_event(event)
 
             # Gestion du changement de marée                   
@@ -61,11 +62,34 @@ class EventHandler:
             if self.game.paused:
                 # Mettre les timers en pause
                 self.game.hud.timer.pause()
-                self.game.hud.petrole.pause()
+                self.game.hud.petrole_red.pause()
+                self.game.hud.petrole_green.pause()
             else:
                 # Reprendre les timers
                 self.game.hud.timer.resume()
-                self.game.hud.petrole.resume()
+                self.game.hud.petrole_red.resume()
+                self.game.hud.petrole_green.resume()
+            print(f"Pause: {'ON' if self.game.paused else 'OFF'}")
+            return True
+
+        elif event.key == pygame.K_v:
+            # Cycle de vitesse: x1 → x2 → x4 → x8 → x1
+            current_speed = self.game.hud.timer.current_speed
+            speed_cycle = [1, 2, 4, 8]  # x1, x2, x4, x8 (basé sur TIME_SPEED = 20)
+            
+            try:
+                current_index = speed_cycle.index(current_speed)
+                new_speed = speed_cycle[(current_index + 1) % len(speed_cycle)]
+            except ValueError:
+                new_speed = speed_cycle[1]  # Si vitesse actuelle pas dans le cycle, passer à x2
+            
+            # Appliquer la nouvelle vitesse à tous les timers
+            self.game.hud.timer.set_speed(new_speed)
+            self.game.hud.petrole_red.set_speed(new_speed)
+            self.game.hud.petrole_green.set_speed(new_speed)
+            
+            speed_multiplier = new_speed // 20
+            print(f"Vitesse du jeu: x{speed_multiplier}")
             return True
 
         if event.key == pygame.K_e:
@@ -194,3 +218,4 @@ class EventHandler:
         world_y = camera_center[1] + offset_y
         
         return world_x, world_y
+

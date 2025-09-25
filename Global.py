@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # === Temps === 
 FPS = 60
 TIME_STEP = 1000 # en ms => 1 seconde
-TIME_SPEED = 20 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
+TIME_SPEED = 1 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
 TIME_MAREE = 180
 
 # === MAP ===
@@ -20,6 +20,8 @@ WATER_TILESET_PATH = resource_path('assets/water/png/water_spritesheet.png')
 # === HUD === 
 PIECE_IMAGE_PATH = resource_path('assets/HUD/piece.png')
 PETROLE_IMAGE_PATH = resource_path('assets/HUD/petrole.png')
+MARREE_HAUTE_PATH = resource_path('assets/HUD/maree_haute.png')
+MARREE_BASSE_PATH = resource_path('assets/HUD/maree_basse.png')
 
 
 # === EVENEMENTS ===

@@ -41,9 +41,11 @@ class Hud:
         ]
                 
 
-        # Instance unique de ton compteur de pétrole
-        self.petrole = Petrole()
-        self.piece = Piece()
+        # Compteurs par équipe
+        self.petrole_red = Petrole()
+        self.petrole_green = Petrole()
+        self.piece_red = Piece()
+        self.piece_green = Piece()
         self.timer = Timer()
 
     def switch(self):
@@ -60,40 +62,49 @@ class Hud:
         #affichage de la selection des troupes
         # Popup aligné aux icônes
         self.draw_unit_popup()
-        # screen.blit(self.images['green_chaloupe'], (self.width * 0.7, self.height * 0.9))
-        # screen.blit(self.images['green_bateau'], (self.width * 0.8, self.height * 0.9))
-        # screen.blit(self.images['green_paquebot'], (self.width * 0.9, self.height * 0.9))
-        # screen.blit(self.images['green_eclaireur'], (self.width * 0.1, self.height * 0.9))
-        # screen.blit(self.images['green_sousmarin'], (self.width * 0.2, self.height * 0.9))
-        # screen.blit(self.images['green_platforme'], (self.width * 0.3, self.height * 0.9))
+
         
         
         
-        # Images
-        screen.blit(self.images['piece'], (self.width * 0.84, self.height * 0.8))
-        screen.blit(self.images['petrole'], (self.width * 0.84, self.height * 0.9))
-        
-        # Texte compteur pétrole
+        # Afficher uniquement les compteurs de l'équipe sélectionnée
         font = pygame.font.Font(None, 30)
-        text = font.render(str(self.petrole.count), True, (0, 0, 0))
-        screen.blit(text, (self.width * 0.84 + 90, self.height * 0.9 + 30))
-        
-        #Texte compteur pièces
-        text = font.render(str(self.piece.count), True, (0, 0, 0))
-        screen.blit(text, (self.width * 0.84 + 90, self.height * 0.8 + 30))
+        current_petrole = self.petrole_red.count if self.popup_team == 'red' else self.petrole_green.count
+        current_piece = self.piece_red.count if self.popup_team == 'red' else self.piece_green.count
+
+        # Emplacement des pièces et du pétrole
+        screen.blit(self.images['piece'], (self.width * 0.84, self.height * 0.8))
+        screen.blit(self.images['petrole'], (self.width * 0.84, self.height * 0.9))    
+        text_petrole = font.render(str(current_petrole), True, (0, 0, 0))
+        screen.blit(text_petrole, (self.width * 0.84 + 90, self.height * 0.9 + 30))
+        text_piece = font.render(str(current_piece), True, (0, 0, 0))
+        screen.blit(text_piece, (self.width * 0.84 + 90, self.height * 0.8 + 30))
         
         #Texte timer
         text = font.render(str(self.timer.get_time()), True, (0, 0, 0))
         screen.blit(text, (self.width * 0.5, self.height *0.05))
+        
+        # Affichage de l'image de marée à côté du timer
+        maree_image = self.images['maree_haute'] if self.timer.maree_haute else self.images['maree_basse']
+        screen.blit(maree_image, (self.width * 0.5 + 150, self.height * 0.05))
+
+        # Libellé d'équipe en haut à droite
+        team_label = "Équipe rouge" if self.popup_team == 'red' else "Équipe verte"
+        team_color = (200, 0, 0) if self.popup_team == 'red' else (0, 150, 0)
+        team_font = pygame.font.Font(None, 32)
+        team_text = team_font.render(team_label, True, team_color)
+        label_x = self.width - team_text.get_width() - 20
+        label_y = 20
+        screen.blit(team_text, (label_x, label_y))
 
     def load_images(self):
         """Fonction permettant de charger les images du HUD"""
         piece = pygame.image.load(PIECE_IMAGE_PATH).convert_alpha()
         petrole = pygame.image.load(PETROLE_IMAGE_PATH).convert_alpha()
+        maree_haute = pygame.image.load(MARREE_HAUTE_PATH).convert_alpha()
+        maree_basse = pygame.image.load(MARREE_BASSE_PATH).convert_alpha()
         
         red_team = load_tileset(RED_TEAM_PATH)
         green_team = load_tileset(GREEN_TEAM_PATH)
-        
         
         red_chaloupe = pygame.transform.scale(red_team[0], (80, 80))
         red_bateau = pygame.transform.scale(red_team[1], (80, 80))
@@ -115,6 +126,8 @@ class Hud:
         images = {
             'piece': piece,
             'petrole': petrole,
+            'maree_haute': maree_haute,
+            'maree_basse': maree_basse,
             'red_chaloupe': red_chaloupe,
             'red_bateau': red_bateau,
             'red_paquebot': red_paquebot,
