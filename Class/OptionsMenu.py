@@ -102,14 +102,14 @@ class OptionsMenu:
         # Récupération et affichage des contrôles depuis Global
         y_pos = 180
         controls_list = [
-            ("E", CONTROLS["CREATE_UNIT"]),
-            ("ÉCHAP", CONTROLS["OPTIONS"]),
-            ("FLÈCHE HAUT", CONTROLS["VOLUME_UP"]),
-            ("FLÈCHE BAS", CONTROLS["VOLUME_DOWN"]),
-            ("CLIC GAUCHE", CONTROLS["SELECT_MOVE"]),
-            ("CLIC DROIT", CONTROLS["QUANTUM_ISLAND"]),
-            ("MOLETTE HAUT", CONTROLS["ZOOM_IN"]),
-            ("MOLETTE BAS", CONTROLS["ZOOM_OUT"])
+            ("E", CONTROLS_DESCRIPTION["CREATE_UNIT"]),
+            ("ÉCHAP", CONTROLS_DESCRIPTION["OPTIONS"]),
+            ("FLÈCHE HAUT", CONTROLS_DESCRIPTION["VOLUME_UP"]),
+            ("FLÈCHE BAS", CONTROLS_DESCRIPTION["VOLUME_DOWN"]),
+            ("CLIC GAUCHE", CONTROLS_DESCRIPTION["SELECT_MOVE"]),
+            ("CLIC DROIT", CONTROLS_DESCRIPTION["QUANTUM_ISLAND"]),
+            ("MOLETTE HAUT", CONTROLS_DESCRIPTION["ZOOM_IN"]),
+            ("MOLETTE BAS", CONTROLS_DESCRIPTION["ZOOM_OUT"])
         ]
 
         # Affichage des contrôles avec largeur adaptée

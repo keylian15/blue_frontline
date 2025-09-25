@@ -1,6 +1,6 @@
 import pygame
 import time
-from Class.options import OptionsMenu
+from Class.OptionsMenu import OptionsMenu
 from Global import UNIT_CONFIGS
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
 from Class.units.Bateau import BateauRouge, BateauVert

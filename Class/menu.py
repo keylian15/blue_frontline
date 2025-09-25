@@ -3,7 +3,7 @@ import sys
 import math
 from Global import *
 from Class.Game import Game
-from Class.options import OptionsMenu
+from Class.OptionsMenu import OptionsMenu
 
 class Menu:
     def __init__(self):
