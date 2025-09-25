@@ -20,6 +20,8 @@ WATER_TILESET_PATH = resource_path('assets/water/png/water_spritesheet.png')
 # === HUD === 
 PIECE_IMAGE_PATH = resource_path('assets/HUD/piece.png')
 PETROLE_IMAGE_PATH = resource_path('assets/HUD/petrole.png')
+MARREE_HAUTE_PATH = resource_path('assets/HUD/maree_haute.png')
+MARREE_BASSE_PATH = resource_path('assets/HUD/maree_basse.png')
 
 
 # === EVENEMENTS ===

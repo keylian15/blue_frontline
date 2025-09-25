@@ -73,7 +73,7 @@ class Hud:
 
         # Emplacement des pièces et du pétrole
         screen.blit(self.images['piece'], (self.width * 0.84, self.height * 0.8))
-        screen.blit(self.images['petrole'], (self.width * 0.84, self.height * 0.9))
+        screen.blit(self.images['petrole'], (self.width * 0.84, self.height * 0.9))    
         text_petrole = font.render(str(current_petrole), True, (0, 0, 0))
         screen.blit(text_petrole, (self.width * 0.84 + 90, self.height * 0.9 + 30))
         text_piece = font.render(str(current_piece), True, (0, 0, 0))
@@ -82,6 +82,10 @@ class Hud:
         #Texte timer
         text = font.render(str(self.timer.get_time()), True, (0, 0, 0))
         screen.blit(text, (self.width * 0.5, self.height *0.05))
+        
+        # Affichage de l'image de marée à côté du timer
+        maree_image = self.images['maree_haute'] if self.timer.maree_haute else self.images['maree_basse']
+        screen.blit(maree_image, (self.width * 0.5 + 150, self.height * 0.05))
 
         # Libellé d'équipe en haut à droite
         team_label = "Équipe rouge" if self.popup_team == 'red' else "Équipe verte"
@@ -96,10 +100,11 @@ class Hud:
         """Fonction permettant de charger les images du HUD"""
         piece = pygame.image.load(PIECE_IMAGE_PATH).convert_alpha()
         petrole = pygame.image.load(PETROLE_IMAGE_PATH).convert_alpha()
+        maree_haute = pygame.image.load(MARREE_HAUTE_PATH).convert_alpha()
+        maree_basse = pygame.image.load(MARREE_BASSE_PATH).convert_alpha()
         
         red_team = load_tileset(RED_TEAM_PATH)
         green_team = load_tileset(GREEN_TEAM_PATH)
-        
         
         red_chaloupe = pygame.transform.scale(red_team[0], (80, 80))
         red_bateau = pygame.transform.scale(red_team[1], (80, 80))
@@ -121,6 +126,8 @@ class Hud:
         images = {
             'piece': piece,
             'petrole': petrole,
+            'maree_haute': maree_haute,
+            'maree_basse': maree_basse,
             'red_chaloupe': red_chaloupe,
             'red_bateau': red_bateau,
             'red_paquebot': red_paquebot,
