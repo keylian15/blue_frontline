@@ -8,7 +8,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # === Temps === 
 FPS = 60
 TIME_STEP = 1000 # en ms => 1 seconde
-TIME_SPEED = 10 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
+TIME_SPEED = 20 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
 TIME_MAREE = 180
 
 # === MAP ===
@@ -30,7 +30,7 @@ TIMER_EVENT = pygame.USEREVENT + 2
 WATER_PATH = resource_path('assets/water/png/water.png')
 
 # === SONS ===
-SOUND = resource_path('blue_frontline_sounds/sandy-beach-calm-waves-water-nature-sounds-8052.mp3')
+SOUND = resource_path('blue_frontline_sounds/son_base.mp3')
 VOLUME_SOUND = 0.5  # Volume du son (0.0 à 1.0)
 
 # Les images de mapping font 512 pixels par 512 pixels
@@ -309,5 +309,17 @@ BUTTON_MARGIN_BOTTOM = 40
 # === IMAGES ===
 MENU_PATH = resource_path('assets/menu/menu.png')
 ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
+
+# === Contrôles du jeu ===
+CONTROLS_DESCRIPTION = {
+    "CREATE_UNIT": "Ouvrir/Fermer le menu de création d'unités",
+    "OPTIONS": "Ouvrir/Fermer le menu options", 
+    "VOLUME_UP": "Augmenter le volume",
+    "VOLUME_DOWN": "Diminuer le volume",
+    "SELECT_MOVE": "Sélectionner/Déplacer une unité",
+    "QUANTUM_ISLAND": "Activer l'île quantique (marée haute)",
+    "ZOOM_IN": "Zoom avant",
+    "ZOOM_OUT": "Zoom arrière"
+}
 
 

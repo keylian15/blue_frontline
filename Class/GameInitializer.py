@@ -24,8 +24,7 @@ class GameInitializer:
     
     def init_display(self):
         """Initialise l'affichage et la fenêtre."""
-        self.game.screen = pygame.display.set_mode((0, 0), pygame.NOFRAME)        
-        pygame.display.set_caption("Blue Frontline")
+        pass
     
     def init_map(self):
         """Initialise les données de la map et les tilesets."""
@@ -62,19 +61,15 @@ class GameInitializer:
         self.game.combat_system.game = self.game
         self.game.units = []
         self.game.selected_unit = None
-        
-        # Positions de spawn des unités
-        self.game.green_platform_spawn = (96, 512)
-        self.game.red_platform_spawn = (1824, 512)
-        self.game.spawn_radius = 80
     
+        # Récupérer les points du polygone
         for obj in self.game.tmx_data.objects:
             if obj.name == "Base_verte":
-                self.game.green_platform_spawn = (obj.x, obj.y)
+                self.game.green_platform_spawn = obj.points
             elif obj.name == "Base_rouge":
-                self.game.red_platform_spawn = (obj.x, obj.y)
+                self.game.red_platform_spawn = obj.points
             elif obj.name == "Spawn_base_verte":
-                self.game.green_platform_zone = obj.points  # Récupérer les points du polygone
+                self.game.green_platform_zone = obj.points  
             elif obj.name == "Spawn_base_rouge":
                 self.game.red_platform_zone = obj.points  # Récupérer les points du polygone
         

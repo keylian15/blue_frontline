@@ -1,11 +1,13 @@
 import pygame
 import time
+from Class.OptionsMenu import OptionsMenu
 from Global import UNIT_CONFIGS
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
 from Class.units.Bateau import BateauRouge, BateauVert
 from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
 from Class.units.Paquebot import PaquebotRouge, PaquebotVert
 from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
+
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
     
@@ -70,6 +72,11 @@ class EventHandler:
             self.game.show_unit_popup = not self.game.show_unit_popup
             self.game.popup_selection = 0
             return True
+        
+        elif event.key == pygame.K_ESCAPE:
+            options_menu = OptionsMenu(self.game.screen)
+            options_menu.run()
+            return True
 
         # Entrée via le HUD (bandeau bas) pour spawn l'unité sélectionnée (coût géré dans Game.spawn_unit)
         if event.key == pygame.K_RETURN and not self.game.show_unit_popup:
@@ -109,6 +116,12 @@ class EventHandler:
         elif event.key == pygame.K_t:
             return True
 
+        if event.key == pygame.K_LEFT:
+            self.game.hud.popup_selection = (self.game.hud.popup_selection - 1) % len(self.game.hud.unit_names)
+            time.sleep(0.1)
+        if event.key == pygame.K_RIGHT:
+            self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
+            time.sleep(0.1)
 
         return True
     
