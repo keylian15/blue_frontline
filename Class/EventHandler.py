@@ -127,8 +127,7 @@ class EventHandler:
                 return True
 
 
-        elif self.game.show_unit_popup:
-            return self._handle_popup_navigation(event)
+
         
         elif event.key == pygame.K_UP:  
 
