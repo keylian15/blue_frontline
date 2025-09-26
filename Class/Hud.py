@@ -43,8 +43,10 @@ class Hud:
                 
 
         # Instance unique de ton compteur de pétrole
-        self.petrole = Petrole()
-        self.piece = Piece()
+        self.petrole_red = Petrole()
+        self.piece_red = Piece()
+        self.petrole_green = Petrole()
+        self.piece_green = Piece()
         self.timer = Timer()
 
     def switch(self):
@@ -75,11 +77,11 @@ class Hud:
         
         # Texte compteur pétrole
         font = pygame.font.Font(None, 30)
-        text = font.render(str(self.petrole.count), True, (0, 0, 0))
+        text = font.render(str(self.petrole_red.count if self.player_team == 'red' else self.petrole_green.count), True, (0, 0, 0))
         screen.blit(text, (self.width * 0.84 + 90, self.height * 0.9 + 30))
         
         #Texte compteur pièces
-        text = font.render(str(self.piece.count), True, (0, 0, 0))
+        text = font.render(str(self.piece_red.count if self.player_team == 'red' else self.piece_green.count), True, (0, 0, 0))
         screen.blit(text, (self.width * 0.84 + 90, self.height * 0.8 + 30))
         
         #Texte timer
