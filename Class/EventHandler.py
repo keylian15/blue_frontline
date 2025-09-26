@@ -1,6 +1,5 @@
 import pygame
 import time
-<<<<<<< Updated upstream
 from Class.OptionsMenu import OptionsMenu
 from Global import UNIT_CONFIGS
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
@@ -8,9 +7,6 @@ from Class.units.Bateau import BateauRouge, BateauVert
 from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
 from Class.units.Paquebot import PaquebotRouge, PaquebotVert
 from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
-=======
-from Class.options import OptionsMenu
->>>>>>> Stashed changes
 
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
@@ -57,30 +53,27 @@ class EventHandler:
     
     def _handle_keydown_events(self, event):
         """Gère les événements de touches pressées."""
-        if event.key == pygame.K_p:
-            # Toggle pause
-            self.game.paused = not self.game.paused
-            if self.game.paused:
-                # Mettre les timers en pause
+        if event.key == pygame.K_ESCAPE:
+            # Mettre le jeu en pause avant d'ouvrir le menu
+            if not self.game.paused:
+                self.game.paused = True
                 self.game.hud.timer.pause()
                 self.game.hud.petrole.pause()
-            else:
-                # Reprendre les timers
-                self.game.hud.timer.resume()
-                self.game.hud.petrole.resume()
-            print(f"Pause: {'ON' if self.game.paused else 'OFF'}")
+        
+            # Afficher le menu options
+            options_menu = OptionsMenu(self.game.screen)
+            options_menu.run()
+            
+            # Reprendre le jeu après la fermeture du menu
+            self.game.paused = False
+            self.game.hud.timer.resume()
+            self.game.hud.petrole.resume()
             return True
 
         if event.key == pygame.K_e:
             self.game.show_unit_popup = not self.game.show_unit_popup
             self.game.popup_selection = 0
             return True
-        
-        elif event.key == pygame.K_ESCAPE:
-            options_menu = OptionsMenu(self.game.screen)
-            options_menu.run()
-            return True
-<<<<<<< Updated upstream
 
         # Entrée via le HUD (bandeau bas) pour spawn l'unité sélectionnée (coût géré dans Game.spawn_unit)
         if event.key == pygame.K_RETURN and not self.game.show_unit_popup:
@@ -108,8 +101,6 @@ class EventHandler:
                     print(f"Unité produite: {unit_class.__name__}")
                 return True
 
-=======
->>>>>>> Stashed changes
 
         elif self.game.show_unit_popup:
             return self._handle_popup_navigation(event)

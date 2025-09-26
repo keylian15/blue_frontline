@@ -9,6 +9,9 @@ class OptionsMenu:
         self.font = pygame.font.SysFont(None, 40)
         self.title_font = pygame.font.SysFont(None, 60)
         
+        self.background = pygame.image.load(MENU_PATH).convert_alpha()
+        self.background = pygame.transform.scale(self.background, (self.WIDTH, self.HEIGHT))
+        
         self.anchor_img = pygame.image.load(ANCHOR_PATH).convert_alpha()
         self.anchor_img = pygame.transform.smoothscale(self.anchor_img, (30, 30))
         
@@ -82,10 +85,8 @@ class OptionsMenu:
 
     def draw(self):
         """Dessine le menu des options"""
-        # Fond semi-transparent
-        overlay = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 200))
-        self.screen.blit(overlay, (0, 0))
+        # Afficher le fond
+        self.screen.blit(self.background, (0, 0))
 
         # Titre centré
         title = "OPTIONS"
@@ -102,14 +103,13 @@ class OptionsMenu:
         # Récupération et affichage des contrôles depuis Global
         y_pos = 180
         controls_list = [
-            ("E", CONTROLS_DESCRIPTION["CREATE_UNIT"]),
-            ("ÉCHAP", CONTROLS_DESCRIPTION["OPTIONS"]),
-            ("FLÈCHE HAUT", CONTROLS_DESCRIPTION["VOLUME_UP"]),
-            ("FLÈCHE BAS", CONTROLS_DESCRIPTION["VOLUME_DOWN"]),
-            ("CLIC GAUCHE", CONTROLS_DESCRIPTION["SELECT_MOVE"]),
-            ("CLIC DROIT", CONTROLS_DESCRIPTION["QUANTUM_ISLAND"]),
-            ("MOLETTE HAUT", CONTROLS_DESCRIPTION["ZOOM_IN"]),
-            ("MOLETTE BAS", CONTROLS_DESCRIPTION["ZOOM_OUT"])
+            ("ENTREE", CtrlDescription[pygame.K_RETURN]),
+            ("ECHAP", CtrlDescription[pygame.K_ESCAPE]),
+            ("FLÈCHE HAUT", CtrlDescription[pygame.K_UP]),
+            ("FLÈCHE BAS", CtrlDescription[pygame.K_DOWN]),
+            ("Scroll Haut", CtrlDescription['Molette Haut']),
+            ("Scroll Bas", CtrlDescription['Molette Bas']),
+            ("Clic Gauche", CtrlDescription['Clic Gauche']),
         ]
 
         # Affichage des contrôles avec largeur adaptée

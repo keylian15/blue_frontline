@@ -310,14 +310,13 @@ BUTTON_MARGIN_BOTTOM = 40
 MENU_PATH = resource_path('assets/menu/menu.png')
 ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
 
-# === Contrôles du jeu ===
-dico_keys = {
-    "CREATE_UNIT": pygame.K_e,
-    "OPTIONS": pygame.K_ESCAPE,
-    "VOLUME_UP": pygame.K_UP,
-    "VOLUME_DOWN": pygame.K_DOWN,
-    "ZOOM_IN": 4,  # Molette haut
-    "ZOOM_OUT": 5  # Molette bas
+# === Contrôles et descriptions ===
+CtrlDescription = {
+    pygame.K_ESCAPE: "Options",
+    pygame.K_RETURN: "Créer unité",
+    pygame.K_DOWN: "Volume -",
+    pygame.K_UP: "Volume +",
+    "Clic Gauche": "Sélectionner / Déplacer",
+    "Molette Haut": "Zoom +",
+    "Molette Bas": "Zoom -"
 }
-
-
