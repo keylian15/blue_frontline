@@ -67,6 +67,11 @@ class EventHandler:
                 self.game.hud.timer.resume()
                 self.game.hud.petrole.resume()
             return True
+        
+        if event.key == pygame.K_j :
+            self.game.hud.toggle_popup_team()
+            self.game.hud.switch_team()
+            return True
 
         if event.key == pygame.K_e:
             self.game.show_unit_popup = not self.game.show_unit_popup
@@ -118,10 +123,10 @@ class EventHandler:
 
         if event.key == pygame.K_LEFT:
             self.game.hud.popup_selection = (self.game.hud.popup_selection - 1) % len(self.game.hud.unit_names)
-            time.sleep(0.1)
+            return True
         if event.key == pygame.K_RIGHT:
             self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
-            time.sleep(0.1)
+            return True
 
         return True
     
