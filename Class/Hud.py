@@ -87,11 +87,18 @@ class Hud:
         #Texte timer
         text = font.render(str(self.timer.get_time()), True, (0, 0, 0))
         screen.blit(text, (self.width * 0.5, self.height *0.05))
-
+        
+        if self.timer.maree_haute:
+            screen.blit(self.images['maree_haute'], (self.width * 0.6, self.height * 0.05))
+        else:
+            screen.blit(self.images['maree_basse'], (self.width * 0.6, self.height * 0.05))
+                
     def load_images(self):
         """Fonction permettant de charger les images du HUD"""
         piece = pygame.image.load(PIECE_IMAGE_PATH).convert_alpha()
         petrole = pygame.image.load(PETROLE_IMAGE_PATH).convert_alpha()
+        maree_haute = pygame.image.load(MAREE_HAUTE_IMAGE_PATH).convert_alpha()
+        marre_basse = pygame.image.load(MAREE_BASSE_IMAGE_PATH).convert_alpha()
         
         red_team = load_tileset(RED_TEAM_PATH)
         green_team = load_tileset(GREEN_TEAM_PATH)
@@ -128,7 +135,9 @@ class Hud:
             'green_paquebot': green_paquebot,
             'green_eclaireur': green_eclaireur,
             'green_sousmarin': green_sousmarin,
-            'green_platforme': green_platforme
+            'green_platforme': green_platforme,
+            'maree_haute': maree_haute,
+            'maree_basse': marre_basse
         }
         return images
     
@@ -267,3 +276,4 @@ class Hud:
     def switch_team(self):
         """Change l'équipe du joueur"""
         self.player_team = 'green' if self.player_team == 'red' else 'red'
+        
