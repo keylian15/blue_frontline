@@ -54,3 +54,4 @@ class Timer:
         # Relancer le timer avec la vitesse par défaut
         self.current_speed = TIME_SPEED
         self.set_speed(self.current_speed)
+        
