@@ -150,7 +150,7 @@ class Game :
             cost = UNIT_CONFIGS.get(config_key, {}).get('cost') if config_key else None
             if cost is None:
                 return None
-            if self.hud.petrole.count < cost:
+            if self.hud.petrole_red.count < cost or self.hud.petrole_green.count < cost:
                 return None
             
             # Générer le point de spawn dans la zone définie par le polygone
@@ -168,8 +168,12 @@ class Game :
             self.group.add(unit)
 
             # Débiter le pétrole après création réussie
-            self.hud.petrole.count -= cost
-            print(f"Pétrole débité: -{cost}. Nouveau solde: {self.hud.petrole.count}")
+            if self.hud.player_team == "red" :
+                self.hud.petrole_red.count -= cost
+                print(f"Pétrole débité: -{cost}. Nouveau solde: {self.hud.petrole.count}")
+            else :
+                self.hud.petrole_green.count -= cost
+                print(f"Pétrole débité: -{cost}. Nouveau solde: {self.hud.petrole.count}")
 
             return unit
         #Gestion erreurs

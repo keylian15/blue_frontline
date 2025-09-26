@@ -22,7 +22,8 @@ class EventHandler:
                 return False
 
             # Gestion des événements HUD
-            self.game.hud.petrole.handle_event(event)
+            self.game.hud.petrole_green.handle_event(event)
+            self.game.hud.petrole_red.handle_event(event)
             self.game.hud.timer.handle_event(event)
 
             # Gestion du changement de marée                   
