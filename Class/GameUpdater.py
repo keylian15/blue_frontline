@@ -20,7 +20,11 @@ class GameUpdater:
         
         # Mettre à jour les unités
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
+        self.game.setObstacles()
         for unit in self.game.units:
+            # Met a jour les obstacles 
+            if type(unit).__name__ != "PlateformePetroliere" : 
+                unit.updateObstacle(self.game.obstacles)
             # Mettre à jour l'unité avec toutes les informations nécessaires
             unit.update(dt, self.game.combat_system, self.game.screen, camera_offset, self.game.units)
             
@@ -29,6 +33,7 @@ class GameUpdater:
                 unit.is_selected = (unit == self.game.selected_unit)
         
         # Mettre à jour le système de combat
+        
         if hasattr(self.game, 'combat_system'):
             self.game.combat_system.update(dt)
         

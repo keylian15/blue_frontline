@@ -36,12 +36,6 @@ class Chaloupe(Unit):
         self.is_moving = False
         self.target_position = None
         
-    def move_to_position(self, target_x, target_y):
-        """Déplace la chaloupe vers une position cible."""
-        self.target_position = (target_x, target_y)
-        self.move_to(target_x, target_y, self.max_speed)
-        self.is_moving = True
-    
     def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
         """Met à jour la chaloupe."""
         # Appeler la mise à jour de la classe parent
@@ -57,42 +51,6 @@ class Chaloupe(Unit):
                 self.stop()
                 self.is_moving = False
                 self.target_position = None
-    
-    def get_info(self):
-        """Retourne les informations de l'unité."""
-        return {
-            "name": self.unit_name,
-            "type": self.unit_type,
-            "team": self.team,
-            "health": f"{self.current_health}/{self.max_health}",
-            "cost": self.cost,
-            "speed": self.max_speed,
-            "range": self.range,
-            "damage": self.damage,
-            "fire_rate": self.fire_rate,
-            "position": (int(self.position[0]), int(self.position[1])),
-            "is_alive": self.is_alive,
-            "is_moving": self.is_moving,
-            "is_selected": self.is_selected,
-            "enemies_in_range": len(self.enemies_in_range)
-        }
-    
-    @staticmethod
-    def can_build():
-        """Méthode statique pour vérifier si on peut construire une chaloupe."""
-        # Cette méthode peut être utilisée pour vérifier les ressources
-        # Retourne True si on a assez de pétrole (à implémenter avec le système de ressources)
-        return True  # Pour l'instant, toujours possible
-    
-    @staticmethod
-    def get_build_requirements():
-        """Retourne les exigences pour construire cette unité."""
-        config = UNIT_CONFIGS["chaloupe"]
-        return {
-            "cost": config["cost"],
-            "build_time": config["build_time"],
-            "required_building": None  # Pas de bâtiment requis pour la chaloupe
-        }
 
 # Classes d'alias pour la compatibilité avec l'ancien code
 class ChaloupeRouge(Chaloupe):

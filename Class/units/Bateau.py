@@ -36,13 +36,7 @@ class Bateau(Unit):
         # État de mouvement
         self.is_moving = False
         self.target_position = None
-        
-    def move_to_position(self, target_x, target_y):
-        """Déplace le bateau vers une position cible."""
-        self.target_position = (target_x, target_y)
-        self.move_to(target_x, target_y, self.max_speed)
-        self.is_moving = True
-    
+            
     def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
         """Met à jour le bateau."""
         # Appeler la mise à jour de la classe parent
@@ -59,24 +53,6 @@ class Bateau(Unit):
                 self.is_moving = False
                 self.target_position = None
     
-    def get_info(self):
-        """Retourne les informations de l'unité."""
-        return {
-            "name": self.unit_name,
-            "type": self.unit_type,
-            "team": self.team,
-            "health": f"{self.current_health}/{self.max_health}",
-            "cost": self.cost,
-            "speed": self.max_speed,
-            "range": self.range,
-            "damage": self.damage,
-            "fire_rate": self.fire_rate,
-            "position": (int(self.position[0]), int(self.position[1])),
-            "is_alive": self.is_alive,
-            "is_moving": self.is_moving,
-            "is_selected": self.is_selected,
-            "enemies_in_range": len(self.enemies_in_range)
-        }
 
 # Classes d'alias pour la compatibilité avec l'ancien code
 class BateauRouge(Bateau):

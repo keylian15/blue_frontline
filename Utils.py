@@ -43,7 +43,7 @@ def random_point_in_polygon(points):
         if poly.contains(p):
             return (p.x, p.y)
 
-def point_in_polygon(polygon_points, test_point):
+def point_in_polygon(polygon_points:list[tuple], test_point:tuple):
     """
     Vérifie si un point est dans un polygone.
     polygon_points : liste de tuples (x, y)
@@ -52,3 +52,14 @@ def point_in_polygon(polygon_points, test_point):
     poly = Polygon(polygon_points)
     point = Point(test_point)
     return poly.contains(point)
+
+def point_in_many_polygons(polygons_points:list[list[tuple]], test_point:tuple):
+    """
+    Vérifie si un point est dans un polygone.
+    polygons_points : liste de listes de tuples (x, y)
+    test_point : tuple (x, y)
+    """
+    for polygon_points in polygons_points:
+        if point_in_polygon(polygon_points, test_point):
+            return True
+    return False

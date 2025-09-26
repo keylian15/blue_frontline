@@ -2,7 +2,7 @@ import pygame
 import time
 import math
 from Global import *
-from Utils import load_tileset
+from Utils import load_tileset, point_in_many_polygons
 
 class Unit(pygame.sprite.Sprite):
     """Classe de base pour toutes les unités du jeu."""
@@ -47,6 +47,32 @@ class Unit(pygame.sprite.Sprite):
             self.range_color = config.get("range_color", {}).get(team, (255, 0, 0, 50))
         else:
             self.range_color = (255, 0, 0, 50) if team == "red" else (0, 255, 0, 50)
+                        
+        vitesse = {
+            "haute" : { 
+                "Collision" :{
+                    "Collision" : 0,
+                    "mh_ile" : 0,
+                    "mb_ile" : 1, 
+                    },
+                "eau_peu_profonde" : { 
+                    "mb_ile" : 2,
+                    },
+                "defaut" : 2 
+                }, 
+            "basse" : { 
+                "Collision" : { 
+                    "Collision" : 0, 
+                    "mh_ile" : 0, 
+                    "mb_ile" : 0, 
+                    }, 
+                "eau_peu_profonde" : { 
+                    "mb_ile" : 1, 
+                    }, 
+                "defaut" : 2 
+                }, 
+            }
+
     
     # Chaque unité peut avoir sa propre tuile, pour chaque équipe, et tout est configurable
     def load_sprite_from_tileset(self, team, unit_type):
@@ -90,18 +116,25 @@ class Unit(pygame.sprite.Sprite):
         # Mise à jour du rectangle de collision
         self.rect.center = (int(self.position[0]), int(self.position[1]))
     
+    def updateObstacle(self, obstacles):
+        """Mise à jour de l'obstacle de l'unité."""
+        self.obstacles = obstacles
+    
+    
     def move(self, dt):
-        """Déplace l'unité selon sa vitesse."""
-        self.position[0] += self.speed_x * dt
-        self.position[1] += self.speed_y * dt
-    
-    def set_velocity(self, vx, vy):
-        """Définit la vitesse de l'unité."""
-        self.speed_x = vx
-        self.speed_y = vy
-    
+        """Déplace l'unité selon sa vitesse. Appelé a chaque tick"""
+        # Verifier que le prochain déplacement n'est pas une ile.
+        # On prend la prochaine position
+        next_position = (self.position[0] + self.speed_x * dt, self.position[1] + self.speed_y * dt)
+
+        # Si la prochaine position est dans une ile, on arrête le mouvement
+        if point_in_many_polygons(self.obstacles, next_position):
+            self.stop()
+        else: 
+            self.position = next_position
+        
     def move_to(self, target_x, target_y, speed):
-        """Déplace l'unité vers une position cible à une vitesse donnée."""
+        """Fonction permettant de mettre a jour la vitesse pour les déplacements."""
         dx = target_x - self.position[0]
         dy = target_y - self.position[1]
         distance = (dx**2 + dy**2)**0.5
@@ -111,9 +144,14 @@ class Unit(pygame.sprite.Sprite):
             self.speed_x = (dx / distance) * speed
             self.speed_y = (dy / distance) * speed
         else:
-            self.speed_x = 0
-            self.speed_y = 0
-    
+            self.stop()
+            
+    def move_to_position(self, target:tuple, game):
+        """Fonction permettant de mettre les mécanismes de déplacements."""
+        self.target_position = target                       # On défini la position cible
+        self.move_to(target[0], target[1], self.max_speed)  # On va initialiser les déplacements de l'unité
+        self.is_moving = True                               # On indique que l'unité est en train de bouger
+        
     def stop(self):
         """Arrête le mouvement de l'unité."""
         self.speed_x = 0

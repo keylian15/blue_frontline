@@ -63,7 +63,27 @@ class Game :
         self.winner_team = None
         self.victory_font = pygame.font.Font(None, 72)
         self.button_font = pygame.font.Font(None, 36)
-            
+        
+        # Obstacles
+        self.obstacles = []
+        
+    def setObstacles(self):
+        """Fonction permettant de récupérer les obstacles du jeu."""
+        # On récupére les objets de tiled.
+        self.obstacles= []
+        
+        layer_name = "Collision_Haute" if self.hud.timer.maree_haute else "Collision_Basse"
+        layer = next((l for l in self.tmx_data.layers if l.name == layer_name), None)
+        if not layer:
+            return
+        
+        for obj in layer:
+            if obj.name == "Collision" : # Si l'objet est une collision 
+                if hasattr(obj, 'as_points') : 
+                    self.obstacles.append(obj.as_points)
+                elif hasattr(obj, 'points') :
+                    self.obstacles.append(obj.points) 
+
     def quantique(self):
         """ Génération de l'île quantique pour toutes les îles quantique dans la map."""
         # Initialiser la liste des îles si elle n'existe pas
@@ -106,8 +126,6 @@ class Game :
                 # Ajouter à la liste ET au groupe
                 self.quantum_islands.append(island_sprite)
                 self.group.add(island_sprite)
-
-
     
     def spawn_unit(self, unit_class):
         """Fait apparaître une unité près de la plateforme correspondant à son équipe, en gérant le coût en pétrole.
@@ -428,7 +446,6 @@ class Game :
         print("Retour au menu principal...")
         self.game_running = False
 
-
     def run(self): 
         """Boucle principale du jeu."""
         clock = pygame.time.Clock()
@@ -445,8 +462,7 @@ class Game :
             if not self.paused:
                 self.input_manager.handle_continuous_input()
             
-            # Mise à jour des systèmes
-            if not self.paused:
+                # Mise à jour des systèmes
                 self.updater.update_systems(dt)
             
             # Rendu

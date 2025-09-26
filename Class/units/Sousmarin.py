@@ -36,13 +36,7 @@ class Sousmarin(Unit):
         # État de mouvement
         self.is_moving = False
         self.target_position = None
-        
-    def move_to_position(self, target_x, target_y):
-        """Déplace le sous-marin vers une position cible."""
-        self.target_position = (target_x, target_y)
-        self.move_to(target_x, target_y, self.max_speed)
-        self.is_moving = True
-    
+            
     def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
         """Met à jour le sous-marin."""
         # Appeler la mise à jour de la classe parent
@@ -87,46 +81,6 @@ class Sousmarin(Unit):
             print(f"Mine placée par {self.unit_name} à la position ({x}, {y})")
             return True
         return False
-
-    def get_info(self):
-        """Retourne les informations de l'unité."""
-        info = {
-            "name": self.unit_name,
-            "type": self.unit_type,
-            "team": self.team,
-            "health": f"{self.current_health}/{self.max_health}",
-            "cost": self.cost,
-            "speed": self.max_speed,
-            "range": self.range,
-            "damage": self.damage,
-            "fire_rate": self.fire_rate,
-            "position": (int(self.position[0]), int(self.position[1])),
-            "is_alive": self.is_alive,
-            "is_moving": self.is_moving
-        }
-        
-        # Ajouter les capacités spéciales s'il y en a
-        if self.special_ability:
-            info["special_ability"] = self.special_ability
-            
-        return info
-    
-    @staticmethod
-    def can_build():
-        """Méthode statique pour vérifier si on peut construire un sous-marin."""
-        # Cette méthode peut être utilisée pour vérifier les ressources
-        # Retourne True si on a assez de pétrole (à implémenter avec le système de ressources)
-        return True  # Pour l'instant, toujours possible
-    
-    @staticmethod
-    def get_build_requirements():
-        """Retourne les exigences pour construire cette unité."""
-        config = UNIT_CONFIGS["sousmarin"]
-        return {
-            "cost": config["cost"],
-            "build_time": config["build_time"],
-            "required_building": None  # Pas de bâtiment requis pour le sous-marin
-        }
 
 # Classes d'alias pour la compatibilité avec l'ancien code
 class SousmarinRouge(Sousmarin):

@@ -161,8 +161,7 @@ class EventHandler:
                 self.game.select_unit(clicked_unit)
             elif self.game.selected_unit and self.game.selected_unit.is_alive:
                 # Déplacer l'unité sélectionnée vers la position cliquée
-                if hasattr(self.game.selected_unit, 'move_to_position'):
-                    self.game.selected_unit.move_to_position(world_x, world_y)
+                self.game.selected_unit.move_to_position((world_x, world_y), self.game)
             else:
                 self.game.select_unit(None)
         
