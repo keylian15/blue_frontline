@@ -13,6 +13,7 @@ class Hud:
         self.width = screen.get_width()
         self.height = screen.get_height()
         self.screen = screen
+        self.player_team = 'red'  # Équipe du joueur, 'red' ou 'green'
         
         # Couleur de fond du HUD
         self.hud_color = (198, 198, 198)
@@ -42,8 +43,10 @@ class Hud:
                 
 
         # Instance unique de ton compteur de pétrole
-        self.petrole = Petrole()
-        self.piece = Piece()
+        self.petrole_red = Petrole()
+        self.piece_red = Piece()
+        self.petrole_green = Petrole()
+        self.piece_green = Piece()
         self.timer = Timer()
 
     def switch(self):
@@ -60,12 +63,11 @@ class Hud:
         #affichage de la selection des troupes
         # Popup aligné aux icônes
         self.draw_unit_popup()
-        # screen.blit(self.images['green_chaloupe'], (self.width * 0.7, self.height * 0.9))
-        # screen.blit(self.images['green_bateau'], (self.width * 0.8, self.height * 0.9))
-        # screen.blit(self.images['green_paquebot'], (self.width * 0.9, self.height * 0.9))
-        # screen.blit(self.images['green_eclaireur'], (self.width * 0.1, self.height * 0.9))
-        # screen.blit(self.images['green_sousmarin'], (self.width * 0.2, self.height * 0.9))
-        # screen.blit(self.images['green_platforme'], (self.width * 0.3, self.height * 0.9))
+
+        team_text = "Équipe: " + ("Rouge" if self.player_team == 'red' else "Verte")
+        team_color = (255, 0, 0) if self.player_team == 'red' else (0, 255, 0)
+        team_surface = self.font.render(team_text, True, team_color)
+        screen.blit(team_surface, (self.width * 0.05, self.height * 0.05))
         
         
         
@@ -75,21 +77,30 @@ class Hud:
         
         # Texte compteur pétrole
         font = pygame.font.Font(None, 30)
-        text = font.render(str(self.petrole.count), True, (0, 0, 0))
+        text = font.render(str(self.petrole_red.count if self.player_team == 'red' else self.petrole_green.count), True, (0, 0, 0))
         screen.blit(text, (self.width * 0.84 + 90, self.height * 0.9 + 30))
         
         #Texte compteur pièces
-        text = font.render(str(self.piece.count), True, (0, 0, 0))
+        text = font.render(str(self.piece_red.count if self.player_team == 'red' else self.piece_green.count), True, (0, 0, 0))
         screen.blit(text, (self.width * 0.84 + 90, self.height * 0.8 + 30))
         
-        #Texte timer
-        text = font.render(str(self.timer.get_time()), True, (0, 0, 0))
+        #Texte timer avec vitesse
+        speed_multiplier = self.timer.get_speed_multiplier()
+        timer_text = f"{self.timer.get_time()} (x{speed_multiplier})"
+        text = font.render(timer_text, True, (0, 0, 0))
         screen.blit(text, (self.width * 0.5, self.height *0.05))
-
+        
+        if self.timer.maree_haute:
+            screen.blit(self.images['maree_haute'], (self.width * 0.6, self.height * 0.05))
+        else:
+            screen.blit(self.images['maree_basse'], (self.width * 0.6, self.height * 0.05))
+                
     def load_images(self):
         """Fonction permettant de charger les images du HUD"""
         piece = pygame.image.load(PIECE_IMAGE_PATH).convert_alpha()
         petrole = pygame.image.load(PETROLE_IMAGE_PATH).convert_alpha()
+        maree_haute = pygame.image.load(MAREE_HAUTE_IMAGE_PATH).convert_alpha()
+        marre_basse = pygame.image.load(MAREE_BASSE_IMAGE_PATH).convert_alpha()
         
         red_team = load_tileset(RED_TEAM_PATH)
         green_team = load_tileset(GREEN_TEAM_PATH)
@@ -126,7 +137,9 @@ class Hud:
             'green_paquebot': green_paquebot,
             'green_eclaireur': green_eclaireur,
             'green_sousmarin': green_sousmarin,
-            'green_platforme': green_platforme
+            'green_platforme': green_platforme,
+            'maree_haute': maree_haute,
+            'maree_basse': marre_basse
         }
         return images
     
@@ -260,3 +273,9 @@ class Hud:
     def toggle_popup_team(self):
         """Bascule l'équipe affichée dans le popup (rouge <-> vert)."""
         self.popup_team = 'green' if self.popup_team == 'red' else 'red'
+        
+        
+    def switch_team(self):
+        """Change l'équipe du joueur"""
+        self.player_team = 'green' if self.player_team == 'red' else 'red'
+        

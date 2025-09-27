@@ -22,7 +22,8 @@ class EventHandler:
                 return False
 
             # Gestion des événements HUD
-            self.game.hud.petrole.handle_event(event)
+            self.game.hud.petrole_green.handle_event(event)
+            self.game.hud.petrole_red.handle_event(event)
             self.game.hud.timer.handle_event(event)
 
             # Gestion du changement de marée                   
@@ -66,6 +67,11 @@ class EventHandler:
                 # Reprendre les timers
                 self.game.hud.timer.resume()
                 self.game.hud.petrole.resume()
+            return True
+        
+        if event.key == pygame.K_j :
+            self.game.hud.toggle_popup_team()
+            self.game.hud.switch_team()
             return True
 
         if event.key == pygame.K_e:
@@ -118,11 +124,18 @@ class EventHandler:
 
         if event.key == pygame.K_LEFT:
             self.game.hud.popup_selection = (self.game.hud.popup_selection - 1) % len(self.game.hud.unit_names)
-            time.sleep(0.1)
+            return True
         if event.key == pygame.K_RIGHT:
             self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
-            time.sleep(0.1)
-
+            return True
+        
+        if event.key == pygame.K_v:
+            # Cycler la vitesse du temps
+            new_speed = self.game.hud.timer.cycle_speed()
+            # Synchroniser la vitesse du pétrole avec le timer
+            self.game.hud.petrole_red.set_speed(new_speed)
+            self.game.hud.petrole_green.set_speed(new_speed)
+            return True
         return True
     
     
