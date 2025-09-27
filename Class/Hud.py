@@ -84,8 +84,10 @@ class Hud:
         text = font.render(str(self.piece_red.count if self.player_team == 'red' else self.piece_green.count), True, (0, 0, 0))
         screen.blit(text, (self.width * 0.84 + 90, self.height * 0.8 + 30))
         
-        #Texte timer
-        text = font.render(str(self.timer.get_time()), True, (0, 0, 0))
+        #Texte timer avec vitesse
+        speed_multiplier = self.timer.get_speed_multiplier()
+        timer_text = f"{self.timer.get_time()} (x{speed_multiplier})"
+        text = font.render(timer_text, True, (0, 0, 0))
         screen.blit(text, (self.width * 0.5, self.height *0.05))
         
         if self.timer.maree_haute:

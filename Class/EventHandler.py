@@ -128,7 +128,14 @@ class EventHandler:
         if event.key == pygame.K_RIGHT:
             self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
             return True
-
+        
+        if event.key == pygame.K_v:
+            # Cycler la vitesse du temps
+            new_speed = self.game.hud.timer.cycle_speed()
+            # Synchroniser la vitesse du pétrole avec le timer
+            self.game.hud.petrole_red.set_speed(new_speed)
+            self.game.hud.petrole_green.set_speed(new_speed)
+            return True
         return True
     
     

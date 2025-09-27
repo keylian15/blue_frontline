@@ -1,5 +1,5 @@
 import pygame
-from Global import TIME_MAREE, TIME_SPEED, TIME_STEP, TIMER_EVENT
+from Global import TIME_MAREE, TIME_SPEED, TIME_STEP, TIMER_EVENT, TIME_SPEEDS
 
 class Timer:
     def __init__(self):
@@ -7,7 +7,8 @@ class Timer:
         self.maree_changed = False  # Flag pour détecter un changement
         self.count = 0
         self.TIMER_EVENT = TIMER_EVENT
-        self.current_speed = TIME_SPEED
+        self.current_speed = TIME_SPEEDS[0]  # Commencer à x1
+        self.speed_index = 0  # Index dans TIME_SPEEDS
         pygame.time.set_timer(self.TIMER_EVENT, int(TIME_STEP / self.current_speed))
 
     def handle_event(self, event):
@@ -54,4 +55,15 @@ class Timer:
         # Relancer le timer avec la vitesse par défaut
         self.current_speed = TIME_SPEED
         self.set_speed(self.current_speed)
+
+    def cycle_speed(self):
+        """Passe à la vitesse suivante dans le cycle x1 -> x2 -> x4 -> x8 -> x1"""
+        self.speed_index = (self.speed_index + 1) % len(TIME_SPEEDS)
+        self.current_speed = TIME_SPEEDS[self.speed_index]
+        self.set_speed(self.current_speed)
+        return self.current_speed
+
+    def get_speed_multiplier(self):
+        """Retourne le multiplicateur de vitesse actuel"""
+        return self.current_speed
         
