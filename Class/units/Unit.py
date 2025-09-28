@@ -112,14 +112,6 @@ class Unit(pygame.sprite.Sprite):
         # Mise à jour du rectangle de collision
         self.rect.center = (int(self.position[0]), int(self.position[1]))
     
-    def updateObstacle(self, obstacles):
-        """Mise à jour de l'obstacle de l'unité."""
-        self.obstacles = obstacles
-    
-    def updateQuantique(self, quantique):
-        """Mise à jour des iles quantiques de l'unité."""
-        self.quantique = quantique
-    
     def check_area(self, dt):
         """Fonction permettant de verifier la zone dans laquelle l'unité veut aller.
         Si c'est une zone accéssible elle y va sinon elle s'arrete."""
@@ -127,17 +119,30 @@ class Unit(pygame.sprite.Sprite):
         next_position = (self.position[0] + self.speed_x * dt, self.position[1] + self.speed_y * dt)
         
         # Si la prochaine position est dans une ile, on arrête le mouvement
-        if point_in_many_polygons(self.obstacles, next_position):
+        if point_in_many_polygons(self.game.obstacles, next_position):
             self.stop()
         else:
             if self.type == "eclaireur" : 
                 # On vérifie si le prochaine position est dans une zone quantique non découverte
-                result = point_in_many_polygons(self.quantique, next_position) 
+                result = point_in_many_polygons(self.game.quantique_area_hidden, next_position) 
                 if result :
-                    print(result[1])
-                    print("Zone quantique")
+                    # Récupérer l'index de self.game.quantique_area correspondant à l'île
+                    index = self.game.quantique_area.index(result[1])
+                    if index == 0 : # L'ile quantique n°4 est l'index 0 car la plus haute sur Tiled.
+                        index = 4 
+                    self.game.initializer.toggle_layer('fog' + str(index), False) # On enléve le calque de brouillard
+                    
+                    self.game.quantique_area_hidden.remove(result[1]) # On enlève l'ile de la liste des iles cachées
+                    self.game.quantique_area_name.append('ile_quantique_' + str(index)) # On ajoute le nom de l'ile dans la liste des iles quantiques
+                    
+                    
+                    self.game.renderer.refresh_map() # On rafraichit le rendu
+                    self.game.refresh_all_references(self.game) # On met a jour la map
+                    
+                    self.game.quantique('ile_quantique_' + str(index)) # On appel la fonction quantique du jeu pour activer le changement
+                    
             
-            self.position = next_position
+                self.position = next_position
             
     def move(self, dt):
         """Déplace l'unité selon sa vitesse. Appelé a chaque tick"""
@@ -175,15 +180,7 @@ class Unit(pygame.sprite.Sprite):
                     self.is_moving = False
                     self.target_position = None
                 
-                # Verifier que le prochain déplacement n'est pas une ile.
-                # On prend la prochaine position
-                next_position = (self.position[0] + self.speed_x * dt, self.position[1] + self.speed_y * dt)
-
-                # Si la prochaine position est dans une ile, on arrête le mouvement
-                if point_in_many_polygons(self.obstacles, next_position):
-                    self.stop()
-                else: 
-                    self.position = next_position
+                self.check_area()
         
     def move_to(self, target_x, target_y, speed):
         """Fonction permettant de mettre a jour la vitesse pour les déplacements."""

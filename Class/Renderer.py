@@ -31,9 +31,9 @@ class Renderer:
         # Créer un nouveau PyscrollGroup
         self.game.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=1)
                 
-        # Remettre les iles quantiques SI BESOIN
-        # if self.game.hud.timer.maree_haute:
-            # self._restore_quantum_islands()
+        # Remettre les iles quantiques
+        if self.game.hud.timer.maree_haute:
+            self._restore_quantum_islands()
 
         if self.game.units:
             for unit in self.game.units:
@@ -43,12 +43,12 @@ class Renderer:
         # Marquer comme terminé
         self.map_needs_refresh = False
 
-    # def _restore_quantum_islands(self):
-    #     """Réstaure les iles quantiques SI BESOIN."""
-    #     if hasattr(self.game, 'quantum_islands'):
-    #         for island in self.game.quantum_islands:
-    #             if island not in self.game.group.sprites():
-    #                 self.game.group.add(island)
+    def _restore_quantum_islands(self):
+        """Réstaure les iles quantiques."""
+        if hasattr(self.game, 'quantum_islands'):
+            for island in self.game.quantum_islands:
+                if island not in self.game.group.sprites():
+                    self.game.group.add(island)
 
     def render(self):
         """Effectue tout le rendu du jeu."""
