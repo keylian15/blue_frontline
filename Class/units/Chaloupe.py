@@ -1,23 +1,19 @@
-import pygame
 from Class.units.Unit import Unit
 from Global import UNIT_CONFIGS
 
 class Chaloupe(Unit):
     """Classe unifiée pour les unités Chaloupe (Rouge et Verte)."""
     
-    def __init__(self, x, y, team="red"):
+    def __init__(self, game, team):
         # Récupérer la configuration depuis Global.py
         config = UNIT_CONFIGS["chaloupe"]
         
-        # Déterminer le chemin de l'image selon l'équipe
-        image_path = config["image_paths"][team]
-        
         # Initialiser avec l'image appropriée et le type d'unité
-        super().__init__(x, y, image_path, team=team, unit_type="chaloupe")
+        super().__init__(game, team=team, unit_type="chaloupe")
         
         # === Spécifications de la Chaloupe depuis Global.py ===
         self.cost = config["cost"]
-        self.build_time = config["build_time"]
+        
         self.max_speed = config["max_speed"]
         self.max_health = config["max_health"]
         self.current_health = self.max_health
@@ -46,9 +42,9 @@ class Chaloupe(Unit):
             self.draw_range(screen, camera_offset)# Classes d'alias pour la compatibilité avec l'ancien code
             
 class ChaloupeRouge(Chaloupe):
-    def __init__(self, x, y):
-        super().__init__(x, y, team="red")
+    def __init__(self, game):
+        super().__init__(game, team="red")
 
 class ChaloupeVerte(Chaloupe):
-    def __init__(self, x, y):
-        super().__init__(x, y, team="green")
+    def __init__(self, game):
+        super().__init__(game, team="green")

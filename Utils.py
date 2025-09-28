@@ -53,13 +53,14 @@ def point_in_polygon(polygon_points:list[tuple], test_point:tuple):
     point = Point(test_point)
     return poly.contains(point)
 
-def point_in_many_polygons(polygons_points:list[list[tuple]], test_point:tuple):
+def point_in_many_polygons(polygons_points:list[list[tuple]], test_point:tuple) : 
     """
     Vérifie si un point est dans un polygone.
     polygons_points : liste de listes de tuples (x, y)
     test_point : tuple (x, y)
+    renvoi un booléen et les points du polygone dans lequel le point est
     """
     for polygon_points in polygons_points:
         if point_in_polygon(polygon_points, test_point):
-            return True
+            return True, polygon_points
     return False

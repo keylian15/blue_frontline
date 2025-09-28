@@ -66,7 +66,9 @@ class Game :
         
         # Obstacles
         self.setObstacles()
-        
+        # Zone quantiques
+        self.setQuantiqueArea()
+
     def setObstacles(self):
         """Fonction permettant de récupérer les obstacles du jeu."""
         # On récupére les collisions générales.
@@ -83,6 +85,15 @@ class Game :
                     self.obstacles.append(obj.points) 
                 elif hasattr(obj, 'as_points') : 
                     self.obstacles.append(obj.as_points)
+                    
+    def setQuantiqueArea(self):
+        """Fonction permettant de récupérer les zones quantique du jeu."""
+        self.quantique_area = []
+        self.quantique_area_hidden = []
+        for obj in self.tmx_data.objects:
+            if obj.name.startswith("ile_quantique_"):
+                self.quantique_area.append(obj.as_points)
+                self.quantique_area_hidden.append(obj.as_points)
 
     def quantique(self):
         """ Génération de l'île quantique pour toutes les îles quantique dans la map."""
@@ -126,117 +137,6 @@ class Game :
                 # Ajouter à la liste ET au groupe
                 self.quantum_islands.append(island_sprite)
                 self.group.add(island_sprite)
-    
-    def spawn_unit(self, unit_class):
-        """Fait apparaître une unité près de la plateforme correspondant à son équipe, en gérant le coût en pétrole.
-
-        Retourne l'unité créée si succès, sinon None (pétrole insuffisant ou erreur).
-        """
-        try:
-            # Bloquer la production si le jeu est en pause
-            if getattr(self, 'paused', False):
-                return None
-            
-            # Déterminer l'équipe de l'unité à partir du nom de la classe
-            if "Rouge" in unit_class.__name__:
-                team = "red"
-                base_spawn = self.red_platform_spawn
-            else :
-                team = "green"
-                base_spawn = self.green_platform_spawn
-
-            # Déterminer la clé de config (type d'unité) depuis le nom de la classe
-            name_lower = unit_class.__name__.lower()
-            if "chaloupe" in name_lower:
-                config_key = 'chaloupe'
-            elif "paquebot" in name_lower:
-                config_key = 'paquebot'
-            elif "eclaireur" in name_lower or "éclaireur" in unit_class.__name__:
-                config_key = 'eclaireur'
-            elif "sousmarin" in name_lower or "sous_marin" in name_lower or "sousmarin" in name_lower:
-                config_key = 'sousmarin'
-            elif "bateau" in name_lower:
-                config_key = 'bateau'
-            else:
-                config_key = None
-
-            # Vérifier le coût en pétrole
-            cost = UNIT_CONFIGS.get(config_key, {}).get('cost') if config_key else None
-            if cost is None:
-                return None
-            if self.hud.petrole.count < cost:
-                return None
-            
-            # Générer le point de spawn dans la zone définie par le polygone
-            if team == "red":
-                spawn_x, spawn_y = random_point_in_polygon(self.red_platform_zone)
-            else:
-                spawn_x, spawn_y = random_point_in_polygon(self.green_platform_zone)
-            
-            # Créer l'unité à la position de spawn calculée
-            unit = unit_class(spawn_x, spawn_y)
-
-            # Ajouter au système de combat et au groupe de sprites
-            self.combat_system.add_unit(unit)
-            self.units.append(unit)
-            self.group.add(unit)
-
-            # Débiter le pétrole après création réussie
-            self.hud.petrole.count -= cost
-
-            return unit
-        #Gestion erreurs
-        except Exception as e:
-            import traceback
-            traceback.print_exc()
-            return None
-
-    def draw_unit_popup(self):
-        """Dessine le popup de sélection des unités."""
-        if not self.show_unit_popup:
-            return
-        
-        # Dimensions du popup
-        popup_width = 300
-        popup_height = len(self.unit_classes) * 30 + 40
-        popup_x = (self.screen.get_width() - popup_width) // 2
-        popup_y = (self.screen.get_height() - popup_height) // 2
-        
-        # Fond du popup
-        popup_surface = pygame.Surface((popup_width, popup_height), pygame.SRCALPHA)
-        popup_surface.fill((0, 0, 0, 180))  # Fond noir semi-transparent
-        pygame.draw.rect(popup_surface, (255, 255, 255), popup_surface.get_rect(), 2)
-        
-        # Titre
-        title_text = self.font.render("Sélectionner une unité (E pour fermer)", True, (255, 255, 255))
-        popup_surface.blit(title_text, (10, 10))
-        
-        # Liste des unités
-        for i, (unit_name, unit_class) in enumerate(self.unit_classes):
-            y_pos = 40 + i * 30
-            color = (255, 255, 0) if i == self.popup_selection else (255, 255, 255)
-            
-            # Flèche pour l'unité sélectionnée
-            if i == self.popup_selection:
-                arrow_text = self.font.render(">", True, color)
-                popup_surface.blit(arrow_text, (10, y_pos))
-            
-            # Nom de l'unité
-            unit_text = self.font.render(unit_name, True, color)
-            popup_surface.blit(unit_text, (25, y_pos))
-        
-        # Instructions
-        instructions = [
-            "Flèches: Naviguer",
-            "Entrée: Sélectionner",
-            "E: Fermer"
-        ]
-        for i, instruction in enumerate(instructions):
-            inst_text = self.font.render(instruction, True, (200, 200, 200))
-            popup_surface.blit(inst_text, (10, popup_height - 60 + i * 20))
-        
-        # Afficher le popup
-        self.screen.blit(popup_surface, (popup_x, popup_y))
 
     def find_unit_at_position(self, world_x, world_y):
         """
@@ -401,6 +301,8 @@ class Game :
             for unit in self.units:
                 if unit.is_alive and unit not in self.group.sprites():
                     self.group.add(unit)
+                if hasattr(unit, 'refresh_all_references') : 
+                    unit.refresh_all_references(game)
         
         # S'assurer que la caméra est dans le nouveau groupe
         if hasattr(self, 'camera') and self.camera not in self.group.sprites():

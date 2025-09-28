@@ -1,31 +1,28 @@
-import pygame
-import time
-import math
+import pygame, time, math
 from Global import *
-from Utils import load_tileset, point_in_many_polygons
+from Utils import load_tileset, point_in_many_polygons, random_point_in_polygon
 
 class Unit(pygame.sprite.Sprite):
     """Classe de base pour toutes les unités du jeu."""
     
-    def __init__(self, x, y, image_path, team="red", unit_type=None):
+    def __init__(self, game, team, unit_type):
         super().__init__()
+        # La game 
+        self.game = game
+        
+        # Type et team
+        self.type = unit_type
+        self.team = team
         
         # Position et mouvement
-        self.position = [float(x), float(y)]
+        base_spawn = self.game.red_platform_zone if team == "red" else self.game.green_platform_zone
+            
+        self.position = random_point_in_polygon(base_spawn)
         self.speed_x = 0  # Vitesse en pixels par seconde sur l'axe X
         self.speed_y = 0  # Vitesse en pixels par seconde sur l'axe Y
         
-        # Statistiques de base
-        self.max_health = 100
-        self.current_health = self.max_health
-        self.cost = 0  # Coût en pétrole
-        self.team = team  # "red" ou "green"
-        
         # Combat
-        self.damage = 1  # Dégâts par seconde
-        self.range = 1  # Portée en cases (32 pixels par case)
         self.last_shot_time = 0
-        self.fire_rate = 1.0  # Tirs par seconde
         
         # Image et sprite
         self.load_sprite_from_tileset(team, unit_type)
@@ -48,7 +45,7 @@ class Unit(pygame.sprite.Sprite):
         else:
             self.range_color = (255, 0, 0, 50) if team == "red" else (0, 255, 0, 50)
                         
-        vitesse = {
+        self.vitesse = {
             "haute" : { 
                 "Collision" :{
                     "Collision" : 0,
@@ -119,17 +116,74 @@ class Unit(pygame.sprite.Sprite):
         """Mise à jour de l'obstacle de l'unité."""
         self.obstacles = obstacles
     
-    def move(self, dt):
-        """Déplace l'unité selon sa vitesse. Appelé a chaque tick"""
-        # Verifier que le prochain déplacement n'est pas une ile.
+    def updateQuantique(self, quantique):
+        """Mise à jour des iles quantiques de l'unité."""
+        self.quantique = quantique
+    
+    def check_area(self, dt):
+        """Fonction permettant de verifier la zone dans laquelle l'unité veut aller.
+        Si c'est une zone accéssible elle y va sinon elle s'arrete."""
         # On prend la prochaine position
         next_position = (self.position[0] + self.speed_x * dt, self.position[1] + self.speed_y * dt)
-
+        
         # Si la prochaine position est dans une ile, on arrête le mouvement
         if point_in_many_polygons(self.obstacles, next_position):
             self.stop()
-        else: 
+        else:
+            if self.type == "eclaireur" : 
+                # On vérifie si le prochaine position est dans une zone quantique non découverte
+                result = point_in_many_polygons(self.quantique, next_position) 
+                if result :
+                    print(result[1])
+                    print("Zone quantique")
+            
             self.position = next_position
+            
+    def move(self, dt):
+        """Déplace l'unité selon sa vitesse. Appelé a chaque tick"""
+        
+        if self.is_moving : 
+            # Temps de jeu rapide : 
+            if TIME_SPEED >= 10 : 
+                # Vérifier si on a atteint la destination 
+                # On prend un vecteur avant le déplacement
+                to_target_before = (self.target_position[0] - self.position[0],
+                            self.target_position[1] - self.position[1])
+
+                # Verifier le prochain déplacement.
+                result = self.check_area(dt)
+                
+                # On prend un vecteur après le déplacement
+                to_target_after = (self.target_position[0] - self.position[0],  
+                        self.target_position[1] - self.position[1])
+
+                # Produit scalaire : si le signe change, c’est qu’on a dépassé la cible
+                if (to_target_before[0] * to_target_after[0] + 
+                    to_target_before[1] * to_target_after[1]) <= 0:
+                    
+                    self.move_to(self.target_position[0], self.target_position[1], self.max_speed/2)
+                    self.stop()
+
+            else : 
+                # Vérifier si on a atteint la destination
+                distance_to_target = ((self.position[0] - self.target_position[0])**2 + 
+                                    (self.position[1] - self.target_position[1])**2)**0.5
+                
+                # Si on est proche de la destination (moins de 5 pixels)
+                if distance_to_target < 5 :
+                    self.stop()
+                    self.is_moving = False
+                    self.target_position = None
+                
+                # Verifier que le prochain déplacement n'est pas une ile.
+                # On prend la prochaine position
+                next_position = (self.position[0] + self.speed_x * dt, self.position[1] + self.speed_y * dt)
+
+                # Si la prochaine position est dans une ile, on arrête le mouvement
+                if point_in_many_polygons(self.obstacles, next_position):
+                    self.stop()
+                else: 
+                    self.position = next_position
         
     def move_to(self, target_x, target_y, speed):
         """Fonction permettant de mettre a jour la vitesse pour les déplacements."""
@@ -201,7 +255,7 @@ class Unit(pygame.sprite.Sprite):
         """Vérifie si l'unité peut attaquer (cooldown respecté)."""
         current_time = time.time()
         time_since_last_shot = current_time - self.last_shot_time
-        return time_since_last_shot >= (1.0 / self.fire_rate)
+        return time_since_last_shot >= (1.0 * TIME_SPEED / self.fire_rate)
     
     def attack(self, target, combat_system=None):
         """Attaque une cible si possible."""
@@ -326,7 +380,7 @@ class Unit(pygame.sprite.Sprite):
     
     def can_shoot(self, current_time):
         """Vérifie si l'unité peut tirer (cooldown de 1 seconde)."""
-        cooldown = 1000  # Cooldown d'1 seconde entre chaque tir
+        cooldown = 1000 / TIME_SPEED # Cooldown d'1 seconde entre chaque tir
         return current_time - self.last_shot_time >= cooldown
     
     def get_closest_enemy_in_range(self):

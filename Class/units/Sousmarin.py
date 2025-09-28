@@ -1,11 +1,10 @@
-import pygame
 from Class.units.Unit import Unit
 from Global import UNIT_CONFIGS
 
-class Sousmarin(Unit):
+class SousMarin(Unit):
     """Classe unifiée pour les unités Sous-marin (Rouge et Vert)."""
     
-    def __init__(self, x, y, team="red"):
+    def __init__(self, game, team):
         # Récupérer la configuration depuis Global.py
         config = UNIT_CONFIGS["sousmarin"]
         
@@ -13,11 +12,11 @@ class Sousmarin(Unit):
         image_path = config["image_paths"][team]
         
         # Initialiser avec l'image appropriée et le type d'unité
-        super().__init__(x, y, image_path, team=team, unit_type="sousmarin")
+        super().__init__(game, team=team, unit_type="sousmarin")
         
         # === Spécifications du Sous-marin depuis Global.py ===
         self.cost = config["cost"]
-        self.build_time = config["build_time"]
+        
         self.max_speed = config["max_speed"]
         self.max_health = config["max_health"]
         self.current_health = self.max_health
@@ -46,23 +45,6 @@ class Sousmarin(Unit):
         if screen:
             self.draw_range(screen, camera_offset)
     
-    def draw_range(self, screen, camera_offset=(0, 0)):
-        """Dessine une zone de portée de tir autour du sous-marin."""
-        if not self.is_alive:
-            return
-
-        # Calculer le rayon en pixels (range en cases * 32 pixels par case)
-        range_radius = self.range * 32
-
-        # Position du sous-marin avec décalage de la caméra
-        center_x = int(self.position[0] - camera_offset[0])
-        center_y = int(self.position[1] - camera_offset[1])
-
-        # Dessiner un cercle semi-transparent pour la portée avec la couleur de l'équipe
-        surface = pygame.Surface((range_radius * 2, range_radius * 2), pygame.SRCALPHA)
-        pygame.draw.circle(surface, self.range_color, (range_radius, range_radius), range_radius)
-        screen.blit(surface, (center_x - range_radius, center_y - range_radius))
-
     def place_mine(self, x, y):
         """Place une mine à la position spécifiée (capacité spéciale du sous-marin)."""
         if self.special_ability == "mines":
@@ -71,17 +53,10 @@ class Sousmarin(Unit):
         return False
 
 # Classes d'alias pour la compatibilité avec l'ancien code
-class SousmarinRouge(Sousmarin):
-    def __init__(self, x, y):
-        super().__init__(x, y, team="red")
+class SousMarinRouge(SousMarin):
+    def __init__(self, game):
+        super().__init__(game, team="red")
 
-class SousmarinVert(Sousmarin):
-    def __init__(self, x, y):
-        super().__init__(x, y, team="green")
-
-# Alias pour les anciens noms de classe
-class SousMarinRouge(SousmarinRouge):
-    pass
-
-class SousMarinVert(SousmarinVert):
-    pass
+class SousMarinVert(SousMarin):
+    def __init__(self, game):
+        super().__init__(game, team="green")

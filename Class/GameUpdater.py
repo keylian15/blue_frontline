@@ -27,6 +27,7 @@ class GameUpdater:
             # Met a jour les obstacles 
             if type(unit).__name__ != "PlateformePetroliere" : 
                 unit.updateObstacle(self.game.obstacles)
+                unit.updateQuantique(self.game.quantique_area)
             # Mettre à jour l'unité avec toutes les informations nécessaires
             unit.update(dt, self.game.combat_system, self.game.screen, camera_offset, self.game.units)
             

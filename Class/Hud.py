@@ -23,7 +23,6 @@ class Hud:
         
         # Police et état du popup d'unités
         self.font = pygame.font.Font(None, 24)
-        self.show_unit_popup = True
         self.popup_selection = 0  # index sélectionné, 0..5
         self.popup_team = 'red'  # équipe affichée: 'red' ou 'green'
         # Noms correspondant à l'ordre d'affichage des icônes rouges

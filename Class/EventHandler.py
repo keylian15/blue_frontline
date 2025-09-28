@@ -1,12 +1,13 @@
 import pygame
 import time
 from Class.OptionsMenu import OptionsMenu
+from Class.units.Unit import Unit
 from Global import UNIT_CONFIGS
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
 from Class.units.Bateau import BateauRouge, BateauVert
 from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
 from Class.units.Paquebot import PaquebotRouge, PaquebotVert
-from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
+from Class.units.SousMarin import SousMarinRouge, SousMarinVert
 
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
@@ -68,11 +69,6 @@ class EventHandler:
                 self.game.hud.timer.resume()
                 self.game.hud.petrole.resume()
             return True
-
-        if event.key == pygame.K_e:
-            self.game.show_unit_popup = not self.game.show_unit_popup
-            self.game.popup_selection = 0
-            return True
         
         elif event.key == pygame.K_ESCAPE:
             options_menu = OptionsMenu(self.game.screen)
@@ -80,33 +76,47 @@ class EventHandler:
             return True
 
         # Entrée via le HUD (bandeau bas) pour spawn l'unité sélectionnée (coût géré dans Game.spawn_unit)
-        if event.key == pygame.K_RETURN and not self.game.show_unit_popup:
-                hud = self.game.hud
-                selection_index = hud.popup_selection
-                team_key = hud.popup_team  # 'red' ou 'green'
-                # Récupérer la clé de config de l'unité
-                if selection_index < 0 or selection_index >= len(hud.unit_config_keys):
-                    return True
-                config_key = hud.unit_config_keys[selection_index]
-
-                # Mapping type + équipe -> classe
-                class_map = {
-                    'chaloupe': {'red': ChaloupeRouge, 'green': ChaloupeVerte},
-                    'bateau': {'red': BateauRouge, 'green': BateauVert},
-                    'paquebot': {'red': PaquebotRouge, 'green': PaquebotVert},
-                    'eclaireur': {'red': EclaireurRouge, 'green': EclaireurVert},
-                    'sousmarin': {'red': SousMarinRouge, 'green': SousMarinVert},
-                }
-                team_to_class = class_map.get(config_key)
-
-                unit_class = team_to_class[team_key]
-                unit = self.game.spawn_unit(unit_class)
+        if event.key == pygame.K_RETURN :
+            hud = self.game.hud
+            selection_index = hud.popup_selection
+            team_key = hud.popup_team  # 'red' ou 'green'
+            # Récupérer la clé de config de l'unité (le type d'unité)
+            if selection_index < 0 or selection_index >= len(hud.unit_config_keys):
                 return True
+            config_key = hud.unit_config_keys[selection_index]
+            
+            # Vérifier le coût en pétrole
+            cost = UNIT_CONFIGS.get(config_key, {}).get('cost')
+            
+            # S'il n'y a pas assez de pétrole.
+            if hud.petrole.count < cost:
+                return None
+            # Débiter le pétrole
+            hud.petrole.count -= cost
+            
+            # Créer l'unité
+            # Mapping type + équipe -> classe
+            class_map = {
+                'chaloupe': {'red': ChaloupeRouge, 'green': ChaloupeVerte},
+                'bateau': {'red': BateauRouge, 'green': BateauVert},
+                'paquebot': {'red': PaquebotRouge, 'green': PaquebotVert},
+                'eclaireur': {'red': EclaireurRouge, 'green': EclaireurVert},
+                'sousmarin': {'red': SousMarinRouge, 'green': SousMarinVert},
+            }
+            unit_class = class_map.get(config_key)[team_key]
+            
+            # On instancie l'unité
+            unit = unit_class(self.game)
+            
+            # Ajouter au système de combat et au groupe de sprites
+            self.game.combat_system.add_unit(unit)
+            self.game.units.append(unit)
+            self.game.group.add(unit)
+            
+            # On envoi la map a toutes les instances
+            self.game.refresh_all_references(self.game)
+            return True
 
-
-        elif self.game.show_unit_popup:
-            return self._handle_popup_navigation(event)
-        
         elif event.key == pygame.K_UP:  
 
             self.game.sound.increase_volume()
@@ -123,24 +133,7 @@ class EventHandler:
 
         return True
     
-    
-    def _handle_popup_navigation(self, event):
-        """Gère la navigation dans le popup d'unités."""
-        if event.key == pygame.K_UP:
-            self.game.popup_selection = (self.game.popup_selection - 1) % len(self.game.unit_classes)
-        elif event.key == pygame.K_DOWN:
-            self.game.popup_selection = (self.game.popup_selection + 1) % len(self.game.unit_classes)
-        elif event.key == pygame.K_RETURN:
-            try:
-                unit_name, unit_class = self.game.unit_classes[self.game.popup_selection]
-                unit = self.game.spawn_unit(unit_class)
-                if unit is not None:
-                    self.game.show_unit_popup = False
-            except Exception as e:
-                # Erreur silencieuse lors de la sélection
-                return True
-        return True
-    
+
     def _handle_mouse_events(self, event):
         """Gère les événements de souris."""
         # Si le jeu est gagné, gérer les clics sur l'écran de victoire
@@ -149,7 +142,7 @@ class EventHandler:
             return
         
         # Clic gauche
-        if event.button == 1 and not self.game.show_unit_popup:  # Clic gauche
+        if event.button == 1:  # Clic gauche
             world_x, world_y = self._screen_to_world_coordinates(pygame.mouse.get_pos())
             
             # Chercher une unité à cette position
