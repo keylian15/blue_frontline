@@ -151,13 +151,12 @@ class EventHandler:
         # Clic gauche
         if event.button == 1:  # Clic gauche
             world_x, world_y = self._screen_to_world_coordinates(pygame.mouse.get_pos())
-            
             # Chercher une unité à cette position
             clicked_unit = self.game.find_unit_at_position(world_x, world_y)
             
             if clicked_unit:
                 self.game.select_unit(clicked_unit)
-            elif self.game.selected_unit and self.game.selected_unit.is_alive:
+            elif self.game.selected_unit and self.game.selected_unit.is_alive and hasattr(self.game.selected_unit, 'move_to_position'):
                 # Déplacer l'unité sélectionnée vers la position cliquée
                 self.game.selected_unit.move_to_position((world_x, world_y))
             else:

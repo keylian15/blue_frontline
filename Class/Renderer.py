@@ -35,13 +35,14 @@ class Renderer:
         if self.game.hud.timer.maree_haute:
             self._restore_quantum_islands()
 
-        if self.game.units:
-            for unit in self.game.units:
-                if unit.is_alive:
-                    self.game.group.add(unit)
+        for unit in self.game.units:
+            if unit.is_alive:
+                self.game.group.add(unit)
                     
         # Marquer comme terminé
         self.map_needs_refresh = False
+        
+        self.game.refresh_all_references(self.game)
 
     def _restore_quantum_islands(self):
         """Réstaure les iles quantiques."""

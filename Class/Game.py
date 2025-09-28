@@ -143,7 +143,6 @@ class Game :
                 if obj.name.startswith("ile_quantique") and obj.name in self.quantique_area_name:
                     create_island(obj)
 
-
     def find_unit_at_position(self, world_x, world_y):
         """
         Trouve l'unité (ou plateforme) la plus proche de la position donnée dans le monde.
@@ -305,8 +304,9 @@ class Game :
         # S'assurer que les unités sont dans le nouveau groupe
         if hasattr(self, 'units') and self.units:
             for unit in self.units:
-                if unit.is_alive and unit not in self.group.sprites():
+                if unit.is_alive:
                     self.group.add(unit)
+                    unit.game = game
                 if hasattr(unit, 'refresh_all_references') : 
                     unit.refresh_all_references(game)
         

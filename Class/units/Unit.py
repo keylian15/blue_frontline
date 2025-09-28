@@ -122,10 +122,10 @@ class Unit(pygame.sprite.Sprite):
         if point_in_many_polygons(self.game.obstacles, next_position):
             self.stop()
         else:
-            if self.type == "eclaireur" : 
-                # On vérifie si le prochaine position est dans une zone quantique non découverte
-                result = point_in_many_polygons(self.game.quantique_area_hidden, next_position) 
-                if result :
+            # On vérifie si le prochaine position est dans une zone quantique non découverte
+            result = point_in_many_polygons(self.game.quantique_area_hidden, next_position) 
+            if result :
+                if self.type == "eclaireur" : 
                     # Récupérer l'index de self.game.quantique_area correspondant à l'île
                     index = self.game.quantique_area.index(result[1])
                     if index == 0 : # L'ile quantique n°4 est l'index 0 car la plus haute sur Tiled.
@@ -140,8 +140,9 @@ class Unit(pygame.sprite.Sprite):
                     self.game.refresh_all_references(self.game) # On met a jour la map
                     
                     self.game.quantique('ile_quantique_' + str(index)) # On appel la fonction quantique du jeu pour activer le changement
-                    
-            
+                else : 
+                    self.stop()
+            else : 
                 self.position = next_position
             
     def move(self, dt):
