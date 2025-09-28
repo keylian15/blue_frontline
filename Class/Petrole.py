@@ -1,5 +1,5 @@
 import pygame
-from Global import PETROLE_EVENT, TIME_SPEED, TIME_SPEEDS, TIME_STEP
+from Global import PETROLE_EVENT, TIME_SPEEDS, TIME_STEP
 
 class Petrole:
     def __init__(self):
@@ -36,6 +36,6 @@ class Petrole:
 
     def resume(self):
         if self.current_speed <= 0:
-            self.current_speed = TIME_SPEED
+            self.current_speed = TIME_SPEEDS[0]
         self.set_speed(self.current_speed)
     

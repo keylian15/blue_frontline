@@ -144,7 +144,7 @@ class Unit(pygame.sprite.Sprite):
         
         if self.is_moving : 
             # Temps de jeu rapide : 
-            if TIME_SPEED >= 10 : 
+            if self.game.hud.timer.get_speed_multiplier() >= 10 : 
                 # Vérifier si on a atteint la destination 
                 # On prend un vecteur avant le déplacement
                 to_target_before = (self.target_position[0] - self.position[0],
@@ -200,8 +200,9 @@ class Unit(pygame.sprite.Sprite):
             
     def move_to_position(self, target:tuple):
         """Fonction permettant de mettre les mécanismes de déplacements."""
+        multiplica = self.game.hud.timer.get_speed_multiplier()
         self.target_position = target                                       # On défini la position cible
-        self.move_to(target[0], target[1], self.max_speed * TIME_SPEED)     # On va initialiser les déplacements de l'unité
+        self.move_to(target[0], target[1], self.max_speed * multiplica)     # On va initialiser les déplacements de l'unité
         self.is_moving = True                                               # On indique que l'unité est en train de bouger
         
     def stop(self):
@@ -255,7 +256,8 @@ class Unit(pygame.sprite.Sprite):
         """Vérifie si l'unité peut attaquer (cooldown respecté)."""
         current_time = time.time()
         time_since_last_shot = current_time - self.last_shot_time
-        return time_since_last_shot >= (1.0 * TIME_SPEED / self.fire_rate)
+        multiplica = self.game.hud.timer.get_speed_multiplier()
+        return time_since_last_shot >= (1.0 * multiplica / self.fire_rate)
     
     def attack(self, target, combat_system=None):
         """Attaque une cible si possible."""
@@ -380,7 +382,8 @@ class Unit(pygame.sprite.Sprite):
     
     def can_shoot(self, current_time):
         """Vérifie si l'unité peut tirer (cooldown de 1 seconde)."""
-        cooldown = 1000 / TIME_SPEED # Cooldown d'1 seconde entre chaque tir
+        multiplica = self.game.hud.timer.get_speed_multiplier()
+        cooldown = 1000 / multiplica # Cooldown d'1 seconde entre chaque tir
         return current_time - self.last_shot_time >= cooldown
     
     def get_closest_enemy_in_range(self):

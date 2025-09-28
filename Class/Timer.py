@@ -1,5 +1,5 @@
 import pygame
-from Global import TIME_MAREE, TIME_SPEED, TIME_STEP, TIMER_EVENT, TIME_SPEEDS
+from Global import TIME_MAREE, TIME_STEP, TIMER_EVENT, TIME_SPEEDS
 
 class Timer:
     def __init__(self):
@@ -44,7 +44,7 @@ class Timer:
     def resume(self):
         """Relance le timer à la vitesse actuelle (ou par défaut)."""
         if self.current_speed <= 0:
-            self.current_speed = TIME_SPEED
+            self.current_speed = TIME_SPEEDS[0]
         self.set_speed(self.current_speed)
 
     def reset(self):
@@ -53,7 +53,7 @@ class Timer:
         self.maree_haute = False
         self.maree_changed = False
         # Relancer le timer avec la vitesse par défaut
-        self.current_speed = TIME_SPEED
+        self.current_speed = TIME_SPEEDS[0]
         self.set_speed(self.current_speed)
 
     def cycle_speed(self):

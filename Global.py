@@ -8,11 +8,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # === Temps === 
 FPS = 60
 TIME_STEP = 1000 # en ms => 1 seconde
-TIME_SPEED = 20 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
 TIME_MAREE = 180
 
 # Vitesses de temps disponibles
-TIME_SPEEDS = [1, 2, 4, 8]
+TIME_SPEEDS = [1, 2, 4, 8, 10, 20, 0.5]
 
 # === MAP ===
 MAP_PATH = resource_path("map.tmx")

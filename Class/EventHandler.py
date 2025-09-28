@@ -7,7 +7,7 @@ from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
 from Class.units.Bateau import BateauRouge, BateauVert
 from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
 from Class.units.Paquebot import PaquebotRouge, PaquebotVert
-from Class.units.SousMarin import SousMarinRouge, SousMarinVert
+from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
 
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
@@ -132,6 +132,12 @@ class EventHandler:
             self.game.hud.petrole_red.set_speed(new_speed)
             self.game.hud.petrole_green.set_speed(new_speed)
             return True
+        
+        if event.key == pygame.K_j :
+            self.game.hud.toggle_popup_team()
+            self.game.hud.switch_team()
+            return True
+        
         return True
     
 

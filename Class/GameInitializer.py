@@ -9,7 +9,7 @@ from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
 from Class.units.Bateau import BateauRouge, BateauVert
 from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
 from Class.units.Paquebot import PaquebotRouge, PaquebotVert
-from Class.units.SousMarin import SousMarinRouge, SousMarinVert
+from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
 from Class.Hud import Hud
 from Global import *
 from Utils import *
