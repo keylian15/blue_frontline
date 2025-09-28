@@ -57,21 +57,8 @@ class EventHandler:
         return True
     
     def _handle_keydown_events(self, event):
-        """Gère les événements de touches pressées."""
-        if event.key == pygame.K_p:
-            # Toggle pause
-            self.game.paused = not self.game.paused
-            if self.game.paused:
-                # Mettre les timers en pause
-                self.game.hud.timer.pause()
-                self.game.hud.petrole.pause()
-            else:
-                # Reprendre les timers
-                self.game.hud.timer.resume()
-                self.game.hud.petrole.resume()
-            return True
-        
-        elif event.key == pygame.K_ESCAPE:
+        """Gère les événements de touches pressées."""        
+        if event.key == pygame.K_ESCAPE:
             options_menu = OptionsMenu(self.game.screen)
             options_menu.run()
             return True
@@ -90,10 +77,16 @@ class EventHandler:
             cost = UNIT_CONFIGS.get(config_key, {}).get('cost')
             
             # S'il n'y a pas assez de pétrole.
-            if hud.petrole.count < cost:
-                return None
-            # Débiter le pétrole
-            hud.petrole.count -= cost
+            if team_key == "red"  :
+                if self.game.hud.petrole_red.count < cost:
+                    return None
+                else : 
+                    self.game.hud.petrole_red.count -= cost
+            else : 
+                if self.game.hud.petrole_green.count < cost: 
+                    return None
+                else :
+                    self.game.hud.petrole_green.count -= cost
             
             # Créer l'unité
             # Mapping type + équipe -> classe

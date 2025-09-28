@@ -1,5 +1,5 @@
 import pygame
-from Global import PETROLE_EVENT, TIME_SPEED, TIME_STEP
+from Global import PETROLE_EVENT, TIME_SPEED, TIME_SPEEDS, TIME_STEP
 
 class Petrole:
     def __init__(self):
@@ -8,7 +8,7 @@ class Petrole:
 
         # On crée un événement unique pour incrémenter le pétrole
         self.PETROLE_EVENT = PETROLE_EVENT
-        self.current_speed = TIME_SPEED
+        self.current_speed = TIME_SPEEDS[0] 
         pygame.time.set_timer(self.PETROLE_EVENT, int(TIME_STEP / self.current_speed))  # On fait le timer en fonction de la vitesse du temps 
 
     def handle_event(self, event):
