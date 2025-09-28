@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="120" height="96" tilewidth="32" tileheight="32" infinite="0" nextlayerid="12" nextobjectid="99">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="120" height="96" tilewidth="32" tileheight="32" infinite="0" nextlayerid="12" nextobjectid="100">
  <tileset firstgid="1" source="assets/miscellaneous/recif.tsx"/>
  <tileset firstgid="2" source="assets/entity/bullet.tsx"/>
  <tileset firstgid="3" source="assets/Green_team/Green_team_spritesheet.tsx"/>
@@ -293,8 +293,8 @@
   <object id="97" name="Collision" x="2592" y="2304">
    <polygon points="0,0 64,0 64,-32 96,-32 96,-64 160,-64 192,-64 192,-96 256,-96 256,-128 320,-128 320,-160 448,-160 448,-192 608,-192 608,-160 672,-160 672,-96 704,-96 704,-32 736,-32 736,32 768,32 768,64 800,64 800,384 832,384 832,448 800,448 800,480 768,480 768,512 672,512 672,544 544,544 544,576 320,576 320,608 224,608 224,576 160,576 160,544 128,544 128,512 96,512 96,480 64,480 64,416 32,416 32,384 0,384 0,320 -32,320 -32,224 -64,224 -64,128 -32,128 -32,128 -32,64 0,64"/>
   </object>
-  <object id="98" name="Collision" x="1568" y="1024">
-   <polygon points="0,0 704,0 704,32 800,32 800,160 832,160 832,256 800,256 800,704 736,704 736,736 672,736 672,768 640,768 640,800 544,800 544,832 288,832 288,864 128,864 128,832 64,832 64,800 32,800 32,768 0,768 0,736 -32,736 -32,704 -64,704 -64,672 -96,672 -96,544 -64,544 -64,416 -96,416 -96,256 -64,256 -64,160 -32,160 -32,32 0,32 0,0"/>
+  <object id="99" name="Collision" x="1568" y="1024">
+   <polygon points="0,0 0,32 -32,32 -32,160 -64,160 -64,256 -96,256 -96,416 -64,416 -64,544 -96,544 -96,672 -64,672 -64,704 -32,704 -32,736 0,736 0,768 32,768 32,800 64,800 64,832 96,832 128,832 128,864 288,864 288,832 544,832 544,800 640,800 640,768 672,768 672,736 736,736 736,704 800,704 800,256 832,256 832,160 800,160 800,32 704,32 704,0"/>
   </object>
  </objectgroup>
  <objectgroup id="11" name="Objects">

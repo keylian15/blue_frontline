@@ -65,12 +65,12 @@ class Game :
         self.button_font = pygame.font.Font(None, 36)
         
         # Obstacles
-        self.obstacles = []
+        self.setObstacles()
         
     def setObstacles(self):
         """Fonction permettant de récupérer les obstacles du jeu."""
-        # On récupére les objets de tiled.
-        self.obstacles= []
+        # On récupére les collisions générales.
+        self.obstacles = [obj.as_points for obj in self.tmx_data.objects if obj.type == "Collision"]
         
         layer_name = "Collision_Haute" if self.hud.timer.maree_haute else "Collision_Basse"
         layer = next((l for l in self.tmx_data.layers if l.name == layer_name), None)
@@ -79,10 +79,10 @@ class Game :
         
         for obj in layer:
             if obj.name == "Collision" : # Si l'objet est une collision 
-                if hasattr(obj, 'as_points') : 
-                    self.obstacles.append(obj.as_points)
-                elif hasattr(obj, 'points') :
+                if hasattr(obj, 'points') :
                     self.obstacles.append(obj.points) 
+                elif hasattr(obj, 'as_points') : 
+                    self.obstacles.append(obj.as_points)
 
     def quantique(self):
         """ Génération de l'île quantique pour toutes les îles quantique dans la map."""
@@ -395,13 +395,14 @@ class Game :
         elif hasattr(self, 'menu_button_rect') and self.menu_button_rect.collidepoint(mouse_pos):
             self.return_to_menu()
     
-    def refresh_all_references(self):
+    def refresh_all_references(self, game):
         """Actualise toutes les références des gestionnaires après reconstruction de la map."""
         # Réinitialiser les gestionnaires pour qu'ils utilisent les nouvelles références
-        self.event_handler.game = self
-        self.renderer.game = self
-        self.input_manager.game = self
-        self.updater.game = self
+        self.event_handler.game = game
+        self.initializer.game = game
+        self.updater.game = game
+        self.input_manager.game = game
+        self.renderer.game = game
         
         # S'assurer que les unités sont dans le nouveau groupe
         if hasattr(self, 'units') and self.units:
@@ -463,7 +464,7 @@ class Game :
                 self.input_manager.handle_continuous_input()
             
                 # Mise à jour des systèmes
-                self.updater.update_systems(dt)
+                self.updater.update_systems(dt, self)
             
             # Rendu
             self.renderer.render()

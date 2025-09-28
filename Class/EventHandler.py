@@ -32,15 +32,15 @@ class EventHandler:
                 # Reconstruire la map
                 if hasattr(self.game.renderer, 'map_needs_refresh') and self.game.renderer.map_needs_refresh:
                     self.game.renderer.refresh_map()  
-                    # Actualiser toutes les références après reconstruction
-                    self.game.refresh_all_references()
                     
                 # Marquer le changement comme traité
                 self.game.hud.timer.maree_changed = False
                 
                 if self.game.hud.timer.maree_haute:
                     self.game.quantique()
-
+                    
+                # On charge les obstacles
+                self.game.setObstacles()
 
             # Gestion des touches
             elif event.type == pygame.KEYDOWN:
