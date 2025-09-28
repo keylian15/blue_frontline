@@ -48,38 +48,6 @@ class Perlin:
             matrice.append(ligne)
         return matrice
 
-    def show_matrix(self, matrice):
-        """Affiche la matrice dans la console pour visualiser l'île."""
-        mapping = {
-            0: "x",  # Eau profonde
-            1: "░",  # Eau peu profonde
-            2: "▓",  # Ile
-        }
-        for ligne in matrice:
-            print("".join(mapping[val] for val in ligne))
-
-    def render_matrix(self, matrice, tileset):
-        """
-        Transforme une matrice de tuiles en surface Pygame. (Ile Brute donc case uniquements pleines)
-        Args:
-            matrice (list[list[int]]): matrice générée par Perlin
-            tileset (list[pygame.Surface]): liste de tuiles DÉJÀ CHARGÉES
-            mapping (dict): association {val_matrice: index_tileset}
-        Returns:
-            pygame.Surface: surface représentant la carte
-        """
-        height = len(matrice)
-        width = len(matrice[0])
-        surface = pygame.Surface((width * 32, height * 32), pygame.SRCALPHA)
-
-        for y in range(height):
-            for x in range(width):
-                val = matrice[y][x]  # 0 (Profonde), 1 (Peu profonde), ou 2 (Ile)
-                tile = tileset[val]  # Récupère la tuile correspondante
-                surface.blit(tile, (x * 32, y * 32))
-
-        return surface
-
     def get_matrix_value(self, matrice, y, x):
         """
         Retourne la valeur de la matrice aux coordonnées (y, x).
@@ -296,7 +264,3 @@ class Perlin:
                 surface.blit(tile, (x * 32, y * 32))
 
         return surface
-
-if __name__ == "__main__":
-    perlin = Perlin()
-    perlin.show_matrix(perlin.generate_island(20, 50))

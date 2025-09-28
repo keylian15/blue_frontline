@@ -7,8 +7,11 @@ class GameUpdater:
         """Initialise le gestionnaire de mise à jour avec une référence au jeu."""
         self.game = game
     
-    def update_systems(self, dt):
-        """Met à jour tous les systèmes du jeu."""
+    def update_systems(self, dt, game):
+        """Met à jour tous les systèmes du jeu grace a la partie en cours."""
+        # Met a jour la game
+        self.game.refresh_all_references(game)
+        
         # Mettre à jour la caméra
         self.game.camera.update()
         
@@ -21,6 +24,10 @@ class GameUpdater:
         # Mettre à jour les unités
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
         for unit in self.game.units:
+            # Met a jour les obstacles 
+            if type(unit).__name__ != "PlateformePetroliere" : 
+                unit.updateObstacle(self.game.obstacles)
+                unit.updateQuantique(self.game.quantique_area)
             # Mettre à jour l'unité avec toutes les informations nécessaires
             unit.update(dt, self.game.combat_system, self.game.screen, camera_offset, self.game.units)
             
@@ -29,6 +36,7 @@ class GameUpdater:
                 unit.is_selected = (unit == self.game.selected_unit)
         
         # Mettre à jour le système de combat
+        
         if hasattr(self.game, 'combat_system'):
             self.game.combat_system.update(dt)
         
@@ -78,5 +86,4 @@ class GameUpdater:
                             self.game.group.add(island)
 
             # Actualiser toutes les références des gestionnaires
-            self.game.refresh_all_references()
             self.game.last_zoom_level = self.game.camera.zoom_level

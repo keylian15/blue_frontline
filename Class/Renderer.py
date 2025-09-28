@@ -70,9 +70,6 @@ class Renderer:
         # Unité sélectionnée
         self._render_selected_unit_highlight()
         
-        # Popup d'unités
-        self.game.draw_unit_popup()
-        
     def _render_map(self):
         """Rend la map avec gestion du zoom et reconstruction si nécessaire."""
         
