@@ -79,14 +79,8 @@ class Camera(pygame.sprite.Sprite):
 
     def zoom_out(self):
         """Zoom arrière (diminue le niveau de zoom)."""
-        if self.zoom_level > self.min_zoom:
-            new_zoom_level = max(self.min_zoom, self.zoom_level - self.zoom_speed)
-            
-            # Si on atteint le zoom minimum, afficher un message informatif
-            if new_zoom_level == self.min_zoom and self.zoom_level > self.min_zoom:
-                print(f"Zoom minimum atteint ({self.min_zoom:.3f}) - toute la map est maintenant visible")
-            
-            self.zoom_level = new_zoom_level
+        if self.zoom_level > self.min_zoom:                       
+            self.zoom_level = max(self.min_zoom, self.zoom_level - self.zoom_speed)
             self.update_zoom_limits()
             # Recalculer la position pour rester dans les limites
             self.position[0] = max(self.min_x, min(self.max_x, self.position[0]))

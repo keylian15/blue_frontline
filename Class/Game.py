@@ -135,10 +135,7 @@ class Game :
         try:
             # Bloquer la production si le jeu est en pause
             if getattr(self, 'paused', False):
-                print("Production interdite pendant la pause.")
                 return None
-
-            print(f"Tentative de création de l'unité: {unit_class.__name__}")
             
             # Déterminer l'équipe de l'unité à partir du nom de la classe
             if "Rouge" in unit_class.__name__:
@@ -147,7 +144,6 @@ class Game :
             else :
                 team = "green"
                 base_spawn = self.green_platform_spawn
-                print(f"Unité verte -> plateforme verte à {base_spawn}")
 
             # Déterminer la clé de config (type d'unité) depuis le nom de la classe
             name_lower = unit_class.__name__.lower()
@@ -187,12 +183,10 @@ class Game :
 
             # Débiter le pétrole après création réussie
             self.hud.petrole.count -= cost
-            print(f"Pétrole débité: -{cost}. Nouveau solde: {self.hud.petrole.count}")
 
             return unit
         #Gestion erreurs
         except Exception as e:
-            print(f"Erreur lors de la création de l'unité: {e}")
             import traceback
             traceback.print_exc()
             return None
@@ -310,10 +304,8 @@ class Game :
         # Déterminer l'équipe gagnante
         if platform.team == "red":
             self.winner_team = "green"
-            print("Équipe VERTE a gagné !")
         else:
             self.winner_team = "red"
-            print("Équipe ROUGE a gagné !")
         
         self.game_won = True
         self.paused = True  # Mettre le jeu en pause
@@ -416,7 +408,6 @@ class Game :
     
     def restart_game(self):
         """Redémarre le jeu."""
-        print("Redémarrage du jeu...")
         # Réinitialiser les variables de victoire
         self.game_won = False
         self.winner_team = None
@@ -444,7 +435,6 @@ class Game :
     
     def return_to_menu(self):
         """Retourne au menu principal."""
-        print("Retour au menu principal...")
         self.game_running = False
 
     def run(self): 

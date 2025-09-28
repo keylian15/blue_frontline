@@ -27,8 +27,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         self.damage = 0
         self.is_platform = True
         
-        print(f"Plateforme {team} créée à ({x}, {y}) - rect.center: {self.rect.center}")
-
     def take_damage(self, damage, killer=None):
         """Inflige des dégâts à la plateforme."""
         if not self.is_alive:
@@ -41,7 +39,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
     def on_destroyed(self):
         """Appelé quand la plateforme est détruite."""
-        print(f"Plateforme {self.team} détruite !")
         # Déclencher la victoire si la plateforme a une référence vers le Game
         if hasattr(self, 'game') and self.game:
             self.game.on_platform_destroyed(self)

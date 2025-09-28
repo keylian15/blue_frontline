@@ -78,7 +78,6 @@ class Sousmarin(Unit):
         """Place une mine à la position spécifiée (capacité spéciale du sous-marin)."""
         if self.special_ability == "mines":
             # TODO: Implémenter le système de mines
-            print(f"Mine placée par {self.unit_name} à la position ({x}, {y})")
             return True
         return False
 

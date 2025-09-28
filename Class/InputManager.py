@@ -76,25 +76,21 @@ class InputManager:
         """Déclenche le tir si toutes les conditions sont remplies."""
         # Vérifier s'il y a une unité sélectionnée
         if not hasattr(self.game, 'selected_unit') or not self.game.selected_unit:
-            print("Aucune unité sélectionnée")
             return
             
         selected_unit = self.game.selected_unit
         
         # Vérifier que l'unité sélectionnée est vivante
         if not selected_unit.is_alive:
-            print("L'unité sélectionnée n'est pas vivante")
             return
             
         # Vérifier s'il y a des ennemis dans la portée
         if not hasattr(selected_unit, 'enemies_in_range') or not selected_unit.enemies_in_range:
-            print("Aucun ennemi dans la portée")
             return
             
         # Obtenir l'ennemi le plus proche
         target = selected_unit.get_closest_enemy_in_range()
         if not target:
-            print("Aucune cible valide trouvée")
             return
             
         # Vérifier le cooldown de tir

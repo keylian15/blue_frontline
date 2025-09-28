@@ -73,7 +73,6 @@ class Unit(pygame.sprite.Sprite):
                 }, 
             }
 
-    
     # Chaque unité peut avoir sa propre tuile, pour chaque équipe, et tout est configurable
     def load_sprite_from_tileset(self, team, unit_type):
         """Charge l'image de l'unité depuis le tileset approprié."""
@@ -107,7 +106,7 @@ class Unit(pygame.sprite.Sprite):
             self.update_enemies_in_range(all_units)
         
         # Mise à jour du combat
-        self.combat_update(dt, combat_system)
+        self.combat_update(combat_system)
         
         # Dessiner la portée uniquement si l'unité est sélectionnée
         if screen and self.is_selected:
@@ -119,7 +118,6 @@ class Unit(pygame.sprite.Sprite):
     def updateObstacle(self, obstacles):
         """Mise à jour de l'obstacle de l'unité."""
         self.obstacles = obstacles
-    
     
     def move(self, dt):
         """Déplace l'unité selon sa vitesse. Appelé a chaque tick"""
@@ -146,11 +144,11 @@ class Unit(pygame.sprite.Sprite):
         else:
             self.stop()
             
-    def move_to_position(self, target:tuple, game):
+    def move_to_position(self, target:tuple):
         """Fonction permettant de mettre les mécanismes de déplacements."""
-        self.target_position = target                       # On défini la position cible
-        self.move_to(target[0], target[1], self.max_speed)  # On va initialiser les déplacements de l'unité
-        self.is_moving = True                               # On indique que l'unité est en train de bouger
+        self.target_position = target                                       # On défini la position cible
+        self.move_to(target[0], target[1], self.max_speed * TIME_SPEED)     # On va initialiser les déplacements de l'unité
+        self.is_moving = True                                               # On indique que l'unité est en train de bouger
         
     def stop(self):
         """Arrête le mouvement de l'unité."""
@@ -181,13 +179,8 @@ class Unit(pygame.sprite.Sprite):
             if coins > 0:
                 self.game.hud.piece.count += coins
                 self.game.coins = self.game.hud.piece.count
-                #print(f"[DEBUG] Pièces ajoutées: +{coins} | Total: {self.game.hud.piece.count}")
         self.kill()  # Retire l'unité du groupe pygame
-    
-    def heal(self, amount):
-        """Soigne l'unité."""
-        self.current_health = min(self.current_health + amount, self.max_health)
-    
+        
     def get_health_percentage(self):
         """Retourne le pourcentage de vie restante."""
         return self.current_health / self.max_health if self.max_health > 0 else 0
@@ -227,7 +220,7 @@ class Unit(pygame.sprite.Sprite):
             return True
         return False
     
-    def combat_update(self, dt, combat_system=None):
+    def combat_update(self, combat_system=None):
         """Met à jour la logique de combat."""
         if self.target and self.target.is_alive:
             if self.is_in_range(self.target):

@@ -32,16 +32,17 @@ class EventHandler:
                 # Reconstruire la map
                 if hasattr(self.game.renderer, 'map_needs_refresh') and self.game.renderer.map_needs_refresh:
                     self.game.renderer.refresh_map()  
-                    
-                # Marquer le changement comme traité
-                self.game.hud.timer.maree_changed = False
-                
+
+                # Gestion des zones quantiques
                 if self.game.hud.timer.maree_haute:
                     self.game.quantique()
                     
                 # On charge les obstacles
                 self.game.setObstacles()
 
+                # Marquer le changement comme traité
+                self.game.hud.timer.maree_changed = False
+                
             # Gestion des touches
             elif event.type == pygame.KEYDOWN:
                 if not self._handle_keydown_events(event):
@@ -161,7 +162,7 @@ class EventHandler:
                 self.game.select_unit(clicked_unit)
             elif self.game.selected_unit and self.game.selected_unit.is_alive:
                 # Déplacer l'unité sélectionnée vers la position cliquée
-                self.game.selected_unit.move_to_position((world_x, world_y), self.game)
+                self.game.selected_unit.move_to_position((world_x, world_y))
             else:
                 self.game.select_unit(None)
         
