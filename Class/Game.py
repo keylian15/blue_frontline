@@ -67,6 +67,7 @@ class Game :
         # Obstacles
         self.setObstacles()
         # Zone quantiques
+        self.quantique_area_name = []
         self.setQuantiqueArea()
 
     def setObstacles(self):
@@ -95,48 +96,53 @@ class Game :
                 self.quantique_area.append(obj.as_points)
                 self.quantique_area_hidden.append(obj.as_points)
 
-    def quantique(self):
-        """ Génération de l'île quantique pour toutes les îles quantique dans la map."""
+    def quantique(self, name: str = None):
+        """ Génération de l'île quantique pour toutes les îles quantiques découvertes dans la map.
+        name : str Paramètre supplémentaire pour générer qu'une seule île
+        """
         # Initialiser la liste des îles si elle n'existe pas
         if not hasattr(self, 'quantum_islands'):
             self.quantum_islands = []
         
         # Nettoyer les anciennes îles
-        for old_island in self.quantum_islands:
-            if old_island in self.group:
-                self.group.remove(old_island)
-        self.quantum_islands.clear()
-        
-        # Générer toutes les îles
-        for obj in self.tmx_data.objects:
-            if obj.name.startswith("ile_quantique"):                         
-                # On récupère la position et on l'aligne à la grille      
-                aligned_x = (obj.x // 32) * 32
-                aligned_y = (obj.y // 32) * 32
-                island_position = (aligned_x, aligned_y)
+        if not name :
+            for old_island in self.quantum_islands:
+                if old_island in self.group:
+                    self.group.remove(old_island)
+            self.quantum_islands.clear()
 
-                # On récupère la taille en nombre de tuiles
-                island_width_tiles = int(obj.width // 32) 
-                island_height_tiles = int(obj.height // 32)
-                        
-                # Créer le tileset final avec les tuiles centrales
-                tileset_surface_smooth = [
-                    self.deep_water_tileset,  # Index 0: Eau profonde
-                    self.water_tileset,       # Index 1: Eau peu profonde
-                    self.island_tileset       # Index 2: Île
-                ]
-        
-                # Générer et créer le sprite de l'île
-                self.perlin = Perlin()
-                island_matrix = self.perlin.generate_island(island_height_tiles, island_width_tiles)
-                island_surface = self.perlin.smooth_map(island_matrix, tileset_surface_smooth)
-                
-                # Créer le sprite
-                island_sprite = IslandSprite(island_surface, island_position[0], island_position[1])
-                
-                # Ajouter à la liste ET au groupe
-                self.quantum_islands.append(island_sprite)
-                self.group.add(island_sprite)
+        # Fonction interne pour créer une île
+        def create_island(obj):
+            aligned_x = (obj.x // 32) * 32
+            aligned_y = (obj.y // 32) * 32
+            island_position = (aligned_x, aligned_y)
+
+            island_width_tiles = int(obj.width // 32)
+            island_height_tiles = int(obj.height // 32)
+
+            tileset_surface_smooth = [
+                self.deep_water_tileset,  # 0: Eau profonde
+                self.water_tileset,       # 1: Eau peu profonde
+                self.island_tileset       # 2: Île
+            ]
+
+            self.perlin = Perlin()
+            island_matrix = self.perlin.generate_island(island_height_tiles, island_width_tiles)
+            island_surface = self.perlin.smooth_map(island_matrix, tileset_surface_smooth)
+
+            island_sprite = IslandSprite(island_surface, island_position[0], island_position[1])
+            self.quantum_islands.append(island_sprite)
+            self.group.add(island_sprite)
+
+        # Générer toutes les îles trouvées
+        for obj in self.tmx_data.objects:
+            if name :
+                if obj.name == name:
+                    create_island(obj)
+            else : 
+                if obj.name.startswith("ile_quantique") and obj.name in self.quantique_area_name:
+                    create_island(obj)
+
 
     def find_unit_at_position(self, world_x, world_y):
         """
