@@ -11,6 +11,9 @@ TIME_STEP = 1000 # en ms => 1 seconde
 TIME_SPEED = 20 # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
 TIME_MAREE = 180
 
+# Vitesses de temps disponibles
+TIME_SPEEDS = [1, 2, 4, 8]
+
 # === MAP ===
 MAP_PATH = resource_path("map.tmx")
 ISLAND_TILESET_PATH = resource_path('assets/island/png/island_spritesheet.png')
@@ -20,6 +23,8 @@ WATER_TILESET_PATH = resource_path('assets/water/png/water_spritesheet.png')
 # === HUD === 
 PIECE_IMAGE_PATH = resource_path('assets/HUD/piece.png')
 PETROLE_IMAGE_PATH = resource_path('assets/HUD/petrole.png')
+MAREE_HAUTE_IMAGE_PATH = resource_path('assets/HUD/maree_haute.png')
+MAREE_BASSE_IMAGE_PATH = resource_path('assets/HUD/maree_basse.png')
 
 
 # === EVENEMENTS ===
