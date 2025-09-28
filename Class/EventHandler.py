@@ -113,9 +113,6 @@ class EventHandler:
         
         elif event.key == pygame.K_DOWN:
             self.game.sound.decrease_volume()
-        
-        elif event.key == pygame.K_t:
-            return True
 
         if event.key == pygame.K_LEFT:
             self.game.hud.popup_selection = (self.game.hud.popup_selection - 1) % len(self.game.hud.unit_names)
@@ -165,10 +162,6 @@ class EventHandler:
                 self.game.selected_unit.move_to_position((world_x, world_y))
             else:
                 self.game.select_unit(None)
-        
-        # Clic droit
-        elif event.button == 3 and self.game.hud.timer.maree_haute:
-            self.game.quantique()
         
         # Molette haut
         elif event.button == 4:

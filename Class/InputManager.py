@@ -66,11 +66,7 @@ class InputManager:
     def _handle_shooting(self, pressed):
         """Gère le tir avec la touche T avec cooldown strict de 1 seconde."""
         if pressed[pygame.K_t]:
-            current_time = pygame.time.get_ticks()
-            # Vérifier le cooldown au niveau de l'InputManager
-            if current_time - self.last_shoot_time >= self.shoot_cooldown:
-                self._trigger_shooting()
-                self.last_shoot_time = current_time
+            self._trigger_shooting()
     
     def _trigger_shooting(self):
         """Déclenche le tir si toutes les conditions sont remplies."""
