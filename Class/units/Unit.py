@@ -181,7 +181,7 @@ class Unit(pygame.sprite.Sprite):
                     self.is_moving = False
                     self.target_position = None
                 
-                self.check_area()
+                self.check_area(dt)
         
     def move_to(self, target_x, target_y, speed):
         """Fonction permettant de mettre a jour la vitesse pour les déplacements."""
