@@ -223,15 +223,17 @@ class Unit(pygame.sprite.Sprite):
             # Détermination du type d'unité pour la récompense
             unit_type = getattr(self, 'unit_type', None)
             if unit_type in ['chaloupe', 'bateau', 'eclaireur']:
-                coins = 1
+                pieces = 1
             elif unit_type in ['paquebot', 'sousmarin']:
-                coins = 3
+                pieces = 3
             else:
-                coins = 0
+                pieces = 0
             # Ajout des pièces au HUD et synchronisation
-            if coins > 0:
-                self.game.hud.piece.count += coins
-                self.game.coins = self.game.hud.piece.count
+            if pieces > 0:
+                if self.team == "red" : 
+                    self.game.hud.piece_green.count += pieces
+                else :
+                    self.game.hud.piece_red.count += pieces
         self.kill()  # Retire l'unité du groupe pygame
         
     def get_health_percentage(self):
