@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 import pygame
 import math
 import random
@@ -15,6 +16,27 @@ from Class.Piece import Piece
 from Class.Timer import Timer
 from Utils import random_point_in_polygon
 
+=======
+import math
+import random
+
+import pygame
+
+# Importation des modules gestionnaires
+from Class.EventHandler import EventHandler
+from Class.GameInitializer import GameInitializer
+from Class.GameUpdater import GameUpdater
+from Class.InputManager import InputManager
+from Class.Perlin import Perlin
+from Class.Petrole import Petrole
+from Class.Piece import Piece
+from Class.Renderer import Renderer
+from Class.Timer import Timer
+from Global import *
+from Utils import random_point_in_polygon
+
+
+>>>>>>> e5f634d (Ajout du système audio spatial)
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
     
@@ -42,6 +64,23 @@ class Game :
         self.initializer.init_ui()
         self.initializer.init_sound()
 
+<<<<<<< HEAD
+=======
+        # === AUDIO / QUANTIQUE: wrapper "post-quantique" SANS toucher la fonction d'origine ===
+        # On interpose un wrapper: tous les appels existants à self.quantique(...)
+        # exécuteront la version originale, puis la notification audio immédiatement après.
+        if not hasattr(self, "_quantique_wrapped"):
+            self._quantique_impl = self.quantique  # sauvegarde de la fonction d'origine
+            def _quantique_with_audio(name: str = None):
+                # Appel inchangé à la logique d'origine (celle de ton camarade)
+                result = self._quantique_impl(name)
+                # Notification son juste APRÈS l'appel, comme demandé
+                self._notify_quantum_audio()
+                return result
+            self.quantique = _quantique_with_audio
+            self._quantique_wrapped = True
+
+>>>>>>> e5f634d (Ajout du système audio spatial)
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
         
@@ -70,6 +109,20 @@ class Game :
         self.quantique_area_name = []
         self.setQuantiqueArea()
 
+<<<<<<< HEAD
+=======
+    # --- Utilitaire audio: notification post-quantique (ne change pas la logique de génération) ---
+    def _notify_quantum_audio(self):
+        """Notifie le moteur audio des îles quantiques présentes, à appeler APRÈS quantique(...)."""
+        try:
+            if hasattr(self, "sound") and self.sound:
+                centers = [(spr.rect.centerx, spr.rect.centery) for spr in getattr(self, "quantum_islands", [])]
+                self.sound.set_quantum_islands(centers)
+        except Exception:
+            # On ne casse jamais la boucle de jeu pour du son
+            pass
+
+>>>>>>> e5f634d (Ajout du système audio spatial)
     def setObstacles(self):
         """Fonction permettant de récupérer les obstacles du jeu."""
         # On récupére les collisions générales.
@@ -111,6 +164,16 @@ class Game :
                     self.group.remove(old_island)
             self.quantum_islands.clear()
 
+<<<<<<< HEAD
+=======
+            # === AUDIO === informer que 0 île quantique est présente (prépare le one-shot 0->N)
+            try:
+                if hasattr(self, "sound") and self.sound:
+                    self.sound.set_quantum_islands([])
+            except Exception:
+                pass
+
+>>>>>>> e5f634d (Ajout du système audio spatial)
         # Fonction interne pour créer une île
         def create_island(obj):
             aligned_x = (obj.x // 32) * 32
@@ -376,4 +439,8 @@ class Game :
         if not self.game_running:
             return  # Retourner au menu
         
+<<<<<<< HEAD
         pygame.quit()
+=======
+        pygame.quit()
+>>>>>>> e5f634d (Ajout du système audio spatial)

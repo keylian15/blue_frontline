@@ -1,10 +1,16 @@
 import pygame
 import pytmx
 import pyscroll
+<<<<<<< HEAD
 from Class.Sound import Sound
 from Class.Camera import Camera
 from Class.Combat import CombatSystem
 from Class.Sound import Sound
+=======
+from Class.SoundAPI import Sound  # <-- API publique son
+from Class.Camera import Camera
+from Class.Combat import CombatSystem
+>>>>>>> e5f634d (Ajout du système audio spatial)
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
 from Class.units.Bateau import BateauRouge, BateauVert
 from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
@@ -47,8 +53,13 @@ class GameInitializer:
         """Initialise la caméra et les groupes de sprites."""
         camera_position = self.game.tmx_data.get_object_by_name("spawn")
         self.game.camera = Camera(camera_position.x, camera_position.y, 
+<<<<<<< HEAD
                                 self.game.screen.get_size(), 
                                 (self.game.map_width, self.game.map_height))
+=======
+                                  self.game.screen.get_size(), 
+                                  (self.game.map_width, self.game.map_height))
+>>>>>>> e5f634d (Ajout du système audio spatial)
         
         # Dessiner le groupe de calques
         self.game.group = pyscroll.PyscrollGroup(map_layer=self.game.map_layer, default_layer=3)
@@ -62,7 +73,11 @@ class GameInitializer:
         self.game.units = []
         self.game.selected_unit = None
     
+<<<<<<< HEAD
         # Récupérer les points du polygone
+=======
+        # Récupérer les points du polygone (zones)
+>>>>>>> e5f634d (Ajout du système audio spatial)
         for obj in self.game.tmx_data.objects:
             if obj.name == "Base_verte":
                 self.game.green_platform_spawn = obj.points
@@ -71,6 +86,7 @@ class GameInitializer:
             elif obj.name == "Spawn_base_verte":
                 self.game.green_platform_zone = obj.points  
             elif obj.name == "Spawn_base_rouge":
+<<<<<<< HEAD
                 self.game.red_platform_zone = obj.points  # Récupérer les points du polygone
         
         # Position hitbox plateformes rouge
@@ -78,6 +94,13 @@ class GameInitializer:
         platform_rouge_y = 1500 
         
         # Position hitbox plateforme verte
+=======
+                self.game.red_platform_zone = obj.points
+        
+        # Position hitbox plateformes rouge/verte (points utilisés pour le son)
+        platform_rouge_x = 144
+        platform_rouge_y = 1500 
+>>>>>>> e5f634d (Ajout du système audio spatial)
         platform_verte_x = 3700  
         platform_verte_y = 1500 
         
@@ -107,6 +130,14 @@ class GameInitializer:
         self.game.group.add(plateforme_rouge)
         self.game.group.add(plateforme_verte)
 
+<<<<<<< HEAD
+=======
+        # === Positions ponctuelles pour l'audio (bases) ===
+        # On fournit explicitement des tuples (x,y) au moteur audio
+        self.game.red_platform_spawn   = (platform_rouge_x, platform_rouge_y)
+        self.game.green_platform_spawn = (platform_verte_x, platform_verte_y)
+
+>>>>>>> e5f634d (Ajout du système audio spatial)
     def init_ui(self):
         """Initialise l'interface utilisateur."""
         # Système de popup pour sélection d'unités
@@ -130,9 +161,15 @@ class GameInitializer:
         self.game.hud = Hud(self.game.screen)
         
     def init_sound(self):
+<<<<<<< HEAD
         """Initialise le système sonore."""
         pygame.mixer.init()
         self.game.sound = Sound()
+=======
+        """Initialise le système sonore (via l'API publique)."""
+        # Le moteur audio interne initialise le mixer si nécessaire.
+        self.game.sound = Sound(self.game)
+>>>>>>> e5f634d (Ajout du système audio spatial)
     
     def switch_layer(self):
         """Fonction permettant de switcher entre les calques de marée haute et basse."""
@@ -157,4 +194,7 @@ class GameInitializer:
             if layer.name == layer_name:
                 layer.visible = visible
                 return
+<<<<<<< HEAD
 
+=======
+>>>>>>> e5f634d (Ajout du système audio spatial)

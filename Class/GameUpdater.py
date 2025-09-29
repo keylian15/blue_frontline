@@ -14,6 +14,19 @@ class GameUpdater:
         
         # Mettre à jour la caméra
         self.game.camera.update()
+<<<<<<< HEAD
+=======
+
+        # === AUDIO ===
+        # Mettre à jour le moteur sonore (spatialisation, ducking musique, base/île/mer…)
+        # On le fait juste après la MAJ caméra, pour avoir la position/zoom à jour.
+        try:
+            if hasattr(self.game, "sound") and self.game.sound:
+                self.game.sound.update()
+        except Exception:
+            # On évite de faire crasher la boucle de jeu si un son manque, etc.
+            pass
+>>>>>>> e5f634d (Ajout du système audio spatial)
         
         # Mettre à jour le renderer si le zoom a changé
         self._update_renderer_for_zoom()
@@ -32,7 +45,10 @@ class GameUpdater:
                 unit.is_selected = (unit == self.game.selected_unit)
         
         # Mettre à jour le système de combat
+<<<<<<< HEAD
         
+=======
+>>>>>>> e5f634d (Ajout du système audio spatial)
         if hasattr(self.game, 'combat_system'):
             self.game.combat_system.update(dt)
         
@@ -82,4 +98,8 @@ class GameUpdater:
                             self.game.group.add(island)
 
             # Actualiser toutes les références des gestionnaires
+<<<<<<< HEAD
             self.game.last_zoom_level = self.game.camera.zoom_level
+=======
+            self.game.last_zoom_level = self.game.camera.zoom_level
+>>>>>>> e5f634d (Ajout du système audio spatial)
