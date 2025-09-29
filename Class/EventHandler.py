@@ -75,6 +75,8 @@ class EventHandler:
             
             # Vérifier le coût en pétrole
             cost = UNIT_CONFIGS.get(config_key, {}).get('cost')
+            if not cost:
+                return
             
             # S'il n'y a pas assez de pétrole.
             if team_key == "red"  :
