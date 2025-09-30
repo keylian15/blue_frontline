@@ -7,8 +7,13 @@ from Utils import *
 class Hud:
     """Classe pour gérer le HUD du jeu."""
     
-    def __init__(self, screen):
-        """Fonction permettant d'initialiser le HUD"""
+    def __init__(self, screen: pygame.surface):
+        """Fonction permettant d'initialiser le HUD.
+
+        Args:
+            screen (pygame.surface): Surface d'affichage du jeu.
+        """
+        
         # Dimensions de l'écran
         self.width = screen.get_width()
         self.height = screen.get_height()
@@ -49,11 +54,16 @@ class Hud:
         self.timer = Timer()
 
     def switch(self):
-        """Fonction permettant d'afficher ou de cacher le HUD"""
+        """Fonction permettant d'afficher ou de cacher le HUD."""
+        
         self.show = not self.show
             
-    def draw(self, screen):
-        """Fonction permettant de déssiener le HUD sur le screen"""
+    def draw(self, screen: pygame.surface):
+        """Fonction permettant de déssiener le HUD sur le screen.
+
+        Args:
+            screen (pygame.surface): Surface sur laquelle dessiner le HUD.
+        """
         
         # On vérifie si le HUD doit être affiché
         if not self.show:
@@ -67,8 +77,6 @@ class Hud:
         team_color = (255, 0, 0) if self.player_team == 'red' else (0, 255, 0)
         team_surface = self.font.render(team_text, True, team_color)
         screen.blit(team_surface, (self.width * 0.05, self.height * 0.05))
-        
-        
         
         # Images
         screen.blit(self.images['piece'], (self.width * 0.84, self.height * 0.8))
@@ -95,7 +103,8 @@ class Hud:
             screen.blit(self.images['maree_basse'], (self.width * 0.6, self.height * 0.05))
                 
     def load_images(self):
-        """Fonction permettant de charger les images du HUD"""
+        """Fonction permettant de charger les images du HUD."""
+        
         piece = pygame.image.load(PIECE_IMAGE_PATH).convert_alpha()
         petrole = pygame.image.load(PETROLE_IMAGE_PATH).convert_alpha()
         maree_haute = pygame.image.load(MAREE_HAUTE_IMAGE_PATH).convert_alpha()
@@ -103,7 +112,6 @@ class Hud:
         
         red_team = load_tileset(RED_TEAM_PATH)
         green_team = load_tileset(GREEN_TEAM_PATH)
-        
         
         red_chaloupe = pygame.transform.scale(red_team[0], (80, 80))
         red_bateau = pygame.transform.scale(red_team[1], (80, 80))
@@ -144,7 +152,6 @@ class Hud:
     
     def draw_unit_popup(self):
         """Dessine un popup horizontal aligné au-dessus des icônes du HUD."""
-        # Toujours affiché
         
         # Paramètres d'alignement des icônes
         icon_size = 80
@@ -211,10 +218,18 @@ class Hud:
         self.screen.blit(band_surface, (int(band_x), int(band_y)))
 
         # Affichage d'un panneau de stats pour l'icône actuellement sélectionnée
-        self._draw_unit_popup_stats(self.popup_selection, band_x, band_y, band_width)
+        self.draw_unit_popup_stats(self.popup_selection, band_x, band_y, band_width)
 
-    def _draw_unit_popup_stats(self, selection_index, band_x, band_y, band_width):
-        """Dessine un panneau de stats au-dessus du bandeau pour l'unité sélectionnée dans le popup."""
+    def draw_unit_popup_stats(self, selection_index: int, band_x: float, band_y: float, band_width: float):
+        """Dessine un panneau de stats au-dessus du bandeau pour l'unité sélectionnée dans le popup.
+
+        Args:
+            selection_index (int): Index de l'unité sélectionnée dans le popup.
+            band_x (float): Position horizontale du bandeau.
+            band_y (float): Position verticale du bandeau.
+            band_width (float): Largeur du bandeau.
+        """
+                
         # Trouver la clé de config
         if selection_index < 0 or selection_index >= len(self.unit_config_keys):
             return
@@ -271,10 +286,12 @@ class Hud:
 
     def toggle_popup_team(self):
         """Bascule l'équipe affichée dans le popup (rouge <-> vert)."""
+        
         self.popup_team = 'green' if self.popup_team == 'red' else 'red'
         
         
     def switch_team(self):
-        """Change l'équipe du joueur"""
+        """Change l'équipe du joueur."""
+        
         self.player_team = 'green' if self.player_team == 'red' else 'red'
         
