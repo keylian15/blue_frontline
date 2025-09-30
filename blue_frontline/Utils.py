@@ -25,17 +25,30 @@ def load_tileset(path):
 
     return tiles
 
-def resource_path(relative_path):
-    """Retourne le chemin absolu vers une ressource"""
+def resource_path(relative_path: str):
+    """Retourne le chemin absolu vers une ressource/
+
+    Args:
+        relative_path (str): Chemin relatif vers la ressource.
+
+    Returns:
+        path (str): Chemin absolu vers la ressource.
+    """
+    
     if hasattr(sys, '_MEIPASS'):
         return os.path.join(sys._MEIPASS, relative_path)  # exe PyInstaller
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)  # script normal
 
-def random_point_in_polygon(points):
+def random_point_in_polygon(points: tuple[int, int]):
+    """Génère un point aléatoire à l'intérieur d'un polygone défini par ses sommets.
+
+    Args:
+        points (tuple[int, int]): Coordonnées des sommets du polygone.
+
+    Returns:
+        point (tuple[int, int]): Coordonnées du point généré.
     """
-    Génère un point aléatoire à l'intérieur d'un polygone défini par ses sommets.
-    points : liste de tuples (x, y)
-    """
+    
     poly = Polygon(points)
     minx, miny, maxx, maxy = poly.bounds  # bounding box du polygone
 
@@ -46,21 +59,28 @@ def random_point_in_polygon(points):
             return (p.x, p.y)
 
 def point_in_polygon(polygon_points:list[tuple], test_point:tuple):
-    """
-    Vérifie si un point est dans un polygone.
-    polygon_points : liste de tuples (x, y)
-    test_point : tuple (x, y)
+    """Vérifie si un point est dans un polygone.
+
+    Args:
+        polygon_points (list[tuple]): Liste de tuples représentant les coordonnées des sommets du polygone.
+        test_point (tuple): Coordonnées du point à tester.
+
+    Returns:
+        Bool: True si le point est dans le polygone, False sinon.
     """
     poly = Polygon(polygon_points)
     point = Point(test_point)
     return poly.contains(point)
 
 def point_in_many_polygons(polygons_points:list[list[tuple]], test_point:tuple) : 
-    """
-    Vérifie si un point est dans un polygone.
-    polygons_points : liste de listes de tuples (x, y)
-    test_point : tuple (x, y)
-    renvoi un booléen et les points du polygone dans lequel le point est
+    """Vérifie si un point est dans plusieurs polygones.
+
+    Args:
+        polygons_points (list[list[tuple]]): Liste de listes de tuples représentant les coordonnées des sommets des polygones.
+        test_point (tuple): Coordonnées du point à tester.
+
+    Returns:
+        bool, Polygon: True si le point est dans un polygone ainsi que son polygon, False sinon.
     """
     for polygon_points in polygons_points:
         if point_in_polygon(polygon_points, test_point):
