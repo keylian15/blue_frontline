@@ -7,7 +7,7 @@ class Sound:
     API publique simple pour piloter l'audio depuis le jeu.
     On garde ici une surface minimale; toute la logique est dans SpatialAudioManager.
     """
-    def __init__(self, game):
+    def __init__(self, game: "Game"):
         self.game = game
         # le moteur initialise mixer + charge les sons
         self._engine = SpatialAudioManager(game)

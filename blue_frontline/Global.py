@@ -187,7 +187,6 @@ MASK_MAPPING = {
     1 + 2 + 4 + 8 : MAPPING["center"],
     }
 
-
 # === Unités ===
 
 RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
@@ -332,7 +331,6 @@ UNIT_CONFIGS = {
     }
 }
 
-
 # === Couleurs marines et interface ===
 WHITE = (255, 255, 255)
 GRAY = (100, 100, 100)
@@ -365,5 +363,3 @@ CONTROLS_DESCRIPTION = {
     "ZOOM_IN": "Zoom avant",
     "ZOOM_OUT": "Zoom arrière"
 }
-
-

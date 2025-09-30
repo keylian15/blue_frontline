@@ -1,12 +1,14 @@
-import pygame
-import sys
-import math
+import pygame, sys, math
 from Global import *
 from Class.Game import Game
 from Class.OptionsMenu import OptionsMenu
 
 class Menu:
+    """Classe pour gérer le menu principal du jeu."""
+    
     def __init__(self):
+        """Fonction d'initialisation du menu principal."""
+
         self.screen = pygame.display.set_mode((0, 0), pygame.NOFRAME)
         pygame.display.set_caption("Blue Frontline")
         self.WIDTH, self.HEIGHT = self.screen.get_size()
@@ -30,7 +32,18 @@ class Menu:
             ("Quitter", start_x, start_y + (BUTTON_HEIGHT + BUTTON_SPACING) * 3, BUTTON_WIDTH, BUTTON_HEIGHT),
         ]
 
-    def draw_button(self, text, x, y, w, h, hovered):
+    def draw_button(self, text: str, x: int, y: int, w: int, h: int, hovered: bool):
+        """Fonction pour dessiner un bouton avec un texte et une bordure.
+
+        Args:
+            text (str): Texte à afficher sur le bouton.
+            x (int): Position x du bouton.
+            y (int): Position y du bouton.
+            w (int): Largeur du bouton.
+            h (int): Hauteur du bouton.
+            hovered (bool): Indique si le bouton est survolé.
+        """
+        
         BORDER_COLOR = WHITE
 
         button_surf = pygame.Surface((w, h), pygame.SRCALPHA)
@@ -70,6 +83,8 @@ class Menu:
         self.screen.blit(txt, txt_rect)
 
     def run(self):
+        """Boucle principale du menu."""
+        
         menu = True
         while menu:
             mouse_pos = pygame.mouse.get_pos()
@@ -94,11 +109,14 @@ class Menu:
                     elif text == "Jouer":
                         game = Game(self.screen)
                         game.run()
+                        menu = False
                     elif text == "Succès":
                         print("Menu succès...")
+                        menu = False
                     elif text == "Options":
                         options_menu = OptionsMenu(self.screen)
                         options_menu.run()
+                        menu = False
 
             pygame.display.flip()
 

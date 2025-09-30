@@ -1,10 +1,18 @@
+import pygame
 from Class.units.Unit import Unit
+from Class.Combat import CombatSystem
 from Global import UNIT_CONFIGS
 
 class Chaloupe(Unit):
     """Classe unifiée pour les unités Chaloupe (Rouge et Verte)."""
     
-    def __init__(self, game, team):
+    def __init__(self, game: "Game", team: str):
+        """Initialise une instance de Chaloupe.
+
+        Args:
+            game (Game): Instance du jeu.
+            team (str): Équipe de l'unité.
+        """
         # Récupérer la configuration depuis Global.py
         config = UNIT_CONFIGS["chaloupe"]
         
@@ -32,8 +40,17 @@ class Chaloupe(Unit):
         self.is_moving = False
         self.target_position = None
         
-    def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
-        """Met à jour la chaloupe."""
+    def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list[Unit] = None):
+        """Met à jour l'unité en fonction de son état actuel.
+
+        Args:
+            dt (int, optional): La différence de temps entre chaque frame. Defaults to 0.
+            combat_system (CombatSystem, optional): Le systeme de combat. Defaults to None.
+            screen (pygame.Surface, optional): L'écran sur lequel affiché. Defaults to None.
+            camera_offset (tuple[float, float], optional): La position de la caméra. Defaults to (0, 0).
+            all_units (list[Unit], optional): Liste des unités. Defaults to None.
+        """
+
         # Appeler la mise à jour de la classe parent
         super().update(dt, combat_system, screen, camera_offset, all_units)
 
@@ -42,9 +59,19 @@ class Chaloupe(Unit):
             self.draw_range(screen, camera_offset)# Classes d'alias pour la compatibilité avec l'ancien code
             
 class ChaloupeRouge(Chaloupe):
-    def __init__(self, game):
+    def __init__(self, game: "Game"):
+        """Initialise une chaloupe rouge.
+
+        Args:
+            game (Game): Instance du jeu.
+        """
         super().__init__(game, team="red")
 
 class ChaloupeVerte(Chaloupe):
-    def __init__(self, game):
+    def __init__(self, game: "Game"):
+        """Initialise une chaloupe verte.
+
+        Args:
+            game (Game): Instance du jeu.
+        """
         super().__init__(game, team="green")

@@ -1,11 +1,15 @@
 import pygame, pyscroll, time, math
 
-
 class Renderer:
     """Gestionnaire de rendu pour le jeu."""
     
-    def __init__(self, game):
-        """Initialise le gestionnaire de rendu avec une référence au jeu."""
+    def __init__(self, game: "Game"):
+        """Initialise le gestionnaire de rendu avec une référence au jeu.
+
+        Args:
+            game (Game): Référence au jeu.
+        """
+        
         self.game = game
         self.map_needs_refresh = False
                 
@@ -33,7 +37,7 @@ class Renderer:
                 
         # Remettre les iles quantiques
         if self.game.hud.timer.maree_haute:
-            self._restore_quantum_islands()
+            self.restore_quantum_islands()
 
         for unit in self.game.units:
             if unit.is_alive:
@@ -44,7 +48,7 @@ class Renderer:
         
         self.game.refresh_all_references(self.game)
 
-    def _restore_quantum_islands(self):
+    def restore_quantum_islands(self):
         """Réstaure les iles quantiques."""
         if hasattr(self.game, 'quantum_islands'):
             for island in self.game.quantum_islands:
@@ -54,27 +58,25 @@ class Renderer:
     def render(self):
         """Effectue tout le rendu du jeu."""
 
-
         # Rendu de la map avec zoom
-        self._render_map()
+        self.render_map()
         
         # HUD
         if self.game.hud.show:
             self.game.hud.draw(self.game.screen)
         
         # Projectiles
-        self._render_projectiles()
+        self.render_projectiles()
         
         # Barres de vie des unités
-        self._render_unit_health_bars()
+        self.render_unit_health_bars()
         
         # Unité sélectionnée
-        self._render_selected_unit_highlight()
+        self.render_selected_unit_highlight()
         
-    def _render_map(self):
+    def render_map(self):
         """Rend la map avec gestion du zoom et reconstruction si nécessaire."""
         
-
         if self.game.camera.zoom_level != 1.0:
             # Rendu avec zoom
             temp_surface = pygame.Surface((
@@ -88,22 +90,25 @@ class Renderer:
             # Rendu normal sans zoom
             self.game.group.draw(self.game.screen)
 
-    def _render_projectiles(self):
+    def render_projectiles(self):
         """Rend tous les projectiles."""
+        
         if hasattr(self.game, 'combat_system'):
             camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
             zoom = self.game.camera.zoom_level
             self.game.combat_system.draw(self.game.screen, camera_offset, zoom)
     
-    def _render_unit_health_bars(self):
+    def render_unit_health_bars(self):
         """Rend les barres de vie des unités."""
+        
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
         zoom = self.game.camera.zoom_level
         for unit in self.game.units:
             unit.draw_health_bar(self.game.screen, camera_offset, zoom)
     
-    def _render_selected_unit_highlight(self):
+    def render_selected_unit_highlight(self):
         """Rend la surbrillance de l'unité sélectionnée et son cercle de portée."""
+        
         if not (self.game.selected_unit and self.game.selected_unit.is_alive):
             return
         

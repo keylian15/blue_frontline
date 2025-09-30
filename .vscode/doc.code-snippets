@@ -1,0 +1,18 @@
+{
+    "Get Types Shortcut": {
+        "prefix": "doc",               
+        "body": [
+            "from Utils import get_types",
+            "print('Affichage de test :')",
+            "get_types(${1:param})"
+        ],
+        "description": "Insère get_types pour debug rapide"
+    },
+    "Doc sur dt":{
+        "prefix" : "#dt",
+        "body" : [
+            "La différence de temps entre chaque frame."
+        ], 
+        "description": "Description de dt"
+    }
+}

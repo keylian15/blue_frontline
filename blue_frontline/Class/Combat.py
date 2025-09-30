@@ -1,13 +1,24 @@
-import pygame
-import math
-from Global import *
+import pygame, math
+from Class.units.Unit import Unit
 
 class Projectile(pygame.sprite.Sprite):
     """Classe pour gérer les projectiles tirés par les unités."""
     
-    def __init__(self, x, y, target_x, target_y, damage, speed=200, shooter=None):
-        super().__init__()
+    def __init__(self, x: int, y: int, target_x: int, target_y: int, damage: int, speed: int, shooter : Unit):
+        """Fonction permettant d'initialiser un projectile.
+
+        Args:
+            x (int): La position x du projectile.
+            y (int): La position y du projectile.
+            target_x (int): La position x de la cible.
+            target_y (int): La position y de la cible.
+            damage (int): Le dommage infligé par le projectile.
+            speed (int): La vitesse du projectile.
+            shooter (Unit): L'unité qui a tiré le projectile.
+        """
         
+        super().__init__()
+                
         # Position de départ
         self.position = [float(x), float(y)]
         
@@ -54,8 +65,13 @@ class Projectile(pygame.sprite.Sprite):
             pygame.draw.circle(self.image, (255, 255, 0), (4, 4), 4)  # Projectile jaune
             pygame.draw.circle(self.image, (255, 165, 0), (4, 4), 2)  # Centre orange
     
-    def update(self, dt):
-        """Met à jour le projectile."""
+    def update(self, dt: float):
+        """Fonction permettant de mettre à jour le projectile.
+
+        Args:
+            dt (float): La différence de temps entre chaque frame.
+        """
+        
         if not self.is_active:
             return
         
@@ -84,15 +100,25 @@ class Projectile(pygame.sprite.Sprite):
     
     def on_impact(self):
         """Appelé quand le projectile atteint sa cible."""
+        
         self.destroy()
     
     def destroy(self):
         """Détruit le projectile."""
+        
         self.is_active = False
         self.kill()  # Retire du groupe pygame
     
-    def check_collision(self, target):
-        """Vérifie la collision avec une cible."""
+    def check_collision(self, target: Unit):
+        """Vérifie la collision avec une cible.
+
+        Args:
+            target (Unit): La cible à vérifier.
+
+        Returns:
+            bool: True si il y a collision, False sinon.
+        """
+
         if not self.is_active or not target.is_alive:
             return False
             
@@ -120,20 +146,37 @@ class Projectile(pygame.sprite.Sprite):
 class CombatSystem:
     """Système de gestion du combat et des projectiles."""
     
-    def __init__(self):
+    def __init__(self, game: "Game"):
+        """Fonction permettant d'initialiser le système de combat.
+
+        Args:
+            game (Game): L'instance du jeu.
+        """
+        
         self.projectiles = pygame.sprite.Group()
         self.units = pygame.sprite.Group()
+        self.game = game
     
-    def add_unit(self, unit):
-        """Ajoute une unité au système de combat."""
+    def add_unit(self, unit: Unit):
+        """Ajoute une unité au système de combat.
+
+        Args:
+            unit (Unit): Unité à ajouter.
+        """
+        
         self.units.add(unit)
     
-    def remove_unit(self, unit):
-        """Retire une unité du système de combat."""
-        self.units.remove(unit)
-    
-    def fire_projectile(self, shooter, target):
-        """Crée un projectile tiré par une unité vers une cible."""
+    def fire_projectile(self, shooter: Unit, target: Unit):
+        """Crée un projectile tiré par une unité vers une cible.
+
+        Args:
+            shooter (Unit): Unité qui tire.
+            target (Unit): Unité cible.
+
+        Returns:
+            Projectile: Projectile créé.
+        """
+
         if not shooter.is_alive or not target.is_alive:
             return None
             
@@ -144,15 +187,20 @@ class CombatSystem:
             target.position[0], 
             target.position[1],
             shooter.damage,
-            speed=300,  # Vitesse des projectiles
-            shooter=shooter
+            300,
+            shooter
         )
         
         self.projectiles.add(projectile)
         return projectile
     
-    def update(self, dt):
-        """Met à jour tous les projectiles et gère les collisions."""
+    def update(self, dt: float):
+        """Met à jour tous les projectiles et gère les collisions.
+
+        Args:
+            dt (float): La différence de temps entre chaque frame.
+        """
+        
         # Mettre à jour tous les projectiles
         self.projectiles.update(dt)
         
@@ -179,8 +227,15 @@ class CombatSystem:
 
                     break  # Projectile détruit, passer au suivant
     
-    def draw(self, screen, camera_offset=(0, 0), zoom=1.0):
-        """Dessine tous les projectiles en tenant compte du zoom."""
+    def draw(self, screen: pygame.Surface, camera_offset: tuple[float, float], zoom: float):
+        """Dessine tous les projectiles en tenant compte du zoom.
+
+        Args:
+            screen (pygame.Surface): Surface sur laquelle dessiner les projectiles.
+            camera_offset (tuple[float, float]): Décalage de la caméra.
+            zoom (float): Zoom de la caméra.
+        """        
+        
         for projectile in self.projectiles:
             if projectile.is_active:
                 # Position avec décalage de caméra et zoom
@@ -195,11 +250,3 @@ class CombatSystem:
                 else:
                     scaled_image = projectile.image
                 screen.blit(scaled_image, (screen_x - scaled_image.get_width()//2, screen_y - scaled_image.get_height()//2))
-    
-    def get_projectile_count(self):
-        """Retourne le nombre de projectiles actifs."""
-        return len([p for p in self.projectiles if p.is_active])
-    
-    def clear_projectiles(self):
-        """Supprime tous les projectiles."""
-        self.projectiles.empty()

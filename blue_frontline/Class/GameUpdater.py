@@ -3,12 +3,23 @@ import pyscroll
 class GameUpdater:
     """Gestionnaire de mise à jour des systèmes de jeu."""
     
-    def __init__(self, game):
-        """Initialise le gestionnaire de mise à jour avec une référence au jeu."""
+    def __init__(self, game: "Game"):
+        """Initialise le gestionnaire de mise à jour avec une référence au jeu.
+
+        Args:
+            game (Game): Référence au jeu.
+        """
+
         self.game = game
     
-    def update_systems(self, dt, game):
-        """Met à jour tous les systèmes du jeu grace a la partie en cours."""
+    def update_systems(self, dt: float, game: "Game"):
+        """Met à jour tous les systèmes du jeu grace a la partie en cours.
+
+        Args:
+            dt (float): La différence de temps entre chaque frame.
+            game (Game): Référence au jeu.
+        """
+
         # Met a jour la game
         self.game.refresh_all_references(game)
         
@@ -26,10 +37,10 @@ class GameUpdater:
             pass
         
         # Mettre à jour le renderer si le zoom a changé
-        self._update_renderer_for_zoom()
+        self.update_renderer_for_zoom()
         
         # S'assurer que toutes les unités sont dans le système de combat
-        self._sync_units_with_combat_system()
+        self.sync_units_with_combat_system()
         
         # Mettre à jour les unités
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
@@ -45,16 +56,13 @@ class GameUpdater:
         if hasattr(self.game, 'combat_system'):
             self.game.combat_system.update(dt)
         
-        # Mettre à jour les projectiles
-        if hasattr(self.game, 'update_bullets'):
-            self.game.update_bullets(dt)
-        
         # Mettre à jour les groupes
         self.game.group.update()
         self.game.group.center(self.game.camera.rect.center)
 
-    def _sync_units_with_combat_system(self):
+    def sync_units_with_combat_system(self):
         """Synchronise les unités avec le système de combat."""
+        
         if not hasattr(self.game, 'combat_system'):
             return
             
@@ -63,8 +71,9 @@ class GameUpdater:
             if unit.is_alive and unit not in self.game.combat_system.units:
                 self.game.combat_system.add_unit(unit)
     
-    def _update_renderer_for_zoom(self):
+    def update_renderer_for_zoom(self):
         """Met à jour le renderer pyscroll pour le nouveau niveau de zoom."""
+        
         if self.game.camera.zoom_level != self.game.last_zoom_level:
             # Calculer la nouvelle taille effective de rendu
             effective_width = int(self.game.screen.get_width() / self.game.camera.zoom_level)
@@ -78,7 +87,7 @@ class GameUpdater:
             self.game.group = pyscroll.PyscrollGroup(map_layer=self.game.map_layer, default_layer=3)
             self.game.group.add(self.game.camera)
             
-            # Ajouter tous les sprites existants au nouveau groupe
+            # Ajouter toutes les unités existantes au nouveau groupe
             for unit in self.game.units:
                 if unit.is_alive:
                     self.game.group.add(unit)

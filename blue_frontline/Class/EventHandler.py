@@ -1,7 +1,5 @@
 import pygame
-import time
 from Class.OptionsMenu import OptionsMenu
-from Class.units.Unit import Unit
 from Global import UNIT_CONFIGS
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
 from Class.units.Bateau import BateauRouge, BateauVert
@@ -12,12 +10,17 @@ from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
     
-    def __init__(self, game):
-        """Initialise le gestionnaire d'événements avec une référence au jeu."""
+    def __init__(self, game: "Game"):
+        """Initialise le gestionnaire d'événements avec une référence au jeu.
+
+        Args:
+            game (Game): Référence au jeu.
+        """
         self.game = game
     
     def handle_events(self):
         """Gère tous les événements ponctuels."""
+        
         for event in pygame.event.get(): 
             if event.type == pygame.QUIT: 
                 return False
@@ -47,17 +50,25 @@ class EventHandler:
                 
             # Gestion des touches
             elif event.type == pygame.KEYDOWN:
-                if not self._handle_keydown_events(event):
+                if not self.handle_keydown_events(event):
                     continue
             
             # Gestion des clics souris
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                self._handle_mouse_events(event)
+                self.handle_mouse_events(event)
         
         return True
     
-    def _handle_keydown_events(self, event):
-        """Gère les événements de touches pressées."""        
+    def handle_keydown_events(self, event: pygame.event):
+        """Gère les événements de touches pressées.
+
+        Args:
+            event (pygame.event): Événement pygame.
+
+        Returns:
+            bool: True si l'événement a été traité, False sinon.
+        """
+        
         if event.key == pygame.K_ESCAPE:
             options_menu = OptionsMenu(self.game.screen)
             options_menu.run()
@@ -142,9 +153,13 @@ class EventHandler:
         
         return True
     
+    def handle_mouse_events(self, event: pygame.event):
+        """Gère les événements de souris.
 
-    def _handle_mouse_events(self, event):
-        """Gère les événements de souris."""
+        Args:
+            event (pygame.event): Événement de souris à traiter.
+        """
+        
         # Si le jeu est gagné, gérer les clics sur l'écran de victoire
         if self.game.game_won and event.button == 1:
             self.game.handle_victory_click(pygame.mouse.get_pos())
@@ -152,7 +167,7 @@ class EventHandler:
         
         # Clic gauche
         if event.button == 1:  # Clic gauche
-            world_x, world_y = self._screen_to_world_coordinates(pygame.mouse.get_pos())
+            world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
             # Chercher une unité à cette position
             clicked_unit = self.game.find_unit_at_position(world_x, world_y)
             
@@ -174,8 +189,16 @@ class EventHandler:
             if not getattr(self.game, 'paused', False):
                 self.game.camera.zoom_out()
     
-    def _screen_to_world_coordinates(self, mouse_pos):
-        """Convertit les coordonnées écran en coordonnées monde."""
+    def screen_to_world_coordinates(self, mouse_pos: tuple[int, int]):
+        """Convertit les coordonnées écran en coordonnées monde.
+
+        Args:
+            mouse_pos (tuple[int, int]): Coordonnées écran.
+
+        Returns:
+            tuple[int, int]: Coordonnées monde.
+        """
+        
         mouse_x, mouse_y = mouse_pos
         camera_center = self.game.camera.rect.center
         screen_center_x = self.game.screen.get_width() // 2
