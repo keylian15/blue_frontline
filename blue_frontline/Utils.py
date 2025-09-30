@@ -66,3 +66,25 @@ def point_in_many_polygons(polygons_points:list[list[tuple]], test_point:tuple) 
         if point_in_polygon(polygon_points, test_point):
             return True, polygon_points
     return False
+
+from collections.abc import Iterable
+
+def get_types(obj):
+    """
+    Affiche les types contenus dans obj.
+    - Si obj est un dict : affiche les types des clés et des valeurs
+    - Si obj est une séquence (tuple, list, set, etc.) : affiche les types des éléments
+    - Sinon : affiche le type de obj
+
+    Args:
+        obj (Any): l'objet dont on veut afficher les types
+    """
+    if isinstance(obj, dict):
+        print({
+            "keys": [type(k).__name__ for k in obj.keys()],
+            "values": [type(v).__name__ for v in obj.values()]
+        })
+    elif isinstance(obj, Iterable) and not isinstance(obj, (str, bytes)):
+        print([type(e).__name__ for e in obj])
+    else:
+        print(type(obj).__name__)
