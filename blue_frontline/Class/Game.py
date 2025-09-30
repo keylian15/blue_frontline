@@ -362,7 +362,22 @@ class Game :
         self.game_running = False
 
     def run(self): 
-        """Boucle principale du jeu."""
+        """
+        Boucle principale du jeu.
+        
+        Gère le game loop principal avec les étapes suivantes :
+        - Gestion des événements (pause, quit, inputs)
+        - Mise à jour des systèmes de jeu (physique, IA, collisions)
+        - Rendu graphique
+        - Affichage de l'écran de victoire si nécessaire
+        
+        La boucle s'exécute à 60 FPS et se termine quand :
+        - Le joueur quitte le jeu (fermeture de fenêtre)
+        - Le joueur retourne au menu (self.game_running = False)
+        
+        Returns:
+            None: Retourne au menu si game_running est False, sinon quitte Pygame
+        """
         clock = pygame.time.Clock()
         running = True
         self.game_running = True  # Variable pour contrôler le retour au menu

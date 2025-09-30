@@ -5,10 +5,12 @@ from shapely.geometry import Point, Polygon
 def load_tileset(path):
     """
     Charge un spritesheet et le découpe en tuiles.
+    
     Args:
-        path (str): chemin vers le fichier image du tileset
+        path (str): Chemin vers le fichier image du tileset
+    
     Returns:
-        list[pygame.Surface]: liste de tuiles découpées
+        tiles (list[pygame.Surface]): liste de tuiles découpées
     """
     tile_width  = tile_height = 32
     image = pygame.image.load(path).convert_alpha()
