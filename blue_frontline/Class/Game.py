@@ -1,5 +1,4 @@
-import pygame
-import math
+import pygame, math
 from Global import *
 from Class.Perlin import Perlin
 
@@ -12,11 +11,20 @@ from Class.GameInitializer import GameInitializer
 from Class.Petrole import Petrole
 from Class.Piece import Piece
 from Class.Timer import Timer
+from Class.units import Unit
+from Class import PlateformePetroliere
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
     
-    def __init__(self, surface, x, y):
+    def __init__(self, surface: pygame.Surface, x: int, y: int):
+        """Fonction permettant d'initialiser un sprite d'île.
+
+        Args:
+            surface (pygame.Surface): La surface de l'île.
+            x (int): La position x de l'île.
+            y (int): La position y de l'île.
+        """
         super().__init__()
         self.image = surface
         self.rect = self.image.get_rect()
@@ -25,8 +33,13 @@ class IslandSprite(pygame.sprite.Sprite):
 class Game : 
     """Classe principale du jeu."""
 
-    def __init__(self, screen): 
-        """Initialisation du jeu."""
+    def __init__(self, screen: pygame.surface): 
+        """Fonction permettant d'initialiser le jeu.
+
+        Args:
+            screen (pygame.surface): La surface d'affichage du jeu.
+        """
+        
         self.screen = screen
         
         # Initialiser les gestionnaires
@@ -69,7 +82,7 @@ class Game :
         self.setQuantiqueArea()
 
     # --- Utilitaire audio: notification post-quantique (ne change pas la logique de génération) ---
-    def _notify_quantum_audio(self):
+    def notify_quantum_audio(self):
         """Notifie le moteur audio des îles quantiques présentes, à appeler APRÈS quantique(...)."""
         try:
             if hasattr(self, "sound") and self.sound:
@@ -106,8 +119,10 @@ class Game :
                 self.quantique_area_hidden.append(obj.as_points)
 
     def quantique(self, name: str = None):
-        """ Génération de l'île quantique pour toutes les îles quantiques découvertes dans la map.
-        name : str Paramètre supplémentaire pour générer qu'une seule île
+        """Génération de l'île quantique pour toutes les îles quantiques découvertes dans la map.
+
+        Args:
+            name (str, optional): Le nom d'une île si on veut en générer qu'une seule. Defaults to None.
         """
         # Initialiser la liste des îles si elle n'existe pas
         if not hasattr(self, 'quantum_islands'):
@@ -119,13 +134,6 @@ class Game :
                 if old_island in self.group:
                     self.group.remove(old_island)
             self.quantum_islands.clear()
-
-            # === AUDIO === informer que 0 île quantique est présente (prépare le one-shot 0->N)
-            try:
-                if hasattr(self, "sound") and self.sound:
-                    self.sound.set_quantum_islands([])
-            except Exception:
-                pass
 
         # Fonction interne pour créer une île
         def create_island(obj):
@@ -155,16 +163,27 @@ class Game :
             if name :
                 if obj.name == name:
                     create_island(obj)
+                    
+                    # On joue le son 
+                    self.notify_quantum_audio()
             else : 
                 if obj.name.startswith("ile_quantique") and obj.name in self.quantique_area_name:
                     create_island(obj)
+                    
+                    # On joue le son 
+                    self.notify_quantum_audio()
 
-    def find_unit_at_position(self, world_x, world_y):
+    def find_unit_at_position(self, world_x: float, world_y: float):
+        """Trouve l'unité (ou plateforme) la plus proche de la position donnée dans le monde.
+
+        Args:
+            world_x (float): Coordonnée x de la position dans le monde.
+            world_y (float): Coordonnée y de la position dans le monde.
+
+        Returns:
+            Unit : L'unité la plus proche de la position donnée. None sinon.
         """
-        Trouve l'unité (ou plateforme) la plus proche de la position donnée dans le monde.
-        Retourne l'unité si elle est dans la zone de tolérance, sinon None.
-        """
-        click_tolerance = 60 
+
         closest_unit = None
         min_distance = float('inf')
         
@@ -185,8 +204,13 @@ class Game :
         
         return closest_unit
 
-    def select_unit(self, unit):
-        """Sélectionne une unité et désélectionne les autres."""
+    def select_unit(self, unit: Unit):
+        """Sélectionne une unité et désélectionne les autres.
+
+        Args:
+            unit (Unit): L'unité à sélectionner.
+        """
+        
         # Désélectionner toutes les unités
         for u in self.units:
             if hasattr(u, 'is_selected'):
@@ -199,8 +223,13 @@ class Game :
         else:
             self.selected_unit = None
 
-    def on_platform_destroyed(self, platform):
-        """Appelé quand une plateforme pétrolière est détruite."""
+    def on_platform_destroyed(self, platform: PlateformePetroliere):
+        """Appelé quand une plateforme pétrolière est détruite.
+
+        Args:
+            platform (PlateformePetroliere): La plateforme détruite.
+        """
+
         # Déterminer l'équipe gagnante
         if platform.team == "red":
             self.winner_team = "green"
@@ -212,6 +241,7 @@ class Game :
     
     def draw_victory_screen(self):
         """Dessine l'écran de victoire."""
+        
         if not self.game_won:
             return
         
@@ -280,15 +310,25 @@ class Game :
         self.restart_button_rect = restart_rect
         self.menu_button_rect = menu_rect
     
-    def handle_victory_click(self, mouse_pos):
-        """Gère les clics sur l'écran de victoire."""
+    def handle_victory_click(self, mouse_pos:tuple[float, float]):
+        """Gère les clics sur l'écran de victoire.
+
+        Args:
+            mouse_pos (tuple[float, float]): La position du clic de la souris.
+        """
+        
         if hasattr(self, 'restart_button_rect') and self.restart_button_rect.collidepoint(mouse_pos):
             self.restart_game()
         elif hasattr(self, 'menu_button_rect') and self.menu_button_rect.collidepoint(mouse_pos):
             self.return_to_menu()
     
-    def refresh_all_references(self, game):
-        """Actualise toutes les références des gestionnaires après reconstruction de la map."""
+    def refresh_all_references(self, game: "Game"):
+        """Actualise toutes les références des gestionnaires après reconstruction de la map.
+
+        Args:
+            game (Game): La référence du jeu.
+        """
+        
         # Réinitialiser les gestionnaires pour qu'ils utilisent les nouvelles références
         self.event_handler.game = game
         self.initializer.game = game
@@ -296,7 +336,6 @@ class Game :
         self.input_manager.game = game
         self.renderer.game = game
         self.combat_system.game = game
-        
         
         # S'assurer que les unités sont dans le nouveau groupe
         if hasattr(self, 'units') and self.units:
@@ -313,6 +352,7 @@ class Game :
     
     def restart_game(self):
         """Redémarre le jeu."""
+        
         # Réinitialiser les variables de victoire
         self.game_won = False
         self.winner_team = None
@@ -334,12 +374,15 @@ class Game :
         self.initializer.init_game_systems()
         
         # Remettre les compteurs à zéro
-        self.hud.petrole = Petrole()  # Valeur de départ pétrole
-        self.hud.piece = Piece()      # Valeur de départ pièces
+        self.hud.petrole_red = Petrole()  # Valeur de départ pétrole
+        self.hud.petrole_green = Petrole()  # Valeur de départ pétrole
+        self.hud.piece_red = Piece()      # Valeur de départ pièces
+        self.hud.piece_green = Piece()      # Valeur de départ pièces
         self.hud.timer = Timer()      # Réinstancie le timer
     
     def return_to_menu(self):
         """Retourne au menu principal."""
+        
         self.game_running = False
 
     def run(self): 
