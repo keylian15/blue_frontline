@@ -45,10 +45,6 @@ class GameUpdater:
         if hasattr(self.game, 'combat_system'):
             self.game.combat_system.update(dt)
         
-        # Mettre à jour les projectiles
-        if hasattr(self.game, 'update_bullets'):
-            self.game.update_bullets(dt)
-        
         # Mettre à jour les groupes
         self.game.group.update()
         self.game.group.center(self.game.camera.rect.center)

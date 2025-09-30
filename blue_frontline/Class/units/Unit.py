@@ -408,21 +408,3 @@ class Unit(pygame.sprite.Sprite):
                 closest_enemy = enemy
                 
         return closest_enemy
-    
-    def shoot_at_target(self, target, current_time):
-        """Tire sur une cible donnée."""
-        if not self.can_shoot(current_time) or not target or not target.is_alive:
-            return None
-            
-        # Mettre à jour le temps du dernier tir
-        self.last_shot_time = current_time
-        
-        # Créer et retourner un projectile
-        from Class.Bullet import Bullet
-        bullet = Bullet(
-            self.position,
-            target.position,
-            self.damage, team=self.team
-        )
-        
-        return bullet

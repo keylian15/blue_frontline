@@ -199,27 +199,6 @@ class Game :
         else:
             self.selected_unit = None
 
-    def update_bullets(self, dt):
-        """Met à jour tous les projectiles."""
-        bullets_to_remove = []
-        
-        for bullet in self.bullets:
-            if not bullet.is_alive:
-                bullets_to_remove.append(bullet)
-                continue
-                
-            # Mettre à jour le projectile
-            bullet.update(dt)
-            
-            # Vérifier les collisions avec les unités
-            for unit in self.units:
-                if bullet.check_collision(unit):
-                    break  # Le projectile s'est détruit lors de la collision
-        
-        # Supprimer les projectiles morts
-        for bullet in bullets_to_remove:
-            self.bullets.remove(bullet)
-
     def on_platform_destroyed(self, platform):
         """Appelé quand une plateforme pétrolière est détruite."""
         # Déterminer l'équipe gagnante
