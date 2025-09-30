@@ -420,8 +420,8 @@ class Unit(pygame.sprite.Sprite):
         # Créer et retourner un projectile
         from Class.Bullet import Bullet
         bullet = Bullet(
-            self.position[0], self.position[1],
-            target.position[0], target.position[1],
+            self.position,
+            target.position,
             self.damage, team=self.team
         )
         

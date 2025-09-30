@@ -5,7 +5,7 @@ from Utils import resource_path
 class Bullet(pygame.sprite.Sprite):
     """Classe pour gérer les projectiles du jeu."""
     
-    def __init__(self, start_x, start_y, target_x, target_y, damage, speed=300, team="red"):
+    def __init__(self, start, target, damage, speed=300, team="red"):
         super().__init__()
         
         # Charger l'image du projectile
@@ -19,12 +19,12 @@ class Bullet(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         
         # Position de départ
-        self.position = [float(start_x), float(start_y)]
-        self.rect.center = (int(start_x), int(start_y))
+        self.position = [float(start[0]), float(start[1])]
+        self.rect.center = (int(start[0]), int(start[1]))
         
         # Calculer la direction vers la cible
-        dx = target_x - start_x
-        dy = target_y - start_y
+        dx = target[0] - start[0]
+        dy = target[1] - start[1]
         distance = math.sqrt(dx*dx + dy*dy)
         
         if distance > 0:
