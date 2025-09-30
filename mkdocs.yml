@@ -1,0 +1,7 @@
+site_name: Blue Frontline Docs
+
+nav:
+  - Home: index.md
+
+theme:
+  name: material
