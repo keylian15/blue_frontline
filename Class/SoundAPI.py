@@ -41,3 +41,15 @@ class Sound:
         Déclenche apparition_ile_quantique si on passe de 0 -> >=1.
         """
         self._engine.set_quantum_islands(centers)
+
+    def increase_volume(self):
+        """Fonction permmettant d'augmenter le volume du son"""
+        current_volume = pygame.mixer.music.get_volume()
+        new_volume = min(1.0, current_volume + 0.1)  # Augmente de 0.1, max 1.0
+        pygame.mixer.music.set_volume(new_volume)
+        
+    def decrease_volume(self):
+        """Fonction permmettant de diminuer le volume du son"""
+        current_volume = pygame.mixer.music.get_volume()
+        new_volume = max(0.0, current_volume - 0.1)  # Diminue de 0.1, min 0.0
+        pygame.mixer.music.set_volume(new_volume)

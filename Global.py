@@ -25,10 +25,6 @@ PETROLE_IMAGE_PATH = resource_path('assets/HUD/petrole.png')
 MAREE_HAUTE_IMAGE_PATH = resource_path('assets/HUD/maree_haute.png')
 MAREE_BASSE_IMAGE_PATH = resource_path('assets/HUD/maree_basse.png')
 
-<<<<<<< HEAD
-
-=======
->>>>>>> e5f634d (Ajout du système audio spatial)
 # === EVENEMENTS ===
 PETROLE_EVENT = pygame.USEREVENT + 1
 TIMER_EVENT = pygame.USEREVENT + 2
@@ -36,12 +32,6 @@ TIMER_EVENT = pygame.USEREVENT + 2
 # === Ile Quantique ===
 WATER_PATH = resource_path('assets/water/png/water.png')
 
-<<<<<<< HEAD
-# === SONS ===
-SOUND = resource_path('blue_frontline_sounds/son_base.mp3')
-VOLUME_SOUND = 0.5  # Volume du son (0.0 à 1.0)
-
-=======
 # === SONS – système historique ===
 # (on remet SOUND sur la musique du jeu pour compatibilité éventuelle)
 SOUND = resource_path('blue_frontline_sounds/son_jeu.mp3')
@@ -87,7 +77,6 @@ BASE_TRIGGER_THRESHOLD = 0.5     # 0..1 : seuil de focus où on déclenche le so
 BASE_COOLDOWN_MS       = 2500    # anti-spam : temps mini entre 2 déclenchements
 BASE_ONE_SHOT_VOL      = 0.9     # volume de base pour le one-shot (avant pan)
 
->>>>>>> e5f634d (Ajout du système audio spatial)
 # Les images de mapping font 512 pixels par 512 pixels
 # Chaque tuile fait 32 pixels par 32 pixels
 # Nous avons laissé de la place pour d'autres tuiles au cas ou.
@@ -196,17 +185,11 @@ MASK_MAPPING = {
     1 + 2 + 8 : MAPPING["end_top"],
     1 + 2 + 4 : MAPPING["end_right"],
     1 + 2 + 4 + 8 : MAPPING["center"],
-<<<<<<< HEAD
     }
 
 
 # === Unités ===
 
-=======
-}
-
-# === Unités ===
->>>>>>> e5f634d (Ajout du système audio spatial)
 RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
 GREEN_TEAM_PATH = resource_path('assets/Green_team/png/Green_team_spritesheet.png')
 
@@ -225,7 +208,6 @@ UNIT_CONFIGS = {
         "damage": 2,
         "fire_rate": 1.0,
         "unit_type": "chaloupe",
-<<<<<<< HEAD
         "tile_index": {
             "red": 0,    # Index de la tuile pour équipe rouge
             "green": 0   # Index de la tuile pour équipe verte
@@ -242,12 +224,6 @@ UNIT_CONFIGS = {
             "red": (255, 0, 0, 50),    # Rouge semi-transparent
             "green": (0, 255, 0, 50)   # Vert semi-transparent
         }
-=======
-        "tile_index": { "red": 0, "green": 0 },
-        "tileset_paths": { "red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH },
-        "image_paths": { "red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH },
-        "range_color": { "red": (255, 0, 0, 50), "green": (0, 255, 0, 50) }
->>>>>>> e5f634d (Ajout du système audio spatial)
     },
     "bateau": {
         "cost": 60,
@@ -258,7 +234,6 @@ UNIT_CONFIGS = {
         "damage": 6,
         "fire_rate": 1.0,
         "unit_type": "bateau",
-<<<<<<< HEAD
         "tile_index": {
             "red": 1,    # Index de la tuile pour équipe rouge
             "green": 1   # Index de la tuile pour équipe verte
@@ -275,12 +250,6 @@ UNIT_CONFIGS = {
             "red": (255, 0, 0, 50),
             "green": (0, 255, 0, 50)
         }
-=======
-        "tile_index": { "red": 1, "green": 1 },
-        "tileset_paths": { "red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH },
-        "image_paths": { "red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH },
-        "range_color": { "red": (255, 0, 0, 50), "green": (0, 255, 0, 50) }
->>>>>>> e5f634d (Ajout du système audio spatial)
     },
     "eclaireur": {
         "cost": 40,
@@ -291,7 +260,6 @@ UNIT_CONFIGS = {
         "damage": 3,
         "fire_rate": 1.5,
         "unit_type": "eclaireur",
-<<<<<<< HEAD
         "tile_index": {
             "red": 3,    # Index de la tuile pour équipe rouge
             "green": 3   # Index de la tuile pour équipe verte
@@ -308,12 +276,6 @@ UNIT_CONFIGS = {
             "red": (255, 0, 0, 50),
             "green": (0, 255, 0, 50)
         }
-=======
-        "tile_index": { "red": 3, "green": 3 },
-        "tileset_paths": { "red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH },
-        "image_paths": { "red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH },
-        "range_color": { "red": (255, 0, 0, 50), "green": (0, 255, 0, 50) }
->>>>>>> e5f634d (Ajout du système audio spatial)
     },
     "paquebot": {
         "cost": 120,
@@ -324,7 +286,6 @@ UNIT_CONFIGS = {
         "damage": 10,
         "fire_rate": 0.8,
         "unit_type": "paquebot",
-<<<<<<< HEAD
         "tile_index": {
             "red": 2,    # Index de la tuile pour équipe rouge
             "green": 2   # Index de la tuile pour équipe verte
@@ -341,12 +302,6 @@ UNIT_CONFIGS = {
             "red": (255, 0, 0, 50),
             "green": (0, 255, 0, 50)
         }
-=======
-        "tile_index": { "red": 2, "green": 2 },
-        "tileset_paths": { "red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH },
-        "image_paths": { "red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH },
-        "range_color": { "red": (255, 0, 0, 50), "green": (0, 255, 0, 50) }
->>>>>>> e5f634d (Ajout du système audio spatial)
     },
     "sousmarin": {
         "cost": 180,
@@ -357,7 +312,6 @@ UNIT_CONFIGS = {
         "damage": 18,
         "fire_rate": 0.5,
         "unit_type": "sousmarin",
-<<<<<<< HEAD
         "special_ability": "mines",  # Capacité spéciale
         "tile_index": {
             "red": 4,    # Index de la tuile pour équipe rouge
@@ -379,16 +333,6 @@ UNIT_CONFIGS = {
 }
 
 
-=======
-        "special_ability": "mines",
-        "tile_index": { "red": 4, "green": 4 },
-        "tileset_paths": { "red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH },
-        "image_paths": { "red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH },
-        "range_color": { "red": (255, 0, 0, 50), "green": (0, 255, 0, 50) }
-    }
-}
-
->>>>>>> e5f634d (Ajout du système audio spatial)
 # === Couleurs marines et interface ===
 WHITE = (255, 255, 255)
 GRAY = (100, 100, 100)
@@ -421,8 +365,5 @@ CONTROLS_DESCRIPTION = {
     "ZOOM_IN": "Zoom avant",
     "ZOOM_OUT": "Zoom arrière"
 }
-<<<<<<< HEAD
 
 
-=======
->>>>>>> e5f634d (Ajout du système audio spatial)

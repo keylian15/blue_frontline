@@ -8,21 +8,12 @@ class SousMarin(Unit):
         # Récupérer la configuration depuis Global.py
         config = UNIT_CONFIGS["sousmarin"]
         
-<<<<<<< HEAD
-        # Déterminer le chemin de l'image selon l'équipe
-        image_path = config["image_paths"][team]
-        
-=======
->>>>>>> e5f634d (Ajout du système audio spatial)
         # Initialiser avec l'image appropriée et le type d'unité
         super().__init__(game, team=team, unit_type="sousmarin")
         
         # === Spécifications du Sous-marin depuis Global.py ===
         self.cost = config["cost"]
-<<<<<<< HEAD
         
-=======
->>>>>>> e5f634d (Ajout du système audio spatial)
         self.max_speed = config["max_speed"]
         self.max_health = config["max_health"]
         self.current_health = self.max_health
@@ -52,11 +43,6 @@ class SousMarin(Unit):
             self.draw_range(screen, camera_offset)
     
     def place_mine(self, x, y):
-<<<<<<< HEAD
-        """Place une mine à la position spécifiée (capacité spéciale du sous-marin)."""
-        if self.special_ability == "mines":
-            # TODO: Implémenter le système de mines
-=======
         """
         Place une mine à la position spécifiée (capacité spéciale du sous-marin).
         NOTE: on ne change pas la logique de jeu ici (le TODO reste).
@@ -72,7 +58,6 @@ class SousMarin(Unit):
             except Exception:
                 # ne jamais crasher pour du son
                 pass
->>>>>>> e5f634d (Ajout du système audio spatial)
             return True
         return False
 
@@ -83,8 +68,4 @@ class SousMarinRouge(SousMarin):
 
 class SousMarinVert(SousMarin):
     def __init__(self, game):
-<<<<<<< HEAD
         super().__init__(game, team="green")
-=======
-        super().__init__(game, team="green")
->>>>>>> e5f634d (Ajout du système audio spatial)

@@ -1,17 +1,7 @@
-<<<<<<< HEAD
 import pygame
 import math
 from Global import *
 
-=======
-import math
-
-import pygame
-
-from Global import *
-
-
->>>>>>> e5f634d (Ajout du système audio spatial)
 class Projectile(pygame.sprite.Sprite):
     """Classe pour gérer les projectiles tirés par les unités."""
     
@@ -133,14 +123,7 @@ class CombatSystem:
     def __init__(self):
         self.projectiles = pygame.sprite.Group()
         self.units = pygame.sprite.Group()
-<<<<<<< HEAD
     
-=======
-        # self.game est généralement attaché depuis l'initializer :
-        # ex: self.game.combat_system.game = self.game
-        # On garde ce contrat pour déclencher l'audio.
-
->>>>>>> e5f634d (Ajout du système audio spatial)
     def add_unit(self, unit):
         """Ajoute une unité au système de combat."""
         self.units.add(unit)
@@ -177,11 +160,6 @@ class CombatSystem:
         for projectile in self.projectiles:
             if not projectile.is_active:
                 continue
-<<<<<<< HEAD
-                
-            for unit in self.units:
-                if projectile.check_collision(unit):
-=======
 
             # NOTE: on parcourt les unités; check_collision() doit gérer dégâts + désactivation proj
             for unit in self.units:
@@ -199,7 +177,6 @@ class CombatSystem:
                         # On ne casse jamais la boucle de jeu à cause de l'audio
                         pass
 
->>>>>>> e5f634d (Ajout du système audio spatial)
                     break  # Projectile détruit, passer au suivant
     
     def draw(self, screen, camera_offset=(0, 0), zoom=1.0):
