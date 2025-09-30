@@ -146,8 +146,12 @@ class Projectile(pygame.sprite.Sprite):
 class CombatSystem:
     """Système de gestion du combat et des projectiles."""
     
-    def __init__(self, game):
-        """Fonction permettant d'initialiser le système de combat."""
+    def __init__(self, game: "Game"):
+        """Fonction permettant d'initialiser le système de combat.
+
+        Args:
+            game (Game): L'instance du jeu.
+        """
         
         self.projectiles = pygame.sprite.Group()
         self.units = pygame.sprite.Group()

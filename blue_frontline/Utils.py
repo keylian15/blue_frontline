@@ -1,5 +1,4 @@
-import sys, pygame, random
-from Global import *
+import sys, pygame, random, os
 from shapely.geometry import Point, Polygon
 
 def load_tileset(path):

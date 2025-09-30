@@ -1,10 +1,18 @@
+import pygame
 from Class.units.Unit import Unit
+from Class.Combat import CombatSystem
 from Global import UNIT_CONFIGS
 
 class Paquebot(Unit):
     """Classe unifiée pour les unités Paquebot (Rouge et Vert)."""
     
-    def __init__(self, game, team):
+    def __init__(self, game: "Game", team: str):
+        """Initialise une instance de Paquebot.
+
+        Args:
+            game (Game): Instance du jeu.
+            team (str): Équipe de l'unité.
+        """
         # Récupérer la configuration depuis Global.py
         config = UNIT_CONFIGS["paquebot"]
        
@@ -32,8 +40,17 @@ class Paquebot(Unit):
         self.is_moving = False
         self.target_position = None
             
-    def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
-        """Met à jour le paquebot."""
+    def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list[Unit] = None):
+        """Met à jour l'unité en fonction de son état actuel.
+
+        Args:
+            dt (int, optional): La différence de temps entre chaque frame. Defaults to 0.
+            combat_system (CombatSystem, optional): Le systeme de combat. Defaults to None.
+            screen (pygame.Surface, optional): L'écran sur lequel affiché. Defaults to None.
+            camera_offset (tuple[float, float], optional): La position de la caméra. Defaults to (0, 0).
+            all_units (list[Unit], optional): Liste des unités. Defaults to None.
+        """
+
         # Appeler la mise à jour de la classe parent
         super().update(dt, combat_system, screen, camera_offset, all_units)
 
@@ -43,9 +60,19 @@ class Paquebot(Unit):
 
 # Classes d'alias pour la compatibilité avec l'ancien code
 class PaquebotRouge(Paquebot):
-    def __init__(self, game):
+    def __init__(self, game: "Game"):
+        """Constructeur de la classe PaquebotRouge.
+
+        Args:
+            game (Game): L'instance du jeu.
+        """
         super().__init__(game, team="red")
 
 class PaquebotVert(Paquebot):
-    def __init__(self, game):
+    def __init__(self, game: "Game"):
+        """Constructeur de la classe PaquebotVert.
+
+        Args:
+            game (Game): L'instance du jeu.
+        """
         super().__init__(game, team="green")

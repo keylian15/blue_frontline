@@ -29,7 +29,7 @@ class SpatialAudioManager:
       - îles quantiques: one-shot d’apparition
       - drops: unités + événements (mine, coin, explosion, éclaireurs)
     """
-    def __init__(self, game):
+    def __init__(self, game: "Game"):
         self.game = game
 
         if not pygame.mixer.get_init():

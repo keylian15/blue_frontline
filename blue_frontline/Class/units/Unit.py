@@ -5,7 +5,14 @@ from Utils import load_tileset, point_in_many_polygons, random_point_in_polygon
 class Unit(pygame.sprite.Sprite):
     """Classe de base pour toutes les unités du jeu."""
     
-    def __init__(self, game, team, unit_type):
+    def __init__(self, game: "Game", team: str, unit_type: str):
+        """Initialise une unité.
+
+        Args:
+            game (Game): L'instance de la classe Game.
+            team (str): L'équipe de l'unité.
+            unit_type (str): Le nom du type d'unité.
+        """
         super().__init__()
         # La game 
         self.game = game
@@ -71,8 +78,14 @@ class Unit(pygame.sprite.Sprite):
             }
 
     # Chaque unité peut avoir sa propre tuile, pour chaque équipe, et tout est configurable
-    def load_sprite_from_tileset(self, team, unit_type):
-        """Charge l'image de l'unité depuis le tileset approprié."""
+    def load_sprite_from_tileset(self, team: str, unit_type: str):
+        """Charge l'image de l'unité depuis le tileset approprié.
+
+        Args:
+            team (str): Équipe de l'unité.
+            unit_type (str): Nom du type de l'unité.
+        """
+        
         if unit_type and unit_type in UNIT_CONFIGS:
             config = UNIT_CONFIGS[unit_type]
             tileset_path = config["tileset_paths"][team]
@@ -90,8 +103,17 @@ class Unit(pygame.sprite.Sprite):
             self.tileset = load_tileset(RED_TEAM_PATH if team == "red" else GREEN_TEAM_PATH)
             self.image = self.tileset[0]
     
-    def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
-        """Met à jour l'unité (mouvement, combat, etc.)."""
+    def update(self, dt: int = 0, combat_system: "CombatSystem" = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list["Unit"] = None):
+        """Met à jour l'unité en fonction de son état actuel.
+
+        Args:
+            dt (int, optional): La différence de temps entre chaque frame. Defaults to 0.
+            combat_system (CombatSystem, optional): Le systeme de combat. Defaults to None.
+            screen (pygame.Surface, optional): L'écran sur lequel affiché. Defaults to None.
+            camera_offset (tuple[float, float], optional): La position de la caméra. Defaults to (0, 0).
+            all_units (list[Unit], optional): Liste des unités. Defaults to None.
+        """
+
         if not self.is_alive:
             return
             
@@ -112,9 +134,13 @@ class Unit(pygame.sprite.Sprite):
         # Mise à jour du rectangle de collision
         self.rect.center = (int(self.position[0]), int(self.position[1]))
     
-    def check_area(self, dt):
+    def check_area(self, dt: int):
         """Fonction permettant de verifier la zone dans laquelle l'unité veut aller.
-        Si c'est une zone accéssible elle y va sinon elle s'arrete."""
+
+        Args:
+            dt (int): La différence de temps entre chaque frame.
+        """
+        
         # On prend la prochaine position
         next_position = (self.position[0] + self.speed_x * dt, self.position[1] + self.speed_y * dt)
         
@@ -145,8 +171,12 @@ class Unit(pygame.sprite.Sprite):
             else : 
                 self.position = next_position
             
-    def move(self, dt):
-        """Déplace l'unité selon sa vitesse. Appelé a chaque tick"""
+    def move(self, dt: int):
+        """Déplace l'unité selon sa vitesse. Appelé a chaque tick.
+
+        Args:
+            dt (int): La différence de temps entre chaque frame.
+        """
         
         if self.is_moving : 
             # Temps de jeu rapide : 
@@ -183,8 +213,15 @@ class Unit(pygame.sprite.Sprite):
                 
                 self.check_area(dt)
         
-    def move_to(self, target_x, target_y, speed):
-        """Fonction permettant de mettre a jour la vitesse pour les déplacements."""
+    def move_to(self, target_x: int, target_y: int, speed: int):
+        """Fonction permettant de mettre a jour la vitesse pour les déplacements.
+
+        Args:
+            target_x (int): Coordonnée x de la cible.
+            target_y (int): Coordonnée y de la cible.
+            speed (int): Vitesse de déplacement.
+        """
+        
         dx = target_x - self.position[0]
         dy = target_y - self.position[1]
         distance = (dx**2 + dy**2)**0.5
@@ -197,7 +234,12 @@ class Unit(pygame.sprite.Sprite):
             self.stop()
             
     def move_to_position(self, target:tuple):
-        """Fonction permettant de mettre les mécanismes de déplacements."""
+        """Fonction permettant de mettre les mécanismes de déplacements.
+
+        Args:
+            target (tuple): Coordonnées x et y de la cible.
+        """
+        
         multiplica = self.game.hud.timer.get_speed_multiplier()
         self.target_position = target                                       # On défini la position cible
         self.move_to(target[0], target[1], self.max_speed * multiplica)     # On va initialiser les déplacements de l'unité
@@ -205,19 +247,31 @@ class Unit(pygame.sprite.Sprite):
         
     def stop(self):
         """Arrête le mouvement de l'unité."""
+        
         self.speed_x = 0
         self.speed_y = 0
     
-    def take_damage(self, damage, killer=None):
-        """Inflige des dégâts à l'unité. killer = unité qui inflige le coup fatal (pour récompense)."""
+    def take_damage(self, damage: int, killer: "Unit"=None):
+        """Inflige des dégâts à l'unité. killer = unité qui inflige le coup fatal (pour récompense).
+
+        Args:
+            damage (int): Dégâts infligés.
+            killer (Unit, optional): L'entité attaquante. Defaults to None.
+        """
+        
         self.current_health -= damage
         if self.current_health <= 0:
             self.current_health = 0
             self.is_alive = False
             self.die(killer=killer)
     
-    def die(self, killer=None):
-        """Gère la mort de l'unité et attribue des pièces à l'ennemi si applicable."""
+    def die(self, killer: "Unit"=None):
+        """Gère la mort de l'unité et attribue des pièces à l'ennemi si applicable.
+
+        Args:
+            killer (Unit, optional): L'entité attaquante. Defaults to None.
+        """
+        
         # Attribution des pièces uniquement si tué par un ennemi
         if killer and hasattr(killer, 'team') and killer.team != self.team and hasattr(self, 'game') and hasattr(self.game, 'hud'):
             # Détermination du type d'unité pour la récompense
@@ -238,29 +292,56 @@ class Unit(pygame.sprite.Sprite):
         
     def get_health_percentage(self):
         """Retourne le pourcentage de vie restante."""
+        
         return self.current_health / self.max_health if self.max_health > 0 else 0
     
-    def distance_to(self, other_unit):
-        """Calcule la distance vers une autre unité."""
+    def distance_to(self, other_unit: "Unit"):
+        """Calcule la distance vers une autre unité.
+
+        Args:
+            other_unit (Unit): Autre unité.
+
+        Returns:
+            distance (float): Distance entre les deux unités.
+        """
+        
         dx = self.position[0] - other_unit.position[0]
         dy = self.position[1] - other_unit.position[1]
         return (dx**2 + dy**2)**0.5
     
-    def is_in_range(self, other_unit):
-        """Vérifie si une autre unité est à portée."""
+    def is_in_range(self, other_unit: "Unit"):
+        """Vérifie si une autre unité est à portée.
+
+        Args:
+            other_unit (Unit): Autre unité.
+
+        Returns:
+            bool: True si l'autre unité est à portée, False sinon.
+        """
+        
         distance = self.distance_to(other_unit)
         range_pixels = self.range * 32  # Conversion cases en pixels
         return distance <= range_pixels
     
     def can_attack(self):
         """Vérifie si l'unité peut attaquer (cooldown respecté)."""
+        
         current_time = time.time()
         time_since_last_shot = current_time - self.last_shot_time
         multiplica = self.game.hud.timer.get_speed_multiplier()
         return time_since_last_shot >= (1.0 * multiplica / self.fire_rate)
     
-    def attack(self, target, combat_system=None):
-        """Attaque une cible si possible."""
+    def attack(self, target: "Unit", combat_system: "CombatSystem" = None):
+        """Attaque une cible si possible. Si un système de combat est fourni, créer un projectile.
+
+        Args:
+            target (Unit): Cible de l'attaque.
+            combat_system (CombatSystem, optional): Le systeme de combat. Defaults to None.
+
+        Returns:
+            Bool: True si l'attaque a été effectuée, False sinon.
+        """
+        
         if not self.can_attack() or not self.is_in_range(target):
             return False
             
@@ -276,21 +357,28 @@ class Unit(pygame.sprite.Sprite):
             return True
         return False
     
-    def combat_update(self, combat_system=None):
-        """Met à jour la logique de combat."""
+    def combat_update(self, combat_system: "CombatSysteme" = None):
+        """Met à jour la logique de combat. Si une cible est définie, essaie d'attaquer la cible.
+
+        Args:
+            combat_system (CombatSysteme, optional): Le systeme de combat. Defaults to None.
+        """
+        
         if self.target and self.target.is_alive:
             if self.is_in_range(self.target):
                 self.attack(self.target, combat_system)
             else:
                 self.target = None
-    
-    def set_target(self, target):
-        """Définit une cible pour l'unité."""
-        if target and target.team != self.team:
-            self.target = target
-    
-    def draw_health_bar(self, screen, camera_offset=(0, 0), zoom=1.0):
-        """Dessine une barre de vie au-dessus de l'unité, qui suit le zoom et la caméra."""
+        
+    def draw_health_bar(self, screen: pygame.Surface, camera_offset: tuple[int, int]=(0, 0), zoom: float=1.0):
+        """Dessine une barre de vie au-dessus de l'unité, qui suit le zoom et la caméra.
+
+        Args:
+            screen (pygame.Surface): Surface sur laquelle dessiner la barre de vie.
+            camera_offset (tuple[int, int], optional): La postition de la caméra. Defaults to (0, 0).
+            zoom (float, optional): Le niveau de zoom. Defaults to 1.0.
+        """
+        
         if not self.is_alive or self.current_health == self.max_health:
             return
         # Position monde -> écran avec zoom
@@ -312,8 +400,14 @@ class Unit(pygame.sprite.Sprite):
         # Contour
         pygame.draw.rect(screen, (0, 0, 0), background_rect, 1)
 
-    def draw_range(self, screen, camera_offset=(0, 0)):
-        """Dessine une zone de portée de tir autour de l'unité."""
+    def draw_range(self, screen: pygame.Surface, camera_offset: list[int, int]=(0, 0)):
+        """Dessine une zone de portée de tir autour de l'unité.
+
+        Args:
+            screen (pygame.Surface): Surface sur laquelle dessiner.
+            camera_offset (list[int, int], optional): Position de la caméra. Defaults to (0, 0).
+        """
+        
         if not self.is_alive or not self.is_selected:
             return
 
@@ -348,8 +442,13 @@ class Unit(pygame.sprite.Sprite):
                 screen.blit(bg_surface, (text_rect.x - 5, text_rect.y - 2))
                 screen.blit(text, text_rect)
 
-    def update_enemies_in_range(self, all_units):
-        """Met à jour la liste des ennemis dans la portée de tir (collision cercle-rectangle pour plateformes)."""
+    def update_enemies_in_range(self, all_units: list["Unit"]):
+        """Met à jour la liste des ennemis dans la portée de tir (collision cercle-rectangle pour plateformes).
+
+        Args:
+            all_units (list[&quot;Unit&quot;]): Liste de toutes les unités du jeu.
+        """
+        
         self.enemies_in_range = []
         range_pixels = self.range * 32  # Rayon du cercle de portée
 
@@ -380,14 +479,23 @@ class Unit(pygame.sprite.Sprite):
                 if distance <= range_pixels:
                     self.enemies_in_range.append(unit)
     
-    def can_shoot(self, current_time):
-        """Vérifie si l'unité peut tirer (cooldown de 1 seconde)."""
+    def can_shoot(self, current_time: int):
+        """Vérifie si l'unité peut tirer (cooldown de 1 seconde).
+
+        Args:
+            current_time (int): Temps actuel en millisecondes.
+
+        Returns:
+            bool: True si l'unité peut tirer, False sinon.
+        """
+        
         multiplica = self.game.hud.timer.get_speed_multiplier()
         cooldown = 1000 / multiplica # Cooldown d'1 seconde entre chaque tir
         return current_time - self.last_shot_time >= cooldown
     
     def get_closest_enemy_in_range(self):
         """Retourne l'ennemi le plus proche dans la portée."""
+        
         if not self.enemies_in_range:
             return None
             

@@ -3,7 +3,7 @@ import pygame
 class InputManager:
     """Gestionnaire des entrées continues pour le jeu."""
     
-    def __init__(self, game):
+    def __init__(self, game: "Game"):
         """Initialise le gestionnaire d'entrées avec une référence au jeu."""
         self.game = game
         self.last_hud_toggle_time = 0
