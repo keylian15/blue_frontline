@@ -3,7 +3,15 @@ import math
 from Global import *
 
 class OptionsMenu:
-    def __init__(self, screen):
+    """Classe pour gérer le menu des options du jeu."""
+
+    def __init__(self, screen: pygame.Surface):
+        """Fonction d'initialisation du menu des options.
+
+        Args:
+            screen (pygame.Surface): L'écran de Pygame.
+        """
+    
         self.screen = screen
         self.WIDTH, self.HEIGHT = self.screen.get_size()
         self.font = pygame.font.SysFont(None, 40)
@@ -27,8 +35,17 @@ class OptionsMenu:
             'rect': pygame.Rect(self.MARGIN_LEFT, self.HEIGHT - 70, back_button_width, self.BUTTON_HEIGHT)
         }
 
-    def draw_gradient_button(self, rect, hovered=False):
-        """Dessine un bouton avec dégradé comme dans le menu principal"""
+    def draw_gradient_button(self, rect: tuple[int, int, int, int], hovered: bool = False):
+        """Dessine un bouton avec dégradé comme dans le menu principal.
+
+        Args:
+            rect (tuple[int, int, int, int]): Les coordonnées du bouton.
+            hovered (bool, optional): Condition sur le survol. Defaults to False.
+
+        Returns:
+            pygame.Surface: Le bouton dessiné.
+        """
+
         button_surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
         
         color1 = LIGHT_BLUE if hovered else OCEAN_BLUE
@@ -56,8 +73,15 @@ class OptionsMenu:
 
         return button_surf
 
-    def draw_control_button(self, key, rect, action):
-        """Dessine un bouton de contrôle stylisé avec largeur adaptée"""
+    def draw_control_button(self, key: str, rect: tuple[int, int, int, int], action: str):
+        """Dessine un bouton de contrôle stylisé avec largeur adaptée
+
+        Args:
+            key (str): Clé de contrôle à afficher
+            rect (tuple[int, int, int, int]): Rectangle de destination
+            action (str): Action associée au bouton
+        """
+        
         key_width = self.font.render(key, True, WHITE).get_width()
         button_width = max(self.MIN_BUTTON_WIDTH, key_width + self.BUTTON_PADDING)
         
@@ -81,7 +105,8 @@ class OptionsMenu:
         self.screen.blit(action_surf, action_rect)
 
     def draw(self):
-        """Dessine le menu des options"""
+        """Dessine le menu des options."""
+        
         # Fond semi-transparent
         overlay = pygame.Surface((self.WIDTH, self.HEIGHT), pygame.SRCALPHA)
         overlay.fill((0, 0, 0, 200))
@@ -124,10 +149,11 @@ class OptionsMenu:
             y_pos += self.VERTICAL_SPACING
 
         # Dessin du bouton retour
-        self._draw_back_button()
+        self.draw_back_button()
 
-    def _draw_back_button(self):
+    def draw_back_button(self):
         """Dessine le bouton retour"""
+        
         mouse_pos = pygame.mouse.get_pos()
         hovered = self.back_button['rect'].collidepoint(mouse_pos)
         back_surf = self.draw_gradient_button(self.back_button['rect'], hovered)
@@ -150,6 +176,7 @@ class OptionsMenu:
 
     def run(self):
         """Exécute la boucle du menu options"""
+        
         running = True
         while running:
             for event in pygame.event.get():
