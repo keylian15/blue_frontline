@@ -46,7 +46,6 @@ class Game :
         self.initializer = GameInitializer(self)
         
         # Initialiser les composants principaux
-        self.initializer.init_display()
         self.initializer.init_map()
         self.initializer.init_camera()
         self.initializer.init_game_systems()
