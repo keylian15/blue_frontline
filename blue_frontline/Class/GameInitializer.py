@@ -85,10 +85,10 @@ class GameInitializer:
         
         plateforme_rouge = PlateformePetroliere(
             platform_rouge_x, platform_rouge_y,
-            team="red", max_health=1000)
+            "red", 1000)
         plateforme_verte = PlateformePetroliere(
             platform_verte_x, platform_verte_y,
-            team="green", max_health=1000)
+            "green", 1000)
                 
         # Ajouter les références au jeu
         plateforme_rouge.game = self.game

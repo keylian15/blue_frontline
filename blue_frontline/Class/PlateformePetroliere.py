@@ -1,7 +1,18 @@
 import pygame
 
 class PlateformePetroliere(pygame.sprite.Sprite):
-    def __init__(self, x, y, team="red", max_health=1000):
+    """Classe pour gérer les plateformes pétrolières."""
+
+    def __init__(self, x: int, y: int, team: str, max_health: int):
+        """Initialise une nouvelle instance de PlateformePetroliere.
+
+        Args:
+            x (int): Coordonnée x de la plateforme.
+            y (int): Coordonnée y de la plateforme.
+            team (str): Équipe de la plateforme.
+            max_health (int): Santé maximale de la plateforme.
+        """
+    
         super().__init__()
         self.team = team
         self.max_health = max_health
@@ -27,8 +38,14 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         self.damage = 0
         self.is_platform = True
         
-    def take_damage(self, damage, killer=None):
-        """Inflige des dégâts à la plateforme."""
+    def take_damage(self, damage: int , killer: str = None):
+        """Inflige des dégâts à la plateforme.
+
+        Args:
+            damage (int): Nombre de dégâts à infliger.
+            killer (str, optional): L'équipe attaquante. Defaults to None.
+        """
+        
         if not self.is_alive:
             return
         self.current_health -= damage
@@ -39,12 +56,20 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
     def on_destroyed(self):
         """Appelé quand la plateforme est détruite."""
+        
         # Déclencher la victoire si la plateforme a une référence vers le Game
         if hasattr(self, 'game') and self.game:
             self.game.on_platform_destroyed(self)
 
-    def draw_health_bar(self, screen, camera_offset=(0, 0), zoom=1.0):
-        """Dessine une barre de vie large pour la plateforme."""
+    def draw_health_bar(self, screen: pygame.Surface, camera_offset: tuple[float, float], zoom: float):
+        """Dessine une barre de vie large pour la plateforme.
+
+        Args:
+            screen (pygame.Surface): L'ecran de jeu.
+            camera_offset (tuple[float, float]): La position de la caméra.
+            zoom (float): Le zoom de la caméra.
+        """
+        
         if not self.is_alive:
             return
         screen_x = (self.position[0] - camera_offset[0]) * zoom
