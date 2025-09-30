@@ -25,7 +25,6 @@ PETROLE_IMAGE_PATH = resource_path('assets/HUD/petrole.png')
 MAREE_HAUTE_IMAGE_PATH = resource_path('assets/HUD/maree_haute.png')
 MAREE_BASSE_IMAGE_PATH = resource_path('assets/HUD/maree_basse.png')
 
-
 # === EVENEMENTS ===
 PETROLE_EVENT = pygame.USEREVENT + 1
 TIMER_EVENT = pygame.USEREVENT + 2
@@ -33,9 +32,50 @@ TIMER_EVENT = pygame.USEREVENT + 2
 # === Ile Quantique ===
 WATER_PATH = resource_path('assets/water/png/water.png')
 
-# === SONS ===
-SOUND = resource_path('blue_frontline_sounds/son_base.mp3')
+# === SONS – système historique ===
+# (on remet SOUND sur la musique du jeu pour compatibilité éventuelle)
+SOUND = resource_path('blue_frontline_sounds/son_jeu.mp3')
 VOLUME_SOUND = 0.5  # Volume du son (0.0 à 1.0)
+
+# === SONS – nouveau système spatial ===
+# Musique / beds / one-shots / drops (tout en .mp3)
+MUSIC_GAME           = resource_path('blue_frontline_sounds/son_jeu.mp3')             # musique de fond
+ISLAND_BED           = resource_path('blue_frontline_sounds/son_iles.mp3')            # ambiance îles "normales" (bed)
+SEA_BED              = resource_path('blue_frontline_sounds/sea-waves-169411.mp3')    # ambiance mer (bed)
+BASE_BED             = resource_path('blue_frontline_sounds/son_base.mp3')            # son court base (one-shot ~3s)
+APPARITION_QUANTIQUE = resource_path('blue_frontline_sounds/apparition_ile_quantique.mp3')
+DROP_MINE          = resource_path('blue_frontline_sounds/drop_mine.mp3')
+DROP_COIN          = resource_path('blue_frontline_sounds/drop_coin.mp3')
+EXPLOSION_MINE     = resource_path('blue_frontline_sounds/explosion_mine.mp3')
+DROP_ECLAIREURS    = resource_path('blue_frontline_sounds/drop_eclaireurs.mp3')
+
+# Drops unités
+DROP_CHALOUPe        = resource_path('blue_frontline_sounds/drop_chaloupe.mp3')       # (nom d'origine conservé)
+DROP_CHALOUPE        = DROP_CHALOUPe                                                  # alias propre, pour compatibilité
+DROP_BATEAU          = resource_path('blue_frontline_sounds/drop_bateau.mp3')
+DROP_PAQUEBOT        = resource_path('blue_frontline_sounds/drop_paquebot.mp3')
+DROP_SOUSMARIN       = resource_path('blue_frontline_sounds/drop_sous_marin.mp3')
+
+# Volumes (0.0–1.0)
+VOL_MUSIC  = VOLUME_SOUND  # volume nominal de la musique (capé par la règle zoom -> 0)
+VOL_ISLAND = 0.8
+VOL_BASE   = 0.8
+VOL_SEA    = 0.2
+VOL_DROPS  = 0.8
+
+# === MIXAGE CONTEXTUEL / COMPORTEMENTS ===
+# La musique est gérée dans Sound.py pour faire : 0% zoom -> 90% ; 100% zoom -> 0%
+SEA_ON_ISLAND_FACTOR   = 0.0     # part de mer qui reste quand on est sur une île/base (0.0 = coupée)
+ISLAND_BASE_CURVE      = "smooth" # "linear" ou "smooth" (smoothstep) pour la montée/descente de focus
+
+# Zones d'influence (agrandies)
+FOCUS_RADIUS_MULT      = 1.6     # >1.0 = la "bulle" d'influence des ÎLES est plus large
+BASE_FOCUS_RADIUS_MULT = 1.6     # idem pour les BASES
+
+# Déclenchement du one-shot de BASE
+BASE_TRIGGER_THRESHOLD = 0.5     # 0..1 : seuil de focus où on déclenche le son de base
+BASE_COOLDOWN_MS       = 2500    # anti-spam : temps mini entre 2 déclenchements
+BASE_ONE_SHOT_VOL      = 0.9     # volume de base pour le one-shot (avant pan)
 
 # Les images de mapping font 512 pixels par 512 pixels
 # Chaque tuile fait 32 pixels par 32 pixels

@@ -1,6 +1,5 @@
 import pygame
 import math
-import random
 from Global import *
 from Class.Perlin import Perlin
 
@@ -13,7 +12,6 @@ from Class.GameInitializer import GameInitializer
 from Class.Petrole import Petrole
 from Class.Piece import Piece
 from Class.Timer import Timer
-from Utils import random_point_in_polygon
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
@@ -70,6 +68,17 @@ class Game :
         self.quantique_area_name = []
         self.setQuantiqueArea()
 
+    # --- Utilitaire audio: notification post-quantique (ne change pas la logique de génération) ---
+    def _notify_quantum_audio(self):
+        """Notifie le moteur audio des îles quantiques présentes, à appeler APRÈS quantique(...)."""
+        try:
+            if hasattr(self, "sound") and self.sound:
+                centers = [(spr.rect.centerx, spr.rect.centery) for spr in getattr(self, "quantum_islands", [])]
+                self.sound.set_quantum_islands(centers)
+        except Exception:
+            # On ne casse jamais la boucle de jeu pour du son
+            pass
+
     def setObstacles(self):
         """Fonction permettant de récupérer les obstacles du jeu."""
         # On récupére les collisions générales.
@@ -110,6 +119,13 @@ class Game :
                 if old_island in self.group:
                     self.group.remove(old_island)
             self.quantum_islands.clear()
+
+            # === AUDIO === informer que 0 île quantique est présente (prépare le one-shot 0->N)
+            try:
+                if hasattr(self, "sound") and self.sound:
+                    self.sound.set_quantum_islands([])
+            except Exception:
+                pass
 
         # Fonction interne pour créer une île
         def create_island(obj):

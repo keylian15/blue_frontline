@@ -160,9 +160,23 @@ class CombatSystem:
         for projectile in self.projectiles:
             if not projectile.is_active:
                 continue
-                
+
+            # NOTE: on parcourt les unités; check_collision() doit gérer dégâts + désactivation proj
             for unit in self.units:
                 if projectile.check_collision(unit):
+                    # === AUDIO: drop coin si l'unité vient de mourir suite à l'impact ===
+                    try:
+                        # Certaines implémentations mettent à jour is_alive dans check_collision()
+                        if (hasattr(unit, "is_alive") and not unit.is_alive 
+                                and hasattr(unit, "position") 
+                                and hasattr(self, "game") and hasattr(self.game, "sound") and self.game.sound):
+                            # On joue le son au centre de l'unité détruite
+                            pos = (unit.position[0], unit.position[1])
+                            self.game.sound.on_coin_drop(pos)
+                    except Exception:
+                        # On ne casse jamais la boucle de jeu à cause de l'audio
+                        pass
+
                     break  # Projectile détruit, passer au suivant
     
     def draw(self, screen, camera_offset=(0, 0), zoom=1.0):

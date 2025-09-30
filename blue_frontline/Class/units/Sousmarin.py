@@ -8,9 +8,6 @@ class SousMarin(Unit):
         # Récupérer la configuration depuis Global.py
         config = UNIT_CONFIGS["sousmarin"]
         
-        # Déterminer le chemin de l'image selon l'équipe
-        image_path = config["image_paths"][team]
-        
         # Initialiser avec l'image appropriée et le type d'unité
         super().__init__(game, team=team, unit_type="sousmarin")
         
@@ -46,9 +43,21 @@ class SousMarin(Unit):
             self.draw_range(screen, camera_offset)
     
     def place_mine(self, x, y):
-        """Place une mine à la position spécifiée (capacité spéciale du sous-marin)."""
+        """
+        Place une mine à la position spécifiée (capacité spéciale du sous-marin).
+        NOTE: on ne change pas la logique de jeu ici (le TODO reste).
+              On se contente d'ajouter le son "drop_mine.mp3" au moment de la pose.
+        """
         if self.special_ability == "mines":
-            # TODO: Implémenter le système de mines
+            # TODO: Implémenter le système de mines (création objet Mine, ajout aux groupes, etc.)
+            # -- AUDIO : drop mine --
+            try:
+                if hasattr(self.game, "sound") and self.game.sound:
+                    # si plus tard l'objet Mine a un .position, vous pouvez envoyer ça plutôt que (x,y)
+                    self.game.sound.on_mine_dropped((x, y))
+            except Exception:
+                # ne jamais crasher pour du son
+                pass
             return True
         return False
 
