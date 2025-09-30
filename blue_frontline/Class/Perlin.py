@@ -6,12 +6,14 @@ import pygame
 class Perlin:
     """Générateur de bruit de Perlin pour créer des îles procédurales."""
     
-    def __init__(self, octave = 4, seed = None):
+    def __init__(self, octave : int = 4, seed : int = None):
         """Initialisation du générateur de bruit de Perlin.
-        octave : Nombre d'octaves pour le bruit de Perlin. (La compléxité du bruit)
-        seed : Seed pour le générateur de bruit. Si None, une seed aléatoire sera générée.
-        """
 
+        Args:
+            octave (int, optional): Nombre d'octaves pour le bruit de Perlin. (La compléxité du bruit) . Defaults to 4.
+            seed (int, optional): Seed pour le générateur de bruit. Si None, une seed aléatoire sera générée.. Defaults to None.
+        """
+        
         # Si une seed n'est pas fournie, on en génère une aléatoire        
         if seed is None:
             seed = randint(0, 10_000)
@@ -20,16 +22,18 @@ class Perlin:
         # Octave détermine la "complexité" du bruit
         self.noise = PerlinNoise(octaves=octave, seed=seed)
 
-    def generate_island(self, line, column, scale=30.0):
-        """Génère une matrice représentant une île.
-        line : Nombre de lignes de la matrice.
-        column : Nombre de colonnes de la matrice.
-        scale : Échelle pour le bruit de Perlin. Plus la valeur est grande, plus les variations sont douces.
-        Retourne une matrice 2D où chaque élément est :
-            0 : Eau profonde
-            1 : Eau peu profonde
-            2 : Ile
+    def generate_island(self, line: int, column: int, scale: float =30.0):
+        """Génère une matrice de hauteur pour une île procédurale.
+
+        Args:
+            line (int): Nombre de lignes de la matrice.
+            column (int): Nombre de colonnes de la matrice.
+            scale (float, optional): Echelle pour le bruit de Perlin, plus la valeur est grande, plus les variations sont douces. Defaults to 30.0.
+
+        Returns:
+            list[list[int]]: Matrice de hauteur (line * column).
         """
+        
         matrice = []
         for y in range(line):
             ligne = []
@@ -48,11 +52,20 @@ class Perlin:
             matrice.append(ligne)
         return matrice
 
-    def get_matrix_value(self, matrice, y, x):
-        """
-        Retourne la valeur de la matrice aux coordonnées (y, x).
+    def get_matrix_value(self, matrice: list[list[int]], y: int, x: int):
+        """Retourne la valeur de la matrice aux coordonnées (y, x).
         Si les coordonnées sont hors limites, retourne 1 (eau peu profonde).
+        
+
+        Args:
+            matrice (list[list[int]]): Matrice de hauteur (line * column).
+            y (int): Coordonnée y.
+            x (int): Coordonnée x.
+
+        Returns:
+            int: Valeur de la matrice aux coordonnées (y, x).
         """
+        
         height = len(matrice)
         width = len(matrice[0])
         
@@ -61,7 +74,18 @@ class Perlin:
         return matrice[y][x]
     
     def update_mask(self, matrice: list[list[int]], x:int, y:int, zone_recherche: int) -> int:
-        """Fonction permettant de mettre à jour le mask binaire pour la sélection des tuiles."""
+        """Fonction permettant de mettre à jour le mask binaire pour la sélection des tuiles.
+
+        Args:
+            matrice (list[list[int]]): Matrice de hauteur (line * column).
+            x (int): Coordonnée x.
+            y (int): Coordonnée y.
+            zone_recherche (int): Valeur pour la zone de recherche.
+
+        Returns:
+            int: Mask binaire mis à jour.
+        """
+        
         # Voir Global.py pour le MASK_MAPPING.
         mask = 0
         
@@ -227,13 +251,16 @@ class Perlin:
         return mask
     
     def smooth_map(self, matrice: list[list[int]], tilesets : list):
-        """
-        Génère une surface avec transitions (edges, corners, L-shapes).
+        """Génère une surface avec transitions (edges, corners, L-shapes).
+
         Args:
-            matrice (list[list[int]]): matrice générée par Perlin
-            tilesets (list): liste de tilesets par biome
-                            [deep_tileset, shallow_tileset, island_tileset]
+            matrice (list[list[int]]): matrice générée par Perlin.
+            tilesets (list): liste de tilesets par biome. ([deep_tileset, shallow_tileset, island_tileset])
+
+        Returns:
+            pygame.Surface: Surface avec les transitions.
         """
+        
         height = len(matrice)
         width = len(matrice[0])
         surface = pygame.Surface((width * 32, height * 32), pygame.SRCALPHA)
