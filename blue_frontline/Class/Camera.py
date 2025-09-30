@@ -4,7 +4,16 @@ from Global import *
 class Camera(pygame.sprite.Sprite):
     """Classe pour gérer la caméra."""
 
-    def __init__(self, x, y, screen_size, map_size):
+    def __init__(self, x: int, y: int, screen_size:tuple[int, int], map_size:tuple[int, int]):
+        """Fonction permettant d'initialiser la caméra.
+
+        Args:
+            x (int): La position x de la caméra.
+            y (int): La position y de la caméra.
+            screen_size (tuple[int, int]): La taille de l'écran.
+            map_size (tuple[int, int]): La taille de la carte.
+        """
+        
         super().__init__()
         # Déplacement de la caméra (en pixels)
         self.camera_move = 20
@@ -36,7 +45,12 @@ class Camera(pygame.sprite.Sprite):
         
     
     def calculate_min_zoom_for_full_map(self):
-        """Calcule le niveau de zoom minimum nécessaire pour voir toute la map."""
+        """Calcule le niveau de zoom minimum nécessaire pour voir toute la map.
+
+        Returns:
+            float: Le niveau de zoom minimum.
+        """
+        
         # Calculer les ratios pour voir toute la map dans chaque dimension
         zoom_x = self.screen_width / self.map_width
         zoom_y = self.screen_height / self.map_height
@@ -51,6 +65,7 @@ class Camera(pygame.sprite.Sprite):
 
     def update_zoom_limits(self):
         """Met à jour les limites de la caméra en fonction du niveau de zoom."""
+        
         # Calculer les limites en fonction du zoom
         effective_screen_width = self.screen_width / self.zoom_level
         effective_screen_height = self.screen_height / self.zoom_level
@@ -70,6 +85,7 @@ class Camera(pygame.sprite.Sprite):
 
     def zoom_in(self):
         """Zoom avant (augmente le niveau de zoom)."""
+        
         if self.zoom_level < self.max_zoom:
             self.zoom_level = min(self.max_zoom, self.zoom_level + self.zoom_speed)
             self.update_zoom_limits()
@@ -79,6 +95,7 @@ class Camera(pygame.sprite.Sprite):
 
     def zoom_out(self):
         """Zoom arrière (diminue le niveau de zoom)."""
+        
         if self.zoom_level > self.min_zoom:                       
             self.zoom_level = max(self.min_zoom, self.zoom_level - self.zoom_speed)
             self.update_zoom_limits()
@@ -88,15 +105,22 @@ class Camera(pygame.sprite.Sprite):
 
     def get_effective_screen_size(self):
         """Retourne la taille effective de l'écran selon le niveau de zoom."""
+        
         return (self.screen_width / self.zoom_level, self.screen_height / self.zoom_level)
 
     def update(self):
         """Met à jour la position du rectangle de la caméra."""
-        # CORRECTION CRITIQUE : pyscroll utilise rect.center, pas rect.topleft !
+        
         self.rect.center = self.position
 
-    def move(self, dx, dy):
-        """Déplace la caméra avec contraintes de limites."""
+    def move(self, dx: int, dy: int):
+        """Déplace la caméra avec contraintes de limites.
+
+        Args:
+            dx (int): Déplacement horizontal.
+            dy (int): Déplacement vertical.
+        """
+        
         # Adapter le déplacement au niveau de zoom
         adjusted_dx = dx / self.zoom_level
         adjusted_dy = dy / self.zoom_level
@@ -109,8 +133,16 @@ class Camera(pygame.sprite.Sprite):
         self.position[0] = max(self.min_x, min(self.max_x, new_x))
         self.position[1] = max(self.min_y, min(self.max_y, new_y))
     
-    def get_offset(self, screen_size):
-        """Calcule l'offset de la caméra pour le rendu."""
+    def get_offset(self, screen_size: tuple[int, int]):
+        """Calcule l'offset de la caméra pour le rendu.
+
+        Args:
+            screen_size (tuple[int, int]): Taille de l'écran.
+
+        Returns:
+            typle[float, float]: Offset de la caméra.
+            """
+            
         return (
             self.position[0] - (screen_size[0] // 2) / self.zoom_level,
             self.position[1] - (screen_size[1] // 2) / self.zoom_level
