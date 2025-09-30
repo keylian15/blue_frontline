@@ -56,8 +56,7 @@ class GameInitializer:
     def init_game_systems(self):
         """Initialise les systèmes de jeu (combat, unités, etc.)."""
         # Système de combat et unités
-        self.game.combat_system = CombatSystem()
-        self.game.combat_system.game = self.game
+        self.game.combat_system = CombatSystem(self.game)
         self.game.units = []
         self.game.selected_unit = None
     
