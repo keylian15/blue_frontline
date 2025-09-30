@@ -153,7 +153,6 @@ class EventHandler:
         
         return True
     
-
     def handle_mouse_events(self, event: pygame.event):
         """Gère les événements de souris.
 
@@ -168,7 +167,7 @@ class EventHandler:
         
         # Clic gauche
         if event.button == 1:  # Clic gauche
-            world_x, world_y = self._screen_to_world_coordinates(pygame.mouse.get_pos())
+            world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
             # Chercher une unité à cette position
             clicked_unit = self.game.find_unit_at_position(world_x, world_y)
             
@@ -190,7 +189,7 @@ class EventHandler:
             if not getattr(self.game, 'paused', False):
                 self.game.camera.zoom_out()
     
-    def _screen_to_world_coordinates(self, mouse_pos: tuple[int, int]):
+    def screen_to_world_coordinates(self, mouse_pos: tuple[int, int]):
         """Convertit les coordonnées écran en coordonnées monde.
 
         Args:
