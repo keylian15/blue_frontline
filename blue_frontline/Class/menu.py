@@ -116,7 +116,6 @@ class Menu:
                         # Passer le système de succès au jeu
                         game.achievements_system = self.achievements_system
                         game.run()
-                        # Retour au menu après la fin du jeu
                     elif text == "Succès":
                         achievements_menu = AchievementsMenu(self.screen)
                         achievements_menu.set_achievements_system(self.achievements_system)
