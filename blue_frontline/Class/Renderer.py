@@ -1,10 +1,9 @@
 import pygame, pyscroll, time, math
-from .Game import Game  # Assure that Game is imported from the correct module
 
 class Renderer:
     """Gestionnaire de rendu pour le jeu."""
     
-    def __init__(self, game: Game):
+    def __init__(self, game: "Game"):
         """Initialise le gestionnaire de rendu avec une référence au jeu.
 
         Args:
