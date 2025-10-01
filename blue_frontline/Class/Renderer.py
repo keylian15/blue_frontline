@@ -1,9 +1,10 @@
 import pygame, pyscroll, time, math
+from .Game import Game  # Assure that Game is imported from the correct module
 
 class Renderer:
     """Gestionnaire de rendu pour le jeu."""
     
-    def __init__(self, game: "Game"):
+    def __init__(self, game: Game):
         """Initialise le gestionnaire de rendu avec une référence au jeu.
 
         Args:
@@ -73,6 +74,10 @@ class Renderer:
         
         # Unité sélectionnée
         self.render_selected_unit_highlight()
+        
+        # Notifications de succès
+        if hasattr(self.game, 'notification_manager'):
+            self.game.notification_manager.draw()
         
     def render_map(self):
         """Rend la map avec gestion du zoom et reconstruction si nécessaire."""

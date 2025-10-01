@@ -447,8 +447,17 @@ class Game :
             if not self.paused:
                 self.input_manager.handle_continuous_input()
             
-                # Mise à jour des systèmes
-                self.updater.update_systems(dt, self)
+            # Mise à jour des systèmes
+            self.updater.update_systems(dt, self)
+
+            # Vérifier s'il y a de nouvelles notifications de succès
+            if self.achievements_system:
+                new_notifications = self.achievements_system.get_pending_notifications()
+                for notification in new_notifications:
+                    self.notification_manager.add_notification(notification['achievement'])
+            
+            # Mettre à jour le gestionnaire de notifications
+            self.notification_manager.update(dt)
             
             # Rendu
             self.renderer.render()
