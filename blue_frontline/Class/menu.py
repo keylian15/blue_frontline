@@ -2,6 +2,8 @@ import pygame, sys, math
 from Global import *
 from Class.Game import Game
 from Class.OptionsMenu import OptionsMenu
+from Class.AchievementsMenu import AchievementsMenu
+from Class.AchievementsSystem import AchievementsSystem
 
 class Menu:
     """Classe pour gérer le menu principal du jeu."""
@@ -31,6 +33,9 @@ class Menu:
             ("Options", start_x, start_y + (BUTTON_HEIGHT + BUTTON_SPACING) * 2, BUTTON_WIDTH, BUTTON_HEIGHT),
             ("Quitter", start_x, start_y + (BUTTON_HEIGHT + BUTTON_SPACING) * 3, BUTTON_WIDTH, BUTTON_HEIGHT),
         ]
+        
+        # Système de succès global
+        self.achievements_system = AchievementsSystem()
 
     def draw_button(self, text: str, x: int, y: int, w: int, h: int, hovered: bool):
         """Fonction pour dessiner un bouton avec un texte et une bordure.
@@ -108,15 +113,17 @@ class Menu:
                         sys.exit()
                     elif text == "Jouer":
                         game = Game(self.screen)
+                        # Passer le système de succès au jeu
+                        game.achievements_system = self.achievements_system
                         game.run()
                         menu = False
                     elif text == "Succès":
-                        print("Menu succès...")
-                        menu = False
+                        achievements_menu = AchievementsMenu(self.screen)
+                        achievements_menu.set_achievements_system(self.achievements_system)
+                        achievements_menu.run()
                     elif text == "Options":
                         options_menu = OptionsMenu(self.screen)
                         options_menu.run()
-                        menu = False
 
             pygame.display.flip()
 

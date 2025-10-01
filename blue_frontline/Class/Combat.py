@@ -119,17 +119,34 @@ class Projectile(pygame.sprite.Sprite):
             bool: True si il y a collision, False sinon.
         """
 
-        if not self.is_active or not target.is_alive:
+        if not self.is_active :
             return False
             
-        # Vérifier que l'unité cible n'est pas de la même équipe
-        if self.shooter and target.team == self.shooter.team:
+        # Vérifier que l'unité cible n'est pas de la même équipe (sauf pour les plateformes)
+        if self.shooter and hasattr(target, 'team') and target.team == self.shooter.team:
+            # Les plateformes peuvent être ciblées par toutes les équipes
+            if not (hasattr(target, 'is_platform') and target.is_platform):
+                return False
+        
+        # Vérifier si la cible est encore vivante
+        if hasattr(target, 'is_alive') and not target.is_alive:
             return False
-            
-        # Calculer la distance entre le projectile et l'unité
+        
+        # Pour les plateformes avec hitbox polygonale, utiliser la méthode spécialisée
+        if hasattr(target, 'is_platform') and target.is_platform and hasattr(target, 'point_in_hitbox'):
+            if target.point_in_hitbox(self.position[0], self.position[1]):
+                # Inflige les dégâts et passe le tireur comme killer
+                if hasattr(target, 'take_damage'):
+                    target.take_damage(self.damage, killer=self.shooter)
+                self.destroy()
+                return True
+            return False
+        
+        # Calculer la distance entre le projectile et l'unité (Méthode classique)
+        target_pos = getattr(target, 'position', (0, 0))
         distance = math.sqrt(
-            (self.position[0] - target.position[0])**2 + 
-            (self.position[1] - target.position[1])**2
+            (self.position[0] - target_pos[0])**2 + 
+            (self.position[1] - target_pos[1])**2
         )
         
         # Si la distance est suffisamment petite (collision)
@@ -179,6 +196,11 @@ class CombatSystem:
 
         if not shooter.is_alive or not target.is_alive:
             return None
+        
+        # Suivre le tir pour les succès
+        if hasattr(shooter, 'game') and hasattr(shooter.game, 'achievements_system') and shooter.game.achievements_system:
+            shooter.game.achievements_system.track_bullet_fired()
+
             
         # Créer le projectile
         projectile = Projectile(

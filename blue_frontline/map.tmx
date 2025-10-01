@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="120" height="96" tilewidth="32" tileheight="32" infinite="0" nextlayerid="12" nextobjectid="100">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="120" height="96" tilewidth="32" tileheight="32" infinite="0" nextlayerid="12" nextobjectid="101">
  <tileset firstgid="1" source="assets/miscellaneous/recif.tsx"/>
  <tileset firstgid="2" source="assets/entity/bullet.tsx"/>
  <tileset firstgid="3" source="assets/Green_team/Green_team_spritesheet.tsx"/>
@@ -700,7 +700,7 @@
   </object>
  </objectgroup>
  <objectgroup id="11" name="Objects">
-  <object id="79" name="Spawn_base_rouge" type="Base" x="32" y="1408">
+  <object id="79" name="Spawn_base_rouge" type="Base" x="32" y="1376">
    <polygon points="0,0 0,-128 352,-128 352,352 0,352 0,224 224,224 224,0"/>
   </object>
   <object id="81" name="Spawn_base_verte" type="Base" x="3808" y="1376">
@@ -709,15 +709,15 @@
   <object id="82" name="Base_verte" type="Base" x="3808" y="1600">
    <polygon points="0,0 -224,0 -224,-224 0,-224"/>
   </object>
-  <object id="83" name="Base_rouge" type="Base" x="32" y="1632">
-   <polygon points="0,0 224,0 224,-224 0,-224 0,0"/>
-  </object>
   <object id="84" name="ile_quantique_4" type="ile_quantique" x="1248" y="64" width="1248" height="704"/>
   <object id="85" name="ile_quantique_1" type="ile_quantique" x="448" y="1024" width="640.003" height="512.003"/>
   <object id="86" name="ile_quantique_2" type="ile_quantique" x="1440" y="2272" width="928" height="672"/>
   <object id="87" name="ile_quantique_3" type="ile_quantique" x="2752" y="1408" width="544.005" height="416"/>
   <object id="88" name="spawn" type="spawn" x="1936" y="1365.67">
    <point/>
+  </object>
+  <object id="100" name="Base_rouge" type="Base" x="256" y="1600">
+   <polygon points="0,0 -224,0 -224,-224 0,-224"/>
   </object>
  </objectgroup>
 </map>

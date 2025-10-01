@@ -13,6 +13,7 @@ from Class.Piece import Piece
 from Class.Timer import Timer
 from Class.units import Unit
 from Class import PlateformePetroliere
+from Class.AchievementNotification import AchievementNotificationManager
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
@@ -41,6 +42,13 @@ class Game :
         """
         
         self.screen = screen
+    
+        # Système de succès (sera assigné par le menu)
+        self.achievements_system = None
+        
+        # Gestionnaire de notifications de succès
+        self.notification_manager = AchievementNotificationManager(screen)
+
         
         # Initialiser les gestionnaires
         self.initializer = GameInitializer(self)
@@ -74,6 +82,11 @@ class Game :
         self.victory_font = pygame.font.Font(None, 72)
         self.button_font = pygame.font.Font(None, 36)
         
+        # Statistiques de jeu pour les succès
+        self.game_start_time = pygame.time.get_ticks()
+        self.units_created_this_game = set()
+        self.units_lost_this_game = 0
+
         # Obstacles
         self.setObstacles()
         # Zone quantiques
@@ -122,7 +135,11 @@ class Game :
 
         Args:
             name (str, optional): Le nom d'une île si on veut en générer qu'une seule. Defaults to None.
-        """
+        """        
+        # Suivre les statistiques pour les succès (îles quantiques)
+        if self.achievements_system:
+            self.achievements_system.track_quantum_island_activated()
+
         # Initialiser la liste des îles si elle n'existe pas
         if not hasattr(self, 'quantum_islands'):
             self.quantum_islands = []
@@ -234,6 +251,11 @@ class Game :
             self.winner_team = "green"
         else:
             self.winner_team = "red"
+        
+        # Suivre les statistiques pour les succès
+        if self.achievements_system:
+            self.achievements_system.track_platform_destroyed()
+            self.achievements_system.track_game_won()
         
         self.game_won = True
         self.paused = True  # Mettre le jeu en pause
@@ -405,8 +427,18 @@ class Game :
         running = True
         self.game_running = True  # Variable pour contrôler le retour au menu
         
+        # Réinitialiser les statistiques de jeu pour les succès
+        if self.achievements_system:
+            print("Reset game stats")
+            self.achievements_system.reset_game_stats()
+        
         while running and self.game_running: 
             dt = clock.tick(FPS) / TIME_STEP
+            
+            # Mettre à jour le temps de jeu pour les succès
+            if self.achievements_system:
+                self.achievements_system.update_playtime(dt / 1000)  # Convertir en secondes
+
             
             # Gestion des événements
             running = self.event_handler.handle_events()

@@ -64,31 +64,32 @@ class GameInitializer:
         self.game.units = []
         self.game.selected_unit = None
     
+        # Variables pour stocker les objets des plateformes Tiled
+        red_platform_obj = None
+        green_platform_obj = None
+        
         # Récupérer les points du polygone
         for obj in self.game.tmx_data.objects:
             if obj.name == "Base_verte":
+                green_platform_obj = obj
                 self.game.green_platform_spawn = obj.points
             elif obj.name == "Base_rouge":
+                red_platform_obj = obj
                 self.game.red_platform_spawn = obj.points
             elif obj.name == "Spawn_base_verte":
                 self.game.green_platform_zone = obj.points  
             elif obj.name == "Spawn_base_rouge":
                 self.game.red_platform_zone = obj.points  # Récupérer les points du polygone
         
-        # Position hitbox plateformes rouge
-        platform_rouge_x = 144
-        platform_rouge_y = 1500 
+
         
-        # Position hitbox plateforme verte
-        platform_verte_x = 3700  
-        platform_verte_y = 1500 
-        
+        # Créer les plateformes à partir des positions Tiled
         plateforme_rouge = PlateformePetroliere(
-            platform_rouge_x, platform_rouge_y,
-            "red", 1000)
+            red_platform_obj.x, red_platform_obj.y,
+            "red", 1000, red_platform_obj)
         plateforme_verte = PlateformePetroliere(
-            platform_verte_x, platform_verte_y,
-            "green", 1000)
+            green_platform_obj.x, green_platform_obj.y,
+            "green", 1000, green_platform_obj)
                 
         # Ajouter les références au jeu
         plateforme_rouge.game = self.game

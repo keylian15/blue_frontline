@@ -3,7 +3,7 @@ import pygame
 class PlateformePetroliere(pygame.sprite.Sprite):
     """Classe pour gérer les plateformes pétrolières."""
 
-    def __init__(self, x: int, y: int, team: str, max_health: int):
+    def __init__(self, x: int, y: int, team: str, max_health: int, objTiled):
         """Initialise une nouvelle instance de PlateformePetroliere.
 
         Args:
@@ -11,16 +11,33 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             y (int): Coordonnée y de la plateforme.
             team (str): Équipe de la plateforme.
             max_health (int): Santé maximale de la plateforme.
+            hitbox_polygon (list["Point", "Point", "Point", "Point"]): Liste des points formant la hitbox de la plateforme.
         """
-    
+
         super().__init__()
         self.team = team
         self.max_health = max_health
         self.current_health = max_health
         self.is_alive = True
-        self.position = [float(x), float(y)]  # Position centrale de la plateforme
-        self.width = 160   # Rectangle beaucoup plus grand et carré (invisible mais actif)
-        self.height = 160  # Rectangle beaucoup plus grand et carré (invisible mais actif)
+        self.hitbox_polygon = objTiled.points
+        self.objTiled = objTiled
+        
+        # Verifier l'utilité d'ici ===>
+        # Calculer les limites du polygone pour le rect
+        min_x = min(point[0] for point in self.hitbox_polygon)
+        max_x = max(point[0] for point in self.hitbox_polygon)
+        min_y = min(point[1] for point in self.hitbox_polygon)
+        max_y = max(point[1] for point in self.hitbox_polygon)
+        # Position centrale calculée depuis le polygone
+        center_x = (min_x + max_x) / 2
+        center_y = (min_y + max_y) / 2
+        self.position = [float(center_x), float(center_y)]
+        self.width = int(max_x - min_x)
+        self.height = int(max_y - min_y)
+        rect_x = int(min_x)
+        rect_y = int(min_y)
+        # <===
+
         self.unit_type = "plateforme"
         self.is_selected = False
         
@@ -29,9 +46,8 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         color = (0, 0, 0, 0)  # Complètement transparent (invisible)
         self.image.fill(color)
         
-        # Le rect utilise la position (x, y) comme centre
-        self.rect = self.image.get_rect()
-        self.rect.center = (x, y)
+        # Le rect englobe la zone de la hitbox
+        self.rect = pygame.Rect(rect_x, rect_y, self.width, self.height)
         
         # Pour compatibilité avec la logique d'unités
         self.range = 0
@@ -72,15 +88,23 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         
         if not self.is_alive:
             return
-        screen_x = (self.position[0] - camera_offset[0]) * zoom
-        screen_y = (self.position[1] - camera_offset[1]) * zoom
+        
+        # Pour les plateformes, utiliser la position de l'image Tiled plutôt que le centre de la hitbox
+        xs = [p.x for p in self.hitbox_polygon]
+        ys = [p.y for p in self.hitbox_polygon]
+        image_center_x = sum(xs) / len(xs)
+        image_center_y = sum(ys) / len(ys)
+        
+        # Calculer les coordonnées de l'image sur l'écran   
+        screen_x = (image_center_x - camera_offset[0]) * zoom
+        screen_y = (image_center_y - camera_offset[1]) * zoom
         
         # Barre de vie plus large pour les plateformes, placée en dessous de l'image
         bar_width = int(180 * zoom)  # Largeur fixe adaptée aux plateformes
         bar_height = max(12, int(20 * zoom))
         bar_x = int(screen_x - bar_width // 2)
-        # Placer la barre en dessous de l'image de la plateforme (environ 80px en dessous du centre)
-        bar_y = int(screen_y + 80 * zoom)
+        # Placer la barre en dessous de l'image de la plateforme (environ 120px en dessous du centre)
+        bar_y = int(screen_y + 120 * zoom)
         
         # Fond
         background_rect = pygame.Rect(bar_x, bar_y, bar_width, bar_height)

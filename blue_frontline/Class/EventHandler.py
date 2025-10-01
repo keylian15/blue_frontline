@@ -89,17 +89,32 @@ class EventHandler:
             if not cost:
                 return
             
+            def succes():
+                """Fonction interne pour gérer les succès liés aux unités créées"""
+
+                # Suivre les statistiques pour les succès
+                if self.game.achievements_system:
+                    self.game.achievements_system.track_unit_created(config_key, cost)
+                    # Mettre à jour le nombre maximum d'unités vivantes
+                    alive_units = len([u for u in self.game.units if u.is_alive and hasattr(u, 'unit_type')])
+                    self.game.achievements_system.update_max_units_alive(alive_units)
+                
+                # Marquer le type d'unité comme créé dans cette partie
+                self.game.units_created_this_game.add(config_key)
+
             # S'il n'y a pas assez de pétrole.
             if team_key == "red"  :
                 if self.game.hud.petrole_red.count < cost:
                     return None
                 else : 
                     self.game.hud.petrole_red.count -= cost
+                    succes()
             else : 
                 if self.game.hud.petrole_green.count < cost: 
                     return None
                 else :
                     self.game.hud.petrole_green.count -= cost
+                    succes()
             
             # Créer l'unité
             # Mapping type + équipe -> classe
