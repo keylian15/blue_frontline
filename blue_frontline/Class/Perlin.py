@@ -291,3 +291,32 @@ class Perlin:
                 surface.blit(tile, (x * 32, y * 32))
 
         return surface
+
+    @staticmethod
+    def get_zone_type( x_pixel: int, y_pixel: int, matrice: list[list[int]], island: "IslandSprite" ) -> int:
+        """Retourne le type de zone à partir des coordonnées en pixels.
+
+        Args:
+            x_pixel (int): Coordonnée x en pixels.
+            y_pixel (int): Coordonnée y en pixels.
+            matrice (list[list[int]]): Matrice de valeurs (Perlin).
+            island (IslandSprite): La zone quantique.
+
+        Returns:
+            int: Type de zone (0 = eau profonde, 1 = eau peu profonde, 2 = île, 3 = terre).
+        """
+        
+        from Utils import get_types
+        print('Affichage de test :')
+        get_types(island)
+        
+        # Conversion monde -> local
+        local_x = x_pixel - island.rect.x
+        local_y = y_pixel - island.rect.y
+
+        tile_x = int(local_x // 32)
+        tile_y = int(local_y // 32)
+
+        if 0 <= tile_y < len(matrice) and 0 <= tile_x < len(matrice[0]):
+            return matrice[tile_y][tile_x]
+        return -1  # en dehors de la map

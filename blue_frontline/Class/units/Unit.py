@@ -1,6 +1,7 @@
 import pygame, time, math
 from Global import *
 from Utils import load_tileset, point_in_many_polygons, random_point_in_polygon
+from Class.Perlin import Perlin
 
 class Unit(pygame.sprite.Sprite):
     """Classe de base pour toutes les unités du jeu."""
@@ -140,6 +141,13 @@ class Unit(pygame.sprite.Sprite):
         Args:
             dt (int): La différence de temps entre chaque frame.
         """
+
+        # === RAPPELS ===
+        # quantum_islands = Zone quantique Graphique 
+        # quantique_area = Zone quantique Tiled
+        # quantique_area_hidden = Zone quantique Tiled cachée
+        # quantique_area_name = Nom des iles quantiques
+        # === RAPPELS ===
         
         # On prend la prochaine position
         next_position = (self.position[0] + self.speed_x * dt, self.position[1] + self.speed_y * dt)
@@ -147,6 +155,7 @@ class Unit(pygame.sprite.Sprite):
         # Si la prochaine position est dans une ile, on arrête le mouvement
         if point_in_many_polygons(self.game.obstacles, next_position):
             self.stop()
+            return
         else:
             # On vérifie si le prochaine position est dans une zone quantique non découverte
             result = point_in_many_polygons(self.game.quantique_area_hidden, next_position) 
@@ -167,10 +176,48 @@ class Unit(pygame.sprite.Sprite):
                     
                     self.game.quantique('ile_quantique_' + str(index)) # On appel la fonction quantique du jeu pour activer le changement
                 else : 
-                    self.stop()
+                    self.stop() # Seul l'eclaireur peut découvrir la zone
+                    return
             else : 
-                self.position = next_position
-            
+                # On vérifie si la prochaine position est dans une zone quantique découverte (Il suffit juste de regarder l'ensemble des zones)
+                result = point_in_many_polygons(self.game.quantique_area, next_position)
+                
+                if result : 
+                    # Récupérer l'index de self.game.quantique_area correspondant à l'île
+                    index = self.game.quantique_area.index(result[1])
+
+                    # On parcours les îles graphiques pour retrouver la bonne île
+                    for island in self.game.quantum_islands: 
+
+                        # On vérifie qu'on a le bon index et le bon nom
+                        if index == int(island.name[-1]) :
+
+                            # On récupére la matrice de Perlin
+                            matrice = island.matrix
+                            
+                            # On vérifie qu'on est pas dans une zone 3 (ile)
+                            num = Perlin.get_zone_type(next_position[0], next_position[1], matrice, island)
+                            
+                            # Gesion de la collision 
+                            match num:
+                                case 2:  # Île
+                                    self.stop()
+                                    return
+                                case 1:  # Eau peu profonde
+                                    # Gestion du rallentissement
+                                    # self.speed_x //= 2
+                                    # self.speed_y //= 2
+                                    pass
+
+                # On vérifie si la prochaine position est dans une zone d'eau peu profonde
+                result = point_in_many_polygons(self.game.eau_peu_profondes, next_position)
+                if result:
+                    # Gestion du rallentissement
+                    # self.speed_x //= 2
+                    # self.speed_y //= 2
+                    pass
+        self.position = next_position
+
     def move(self, dt: int):
         """Déplace l'unité selon sa vitesse. Appelé a chaque tick.
 

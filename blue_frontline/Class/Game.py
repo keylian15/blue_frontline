@@ -18,10 +18,11 @@ from Class.AchievementNotification import AchievementNotificationManager
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
     
-    def __init__(self, surface: pygame.Surface, x: int, y: int):
+    def __init__(self, name: str, surface: pygame.Surface, x: int, y: int):
         """Fonction permettant d'initialiser un sprite d'île.
 
         Args:
+            name (str): Le nom de l'île.
             surface (pygame.Surface): La surface de l'île.
             x (int): La position x de l'île.
             y (int): La position y de l'île.
@@ -30,6 +31,7 @@ class IslandSprite(pygame.sprite.Sprite):
         self.image = surface
         self.rect = self.image.get_rect()
         self.rect.topleft = (x, y)
+        self.name = name
 
 class Game : 
     """Classe principale du jeu."""
@@ -48,7 +50,9 @@ class Game :
         
         # Gestionnaire de notifications de succès
         self.notification_manager = AchievementNotificationManager(screen)
-
+        
+        # La liste des iles quantiques GRAPHIQUES
+        self.quantum_islands = [] 
         
         # Initialiser les gestionnaires
         self.initializer = GameInitializer(self)
@@ -108,6 +112,7 @@ class Game :
         """Fonction permettant de récupérer les obstacles du jeu."""
         # On récupére les collisions générales.
         self.obstacles = [obj.as_points for obj in self.tmx_data.objects if obj.type == "Collision"]
+        self.eau_peu_profondes = []
         
         layer_name = "Collision_Haute" if self.hud.timer.maree_haute else "Collision_Basse"
         layer = next((l for l in self.tmx_data.layers if l.name == layer_name), None)
@@ -120,11 +125,16 @@ class Game :
                     self.obstacles.append(obj.points) 
                 elif hasattr(obj, 'as_points') : 
                     self.obstacles.append(obj.as_points)
+            if obj.name == "Eau_peu_profonde" : 
+                if hasattr(obj, 'points') :
+                    self.eau_peu_profondes.append(obj.as_points)
+                elif hasattr(obj, 'as_points') : 
+                    self.eau_peu_profondes.append(obj.as_points)
                     
     def setQuantiqueArea(self):
         """Fonction permettant de récupérer les zones quantique du jeu."""
-        self.quantique_area = []
-        self.quantique_area_hidden = []
+        self.quantique_area = [] # La liste des zones quantique
+        self.quantique_area_hidden = [] # La liste des zones quantique cachées
         for obj in self.tmx_data.objects:
             if obj.name.startswith("ile_quantique_"):
                 self.quantique_area.append(obj.as_points)
@@ -139,10 +149,6 @@ class Game :
         # Suivre les statistiques pour les succès (îles quantiques)
         if self.achievements_system:
             self.achievements_system.track_quantum_island_activated()
-
-        # Initialiser la liste des îles si elle n'existe pas
-        if not hasattr(self, 'quantum_islands'):
-            self.quantum_islands = []
         
         # Nettoyer les anciennes îles
         if not name :
@@ -152,7 +158,12 @@ class Game :
             self.quantum_islands.clear()
 
         # Fonction interne pour créer une île
-        def create_island(obj):
+        def create_island(obj: "tmx.TiledObject" ):
+            """Fonction interne pour créer une île quantique.
+
+            Args:
+                obj (tmx.TiledObject): L'objet
+            """
             aligned_x = (obj.x // 32) * 32
             aligned_y = (obj.y // 32) * 32
             island_position = (aligned_x, aligned_y)
@@ -170,7 +181,8 @@ class Game :
             island_matrix = self.perlin.generate_island(island_height_tiles, island_width_tiles)
             island_surface = self.perlin.smooth_map(island_matrix, tileset_surface_smooth)
 
-            island_sprite = IslandSprite(island_surface, island_position[0], island_position[1])
+            island_sprite = IslandSprite(obj.name, island_surface, island_position[0], island_position[1])
+            island_sprite.matrix = island_matrix # On stocke la matrice de l'île pour les collisions
             self.quantum_islands.append(island_sprite)
             self.group.add(island_sprite)
 
