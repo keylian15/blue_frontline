@@ -168,7 +168,8 @@ class EventHandler:
             for unit in self.game.units:
                 # Verification sur l'entité
                 if hasattr(unit, 'is_moving') and unit.is_moving : 
-                    unit.move_to(unit.target_position[0], unit.target_position[1], unit.max_speed * new_speed)
+                    # unit.speed * new_speed
+                    unit.move_to(unit.target_position[0], unit.target_position[1])
             return True
         
         if event.key == pygame.K_j :

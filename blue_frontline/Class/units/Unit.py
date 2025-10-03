@@ -158,73 +158,79 @@ class Unit(pygame.sprite.Sprite):
         # quantique_area_name = Nom des iles quantiques
         # === RAPPELS ===
         
-        # On prend la prochaine position
-        next_position = (self.position[0] + self.speed_x * dt, self.position[1] + self.speed_y * dt)
+        if not self.is_moving:
+            return
+        
+        # On prend la prochaine position et ses valeurs 
+        self.speed = self.max_speed
+        next_position = (
+            self.position[0] + self.speed_x * dt, 
+            self.position[1] + self.speed_y * dt
+        )
         
         # Si la prochaine position est dans une ile, on arrête le mouvement
         if point_in_many_polygons(self.game.obstacles, next_position):
             self.stop()
+            self.is_moving = False
+            self.target_position = None
             return
-        else:
-            # On vérifie si le prochaine position est dans une zone quantique non découverte
-            result = point_in_many_polygons(self.game.quantique_area_hidden, next_position) 
-            if result :
-                if self.type == "eclaireur" : 
-                    # Récupérer l'index de self.game.quantique_area correspondant à l'île
-                    index = self.game.quantique_area.index(result[1])
-                    if index == 0 : # L'ile quantique n°4 est l'index 0 car la plus haute sur Tiled.
-                        index = 4 
-                    self.game.initializer.toggle_layer('fog' + str(index), False) # On enléve le calque de brouillard
-                    
-                    self.game.quantique_area_hidden.remove(result[1]) # On enlève l'ile de la liste des iles cachées
-                    self.game.quantique_area_name.append('ile_quantique_' + str(index)) # On ajoute le nom de l'ile dans la liste des iles quantiques
-                    
-                    
-                    self.game.renderer.refresh_map() # On rafraichit le rendu
-                    self.game.refresh_all_references(self.game) # On met a jour la map
-                    
-                    self.game.quantique('ile_quantique_' + str(index)) # On appel la fonction quantique du jeu pour activer le changement
-                else : 
-                    self.stop() # Seul l'eclaireur peut découvrir la zone
-                    return
-            else : 
-                # On vérifie si la prochaine position est dans une zone quantique découverte (Il suffit juste de regarder l'ensemble des zones)
-                result = point_in_many_polygons(self.game.quantique_area, next_position)
+        
+        # On vérifie si le prochaine position est dans une zone quantique non découverte
+        result = point_in_many_polygons(self.game.quantique_area_hidden, next_position)
+        if result:
+            if self.type == "eclaireur":
+                # Récupérer l'index de self.game.quantique_area correspondant à l'île
+                index = self.game.quantique_area.index(result[1])
+                if index == 0:  # L'ile quantique n°4 est l'index 0 car la plus haute sur Tiled.
+                    index = 4
                 
-                if result : 
-                    # Récupérer l'index de self.game.quantique_area correspondant à l'île
-                    index = self.game.quantique_area.index(result[1])
+                self.game.initializer.toggle_layer('fog' + str(index), False)  # On enléve le calque de brouillard
+                self.game.quantique_area_hidden.remove(result[1])  # On enlève l'ile de la liste des iles cachées
+                self.game.quantique_area_name.append('ile_quantique_' + str(index))  # On ajoute le nom de l'ile dans la liste des iles quantiques
+                
+                self.game.renderer.refresh_map()  # On rafraichit le rendu
+                self.game.refresh_all_references(self.game)  # On met a jour la map
+                self.game.quantique('ile_quantique_' + str(index))  # On appel la fonction quantique du jeu pour activer le changement
+            else:
+                self.stop()  # Seul l'eclaireur peut découvrir la zone
+                self.is_moving = False
+                self.target_position = None
+                return
+        
+        # On vérifie si la prochaine position est dans une zone quantique découverte (Il suffit juste de regarder l'ensemble des zones)
+        result = point_in_many_polygons(self.game.quantique_area, next_position)
+        if result:
+            # Récupérer l'index de self.game.quantique_area correspondant à l'île
+            index = self.game.quantique_area.index(result[1])
 
-                    # On parcours les îles graphiques pour retrouver la bonne île
-                    for island in self.game.quantum_islands: 
-
-                        # On vérifie qu'on a le bon index et le bon nom
-                        if index == int(island.name[-1]) :
-
-                            # On récupére la matrice de Perlin
-                            matrice = island.matrix
-                            
-                            # On vérifie qu'on est pas dans une zone 3 (ile)
-                            num = Perlin.get_zone_type(next_position[0], next_position[1], matrice, island)
-                            
-                            # Gesion de la collision 
-                            match num:
-                                case 2:  # Île
-                                    self.stop()
-                                    return
-                                case 1:  # Eau peu profonde
-                                    # Gestion du rallentissement
-                                    # self.speed_x //= 2
-                                    # self.speed_y //= 2
-                                    pass
-
-                # On vérifie si la prochaine position est dans une zone d'eau peu profonde
-                result = point_in_many_polygons(self.game.eau_peu_profondes, next_position)
-                if result:
-                    # Gestion du rallentissement
-                    # self.speed_x //= 2
-                    # self.speed_y //= 2
-                    pass
+            # On parcours les îles graphiques pour retrouver la bonne île
+            for island in self.game.quantum_islands:
+                # On vérifie qu'on a le bon index et le bon nom
+                if index == int(island.name[-1]):
+                    # On récupére la matrice de Perlin
+                    matrice = island.matrix
+                    
+                    # On vérifie qu'on est pas dans une zone 3 (ile)
+                    num = Perlin.get_zone_type(next_position[0], next_position[1], matrice, island)
+                    
+                    # Gesion de la collision 
+                    if num == 2:  # Ile 
+                        self.stop()
+                        self.is_moving = False
+                        self.target_position = None
+                    elif num == 1:  # Eau peu profonde
+                        if self.speed != self.reducte_speed:
+                            # Gestion du rallenti
+                            self.speed = self.reducte_speed
+        
+        # On vérifie si la prochaine position est dans une zone d'eau peu profonde
+        result = point_in_many_polygons(self.game.eau_peu_profondes, next_position)
+        if result:
+            # Gestion du rallentissement
+            self.speed = self.reducte_speed
+        
+        # On met a jour la vitesse de l'unité, speed est la valeur de déplacement, move_to va redefinir la vitesse de déplacement jusqu'a la cible
+        self.move_to(self.target_position[0], self.target_position[1])
         self.position = next_position
 
     def move(self, dt: int):
@@ -234,48 +240,52 @@ class Unit(pygame.sprite.Sprite):
             dt (int): La différence de temps entre chaque frame.
         """
         
-        if self.is_moving : 
-            # Temps de jeu rapide : 
-            if self.game.hud.timer.get_speed_multiplier() >= 10 : 
-                # Vérifier si on a atteint la destination 
-                # On prend un vecteur avant le déplacement
-                to_target_before = (self.target_position[0] - self.position[0],
-                            self.target_position[1] - self.position[1])
-
-                # Verifier le prochain déplacement.
-                result = self.check_area(dt)
-                
-                # On prend un vecteur après le déplacement
-                to_target_after = (self.target_position[0] - self.position[0],  
-                        self.target_position[1] - self.position[1])
-
-                # Produit scalaire : si le signe change, c’est qu’on a dépassé la cible
-                if (to_target_before[0] * to_target_after[0] + 
-                    to_target_before[1] * to_target_after[1]) <= 0:
-                    
-                    # self.move_to(self.target_position[0], self.target_position[1], self.max_speed/2)
-                    self.stop()
-
-            else : 
-                # Vérifier si on a atteint la destination
-                distance_to_target = ((self.position[0] - self.target_position[0])**2 + 
-                                    (self.position[1] - self.target_position[1])**2)**0.5
-                
-                # Si on est proche de la destination (moins de 5 pixels)
-                if distance_to_target < 5 :
-                    self.stop()
-                    self.is_moving = False
-                    self.target_position = None
-                
-                self.check_area(dt)
+        if not (self.is_moving and self.target_position):
+            return
         
-    def move_to(self, target_x: int, target_y: int, speed: int):
+        # Temps de jeu rapide : 
+        if self.game.hud.timer.get_speed_multiplier() >= 10:
+            # On prend un vecteur avant le déplacement
+            to_target_before = (
+                self.target_position[0] - self.position[0],
+                self.target_position[1] - self.position[1]
+            )
+
+            # Verifier le prochain déplacement.
+            self.check_area(dt)
+            
+            # On prend un vecteur après le déplacement
+            to_target_after = (
+                self.target_position[0] - self.position[0],
+                self.target_position[1] - self.position[1]
+            )
+
+            # Produit scalaire : si le signe change, c'est qu'on a dépassé la cible
+            if (to_target_before[0] * to_target_after[0] + 
+                to_target_before[1] * to_target_after[1]) <= 0:
+                self.stop()
+                self.is_moving = False
+                self.target_position = None
+        else:
+            # Vérifier si on a atteint la destination
+            dx = self.position[0] - self.target_position[0]
+            dy = self.position[1] - self.target_position[1]
+            distance_to_target = (dx**2 + dy**2)**0.5
+            
+            # Si on est proche de la destination (moins de 5 pixels)
+            if distance_to_target < 5:
+                self.stop()
+                self.is_moving = False
+                self.target_position = None
+            
+            self.check_area(dt)
+
+    def move_to(self, target_x: int, target_y: int):
         """Fonction permettant de mettre a jour la vitesse pour les déplacements.
 
         Args:
             target_x (int): Coordonnée x de la cible.
             target_y (int): Coordonnée y de la cible.
-            speed (int): Vitesse de déplacement.
         """
         
         dx = target_x - self.position[0]
@@ -288,23 +298,22 @@ class Unit(pygame.sprite.Sprite):
             self.angle %= 360
             self.image = pygame.transform.rotate(self.image_original, self.angle)
             self.rect = self.image.get_rect(center=self.rect.center)
-            self.speed_x = (dx / distance) * speed
-            self.speed_y = (dy / distance) * speed
-            
+
+            multiplica = self.game.hud.timer.get_speed_multiplier()
+            self.speed_x = (dx / distance) * self.speed * multiplica
+            self.speed_y = (dy / distance) * self.speed * multiplica
         else:
             self.stop()
-            
-    def move_to_position(self, target:tuple):
+
+    def move_to_position(self, target: tuple):
         """Fonction permettant de mettre les mécanismes de déplacements.
 
         Args:
             target (tuple): Coordonnées x et y de la cible.
         """
-        
-        multiplica = self.game.hud.timer.get_speed_multiplier()
-        self.target_position = target                                       # On défini la position cible
-        self.move_to(target[0], target[1], self.max_speed * multiplica)     # On va initialiser les déplacements de l'unité
-        self.is_moving = True                                               # On indique que l'unité est en train de bouger
+        self.target_position = target       # On défini la position cible
+        self.move_to(target[0], target[1])  # On va initialiser les déplacements de l'unité
+        self.is_moving = True               # On indique que l'unité est en train de bouger
         
     def stop(self):
         """Arrête le mouvement de l'unité."""

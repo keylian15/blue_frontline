@@ -24,6 +24,8 @@ class SousMarin(Unit):
         self.cost = config["cost"]
         
         self.max_speed = config["max_speed"]
+        self.reducte_speed = self.max_speed // 2
+        self.speed = self.max_speed # Par défaut speed = speed max
         self.max_health = config["max_health"]
         self.current_health = self.max_health
         self.range = config["range"]

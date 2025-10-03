@@ -127,7 +127,7 @@ class Game :
                     self.obstacles.append(obj.as_points)
             if obj.name == "Eau_peu_profonde" : 
                 if hasattr(obj, 'points') :
-                    self.eau_peu_profondes.append(obj.as_points)
+                    self.eau_peu_profondes.append(obj.points)
                 elif hasattr(obj, 'as_points') : 
                     self.eau_peu_profondes.append(obj.as_points)
                     
@@ -441,7 +441,6 @@ class Game :
         
         # Réinitialiser les statistiques de jeu pour les succès
         if self.achievements_system:
-            print("Reset game stats")
             self.achievements_system.reset_game_stats()
         
         while running and self.game_running: 
