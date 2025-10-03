@@ -5,6 +5,13 @@ class AchievementNotification:
     """Notification popup pour les succès débloqués."""
     
     def __init__(self, achievement, screen_width, screen_height):
+        """Initialise une notification de succès.
+
+        Args:
+            achievement (dict): Le succès débloqué.
+            screen_width (int): Largeur de l'écran.
+            screen_height (int): Hauteur de l'écran.
+        """
         self.achievement = achievement
         self.screen_width = screen_width
         self.screen_height = screen_height
@@ -44,7 +51,11 @@ class AchievementNotification:
         self.success_color = (50, 255, 50)
     
     def update(self, dt):
-        """Met à jour l'animation et l'état de la notification."""
+        """Met à jour l'animation et l'état de la notification.
+        
+        Args:
+            dt (int): La différence de temps entre chaque frame.
+        """
         current_time = pygame.time.get_ticks()
         
         # Animation d'entrée
@@ -63,7 +74,15 @@ class AchievementNotification:
             self.is_visible = False
     
     def draw_star(self, surface, x, y, size, filled=True):
-        """Dessine une étoile à 5 branches."""
+        """Dessine une étoile à 5 branches.
+        
+        Args:
+            surface (pygame.Surface): La surface sur laquelle dessiner.
+            x (int): La position x de l'étoile.
+            y (int): La position y de l'étoile.
+            size (int): La taille de l'étoile.
+            filled (bool, optional): Si True, l'étoile est pleine, sinon elle est vide. Par defaut à True .
+        """
         color = (255, 215, 0) if filled else (80, 80, 80)  # Or ou gris
         
         # Points pour une étoile à 5 branches
@@ -85,7 +104,11 @@ class AchievementNotification:
         pygame.draw.polygon(surface, self.border_color, points, 2)
     
     def draw(self, screen):
-        """Dessine la notification."""
+        """Dessine la notification.
+        
+        Args:
+            screen (pygame.Surface): L'écran sur lequel dessiner.
+        """
         if not self.is_visible or self.alpha <= 0:
             return
         
@@ -153,7 +176,11 @@ class AchievementNotificationManager:
         self.max_notifications = 3  # Maximum de notifications simultanées
         
     def add_notification(self, achievement):
-        """Ajoute une nouvelle notification."""
+        """Ajoute une nouvelle notification.
+        
+        Args:
+            achievement (dict): Le succès débloqué.
+        """
         # Limiter le nombre de notifications simultanées
         if len(self.active_notifications) >= self.max_notifications:
             # Supprimer la plus ancienne
@@ -176,7 +203,11 @@ class AchievementNotificationManager:
         self.active_notifications.append(notification)
     
     def update(self, dt):
-        """Met à jour toutes les notifications actives."""
+        """Met à jour toutes les notifications actives.
+        
+        Args :
+            dt (int): La différence de temps entre chaque frame.
+        """
         # Mettre à jour les notifications existantes
         for notification in self.active_notifications[:]:
             notification.update(dt)

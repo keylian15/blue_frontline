@@ -8,30 +8,60 @@ class Sound:
     On garde ici une surface minimale; toute la logique est dans SpatialAudioManager.
     """
     def __init__(self, game: "Game"):
+        """Initialise l'API publique de l'audio.
+
+        Args:
+            game (Game): instance du jeu, pour accéder aux données de gameplay.
+        """
         self.game = game
         # le moteur initialise mixer + charge les sons
         self._engine = SpatialAudioManager(game)
 
     # --- boucle par frame ---
     def update(self):
+        """Met à jour le moteur audio."""
         self._engine.update()
 
     # --- événements de gameplay (one-shots) ---
     def on_unit_dropped(self, unit_class_name: str, pos=None):
-        """Drop générique des unités : chaloupe, bateau, paquebot, sous-marin, etc."""
+        """Drop générique des unités : chaloupe, bateau, paquebot, sous-marin, etc.
+        
+        Args:
+            unit_class_name (str): Nom de la classe de l'unité.
+            pos (tuple, optional): Position du drop. Par defaut à None.
+        """
         self._engine.play_drop_for_unit(unit_class_name, pos=pos)
 
     def on_eclaireur_dropped(self, pos):
+        """L'éclaireur est une unité un peu particulière, on gère son drop à part.
+        
+        Args:
+            pos (tuple): Position du drop.
+        """
         self._engine.play_one_shot_named("DROP_ECLAIREURS", world_pos=pos)
 
     def on_mine_dropped(self, pos):
+        """Quand un sous-marin pose une mine.One-shot court, pas besoin de spatialisation.
+        
+        Args:
+            pos (tuple): Position du drop.
+        """
         self._engine.play_one_shot_named("DROP_MINE", world_pos=pos)
 
     def on_mine_explosion(self, pos):
+        """Quand une mine explose. On fait le son au centre de l'explosion.
+        
+        Args:
+            pos (tuple): Position de l'explosion.
+        """
         self._engine.play_one_shot_named("EXPLOSION_MINE", world_pos=pos)
 
     def on_coin_drop(self, pos):
-        """Quand un ennemi (bateau) est détruit et qu'on spawn une pièce."""
+        """Quand un ennemi (bateau) est détruit et qu'on spawn une pièce.
+        
+        Args:
+            pos (tuple): Position du drop.
+        """
         self._engine.play_one_shot_named("DROP_COIN", world_pos=pos)
 
     # --- îles quantiques ---
@@ -39,6 +69,9 @@ class Sound:
         """
         Informe le moteur des centres d'îles quantiques actuellement présentes.
         Déclenche apparition_ile_quantique si on passe de 0 -> >=1.
+        
+        Args:
+            centers (list): Liste des centres des îles quantiques.
         """
         self._engine.set_quantum_islands(centers)
 

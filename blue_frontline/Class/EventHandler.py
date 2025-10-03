@@ -19,7 +19,11 @@ class EventHandler:
         self.game = game
     
     def handle_events(self):
-        """Gère tous les événements ponctuels."""
+        """Gère tous les événements ponctuels.
+        
+        Returns:
+            bool: True si le jeu doit continuer, False sinon.
+        """
         
         for event in pygame.event.get(): 
             if event.type == pygame.QUIT: 
@@ -90,7 +94,7 @@ class EventHandler:
                 return
             
             def succes():
-                """Fonction interne pour gérer les succès liés aux unités créées"""
+                """Fonction interne pour gérer les succès liés aux unités créées."""
 
                 # Suivre les statistiques pour les succès
                 if self.game.achievements_system:

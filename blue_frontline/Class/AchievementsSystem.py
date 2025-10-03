@@ -5,6 +5,11 @@ class AchievementsSystem:
     """Système de gestion des succès du jeu."""
     
     def __init__(self, game=None):
+        """Initialise le système de succès.
+
+        Args:
+            game (Game, optional): Référence au jeu. Par defaut à None.
+        """
         self.game = game
         self.achievements = self._init_achievements()
         self.unlocked_achievements = set()
@@ -32,7 +37,11 @@ class AchievementsSystem:
         self.load_achievements()
     
     def _init_achievements(self):
-        """Initialise la liste des succès avec leurs conditions."""
+        """Initialise la liste des succès avec leurs conditions.
+        
+        Returns:
+            dict: Un dictionnaire des succès avec leurs conditions.
+        """
         return {
             # === CONSTRUCTION & ÉCONOMIE ===
             'first_unit': {
@@ -255,7 +264,12 @@ class AchievementsSystem:
         return False
     
     def track_unit_created(self, unit_type, cost=0):
-        """Suit la création d'une unité."""
+        """Suit la création d'une unité.
+        
+        Args:
+            unit_type (str): Le type d'unité créé.
+            cost (int, optional): Le coût de l'unité. Par defaut à 0.
+        """
         if unit_type in self.stats['units_created']:
             self.stats['units_created'][unit_type] += 1
             self.stats['total_petrole_spent'] += cost
@@ -265,7 +279,11 @@ class AchievementsSystem:
         self.check_achievements()
     
     def track_unit_killed(self, unit_type):
-        """Suit la destruction d'une unité."""
+        """Suit la destruction d'une unité.
+        
+        Args:
+            unit_type (str): Le type d'unité détruite.
+        """
         if unit_type in self.stats['units_killed']:
             self.stats['units_killed'][unit_type] += 1
         self.check_achievements()
@@ -296,18 +314,30 @@ class AchievementsSystem:
         self.check_achievements()
     
     def track_coins_earned(self, amount):
-        """Suit les pièces gagnées."""
+        """Suit les pièces gagnées.
+        
+        Args:
+            amount (int): Le montant de pièces gagnées.
+        """
         self.stats['total_coins_earned'] += amount
         self.check_achievements()
     
     def update_max_units_alive(self, current_count):
-        """Met à jour le maximum d'unités vivantes simultanément."""
+        """Met à jour le maximum d'unités vivantes simultanément.
+        
+        Args:
+            current_count (int): Le nombre actuel d'unités vivantes.
+        """
         if current_count > self.stats['max_units_alive']:
             self.stats['max_units_alive'] = current_count
             self.check_achievements()
     
     def update_playtime(self, delta_seconds):
-        """Met à jour le temps de jeu total."""
+        """Met à jour le temps de jeu total.
+        
+        Args:
+            delta_seconds (int): Le temps écoulé depuis la dernière mise à jour en secondes.
+        """
         self.stats['total_playtime_seconds'] += delta_seconds
         self.check_achievements()
     
