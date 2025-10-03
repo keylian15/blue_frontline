@@ -28,6 +28,8 @@ class Unit(pygame.sprite.Sprite):
         self.load_sprite_from_tileset(team, unit_type)
         self.rect = self.image.get_rect()
         self.rect.center = (self.position[0], self.position[1])
+        self.angle = 0 
+        
         
         # État
         self.is_alive = True
@@ -85,10 +87,15 @@ class Unit(pygame.sprite.Sprite):
             else:
                 # Si l'index est invalide, utiliser la première tuile
                 self.image = self.tileset[0]
+            
         else:
             # Fallback vers l'ancien système si unit_type n'est pas fourni
             self.tileset = load_tileset(RED_TEAM_PATH if team == "red" else GREEN_TEAM_PATH)
             self.image = self.tileset[0]
+        self.image_original = self.image
+             
+
+        
     
     def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
         """Met à jour l'unité (mouvement, combat, etc.)."""
@@ -111,6 +118,8 @@ class Unit(pygame.sprite.Sprite):
         
         # Mise à jour du rectangle de collision
         self.rect.center = (int(self.position[0]), int(self.position[1]))
+        
+        
     
     def check_area(self, dt):
         """Fonction permettant de verifier la zone dans laquelle l'unité veut aller.
@@ -191,8 +200,13 @@ class Unit(pygame.sprite.Sprite):
         
         if distance > 0:
             # Normaliser le vecteur direction et appliquer la vitesse
+            self.angle = math.degrees(math.atan2(-dy, dx)) + 90
+            self.angle %= 360
+            self.image = pygame.transform.rotate(self.image_original, -self.angle)
+            self.rect = self.image.get_rect(center=self.rect.center)
             self.speed_x = (dx / distance) * speed
             self.speed_y = (dy / distance) * speed
+            
         else:
             self.stop()
             
