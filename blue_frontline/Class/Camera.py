@@ -104,7 +104,11 @@ class Camera(pygame.sprite.Sprite):
             self.position[1] = max(self.min_y, min(self.max_y, self.position[1]))
 
     def get_effective_screen_size(self):
-        """Retourne la taille effective de l'écran selon le niveau de zoom."""
+        """Retourne la taille effective de l'écran selon le niveau de zoom.
+        
+        Returns:
+            tuple[int, int]: La taille effective de l'écran.
+        """
         
         return (self.screen_width / self.zoom_level, self.screen_height / self.zoom_level)
 
@@ -140,8 +144,8 @@ class Camera(pygame.sprite.Sprite):
             screen_size (tuple[int, int]): Taille de l'écran.
 
         Returns:
-            typle[float, float]: Offset de la caméra.
-            """
+            tuple[float, float]: Offset de la caméra.
+        """
             
         return (
             self.position[0] - (screen_size[0] // 2) / self.zoom_level,

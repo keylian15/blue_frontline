@@ -1,6 +1,7 @@
 import pygame
 from Class.units.Unit import Unit
-from Class.Combat import CombatSystem
+from Class.Combat import CombatSystem, Mine
+from math import * 
 from Global import UNIT_CONFIGS
 
 class SousMarin(Unit):
@@ -62,7 +63,6 @@ class SousMarin(Unit):
     def place_mine(self, x: int, y: int):
         """Place une mine à la position spécifiée (capacité spéciale du sous-marin).
 
-
         Args:
             x (int): La position x de la mine.
             y (int): La position y de la mine.
@@ -71,17 +71,22 @@ class SousMarin(Unit):
             bool : True si la mine a été placée, False sinon.
         """
         if self.special_ability == "mines":
-            # TODO: Implémenter le système de mines (création objet Mine, ajout aux groupes, etc.)
+            # Créer la mine à la position exacte du sous-marin
+            mine = Mine(x, y, self.team, damage=18)
+            if hasattr(self.game, 'combat_system') and self.game.combat_system:
+                self.game.combat_system.add_mine(mine)
+  
+
             # -- AUDIO : drop mine --
             try:
                 if hasattr(self.game, "sound") and self.game.sound:
-                    # si plus tard l'objet Mine a un .position, vous pouvez envoyer ça plutôt que (x,y)
                     self.game.sound.on_mine_dropped((x, y))
             except Exception:
                 # ne jamais crasher pour du son
                 pass
             return True
         return False
+
 
 # Classes d'alias pour la compatibilité avec l'ancien code
 class SousMarinRouge(SousMarin):

@@ -36,7 +36,11 @@ class Timer:
                 self.maree_changed = False
 
     def get_time(self):
-        """Retourne le temps écoulé en minutes:secondes."""
+        """Retourne le temps écoulé en minutes:secondes.
+        
+        Returns:
+            str: Temps écoulé en minutes:secondes.
+        """
 
         return f"{self.count // 60} : {self.count % 60}"
 
@@ -55,7 +59,11 @@ class Timer:
             pygame.time.set_timer(self.TIMER_EVENT, int(TIME_STEP / speed))
 
     def cycle_speed(self):
-        """Passe à la vitesse suivante dans le cycle x1 -> x2 -> x4 -> x8 -> x10 -> x20 -> 0.5 -> 1."""
+        """Passe à la vitesse suivante dans le cycle x1 -> x2 -> x4 -> x8 -> x10 -> x20 -> 0.5 -> 1.
+        
+        Returns:
+            int: La nouvelle vitesse.
+        """
         
         self.speed_index = (self.speed_index + 1) % len(TIME_SPEEDS)
         self.current_speed = TIME_SPEEDS[self.speed_index]
@@ -63,7 +71,11 @@ class Timer:
         return self.current_speed
 
     def get_speed_multiplier(self):
-        """Retourne le multiplicateur de vitesse actuel."""
+        """Retourne le multiplicateur de vitesse actuel.
+        
+        Returns:
+            int: Multiplicateur de vitesse actuel.
+        """
         
         return self.current_speed
         

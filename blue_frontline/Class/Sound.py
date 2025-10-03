@@ -30,6 +30,11 @@ class SpatialAudioManager:
       - drops: unités + événements (mine, coin, explosion, éclaireurs)
     """
     def __init__(self, game: "Game"):
+        """Initialise le moteur audio.
+
+        Args:
+            game (Game): L'instance du jeu.
+        """
         self.game = game
 
         if not pygame.mixer.get_init():
@@ -65,6 +70,7 @@ class SpatialAudioManager:
         self._init_static_islands_from_tmx()
 
     def _load_sounds(self):
+        """Charge tous les sons."""
         # beds
         try:
             self.sfx_island = pygame.mixer.Sound(ISLAND_BED)
@@ -86,6 +92,12 @@ class SpatialAudioManager:
         # drops unités connus
         self.sfx_drop = {}
         def _safe_load(name, path):
+            """Charge un son et le stocke dans un dictionnaire.
+            
+            Args:
+                name (str): Nom du son.
+                path (str): Chemin du son.
+            """
             try:
                 self.sfx_drop[name] = pygame.mixer.Sound(path)
             except Exception:
@@ -103,6 +115,7 @@ class SpatialAudioManager:
         _safe_load("DROP_ECLAIREURS", DROP_ECLAIREURS)
 
     def _ensure_beds_started(self):
+        """Assure que les beds sont démarrés."""
         if self.sfx_island and not self.chan_island.get_busy():
             self.chan_island.play(self.sfx_island, loops=-1)
             self.chan_island.set_volume(0, 0)
@@ -112,6 +125,7 @@ class SpatialAudioManager:
 
     # --- îles statiques depuis TMX (détection élargie) ---
     def _init_static_islands_from_tmx(self):
+        """Initialise les îles statiques depuis le TMX."""
         tmx = self.game.tmx_data
         centers = []
 
@@ -148,6 +162,11 @@ class SpatialAudioManager:
 
     # --- API interne utilisées par SoundAPI ---
     def set_quantum_islands(self, centers):
+        """Définit les îles quantiques pour le son. Joue le son d'apparition si on passe de 0 -> >=1.
+        
+        Args:
+            centers (list): Liste des centres des îles quantiques.
+        """
         had = len(self.quantum_islands) > 0
         self.quantum_islands = list(centers or [])
         have_now = len(self.quantum_islands) > 0
@@ -155,7 +174,12 @@ class SpatialAudioManager:
             self.chan_fx.play(self.sfx_quantum)
 
     def play_drop_for_unit(self, unit_class_name: str, pos=None):
-        """Mappe nombres/classes vers un nom générique ('chaloupe', 'bateau', 'paquebot', 'sousmarin')."""
+        """Mappe nombres/classes vers un nom générique ('chaloupe', 'bateau', 'paquebot', 'sousmarin').
+        
+        Args:
+            unit_class_name (str): Nom de la classe de l'unité.
+            pos (tuple, optional): Position du drop. Par defaut à None.
+        """
         key = None
         low = unit_class_name.lower()
         if "chaloupe" in low:
@@ -177,12 +201,19 @@ class SpatialAudioManager:
             self._play_spatial_one_shot(sfx, world_pos=pos, base_vol=VOL_DROPS)
 
     def play_one_shot_named(self, const_name: str, world_pos=None):
+        """Joue un son one-shot nommé.
+
+        Args:
+            const_name (str): Nom du son.
+            world_pos (tuple, optional): Position dans le monde. Par defaut à None.
+        """
         sfx = self.sfx_drop.get(const_name)
         if sfx:
             self._play_spatial_one_shot(sfx, world_pos=world_pos, base_vol=VOL_DROPS)
 
     # --- rendu / update par frame ---
     def update(self):
+        """Met à jour le son."""
         self._ensure_beds_started()
         cam = getattr(self.game, "camera", None)
         screen = getattr(self.game, "screen", None)
@@ -220,6 +251,17 @@ class SpatialAudioManager:
 
     # --- helpers spatialisation ---
     def _world_to_screen(self, wx, wy, cam, screen):
+        """Convertit une position dans le monde en position sur l'écran.
+        
+        Args:
+            wx (int): Position x dans le monde.
+            wy (int): Position y dans le monde.
+            cam (Camera): Instance de la caméra.
+            screen (pygame.Surface): Surface de l'écran.
+        
+        Returns:
+            tuple[int, int]: Position sur l'écran.
+        """
         # position monde -> position écran estimée (cam.rect est centré)
         ox, oy = cam.get_offset(screen.get_size())
         sx = (wx - ox) / cam.zoom_level
@@ -227,18 +269,48 @@ class SpatialAudioManager:
         return sx, sy
 
     def _pan_from_screen_x(self, sx, screen):
+        """Calcule le pan en fonction de la position x sur l'écran.
+
+        Args:
+            sx (int): Position x sur l'écran.
+            screen (pygame.Surface): Surface de l'écran.
+
+        Returns:
+            float: Valeur de panning.
+        """
         w = max(1, screen.get_width())
         x = clamp(sx / w, 0.0, 1.0)
         # L= -1 .. R= +1
         return (x * 2.0) - 1.0
 
     def _pan_to_lr(self, vol, pan):
+        """Convertit un pan en volumes gauche/droit.
+        
+        Args:
+            vol (float): Volume global.
+            pan (float): Valeur de panning.
+        
+        Returns:
+            tuple[float, float]: Volumes gauche/droit.
+        """
         # pan -1..+1 -> balance G/D
         left  = vol * (1.0 - clamp(( pan + 1.0) / 2.0, 0.0, 1.0))
         right = vol * (1.0 - clamp((-pan + 1.0) / 2.0, 0.0, 1.0))
         return left, right
 
     def _dist_focus(self, wx, wy, cam, screen, radius_mult):
+        """Calcule la distance de focus pour une position dans le monde.
+        
+        Args:
+            wx (int): Position x dans le monde.
+            wy (int): Position y dans le monde.
+            cam (Camera): Instance de la caméra.
+            screen (pygame.Surface): Surface de l'écran.
+            radius_mult (float): Multiplicateur du rayon d'influence.
+        
+        Returns:
+            float: Distance de focus.
+        """
         sx, sy = self._world_to_screen(wx, wy, cam, screen)
         cx, cy = screen.get_width()/2, screen.get_height()/2
         dx, dy = (sx - cx), (sy - cy)
@@ -249,6 +321,17 @@ class SpatialAudioManager:
         return clamp(1.0 - (d / r), 0.0, 1.0)
 
     def _best_focus_pan(self, centers, cam, screen, radius_mult):
+        """Trouve le meilleur focus et pan pour une liste de centres.
+        
+        Args:
+            centers (list): Liste des centres.
+            cam (Camera): Instance de la caméra.
+            screen (pygame.Surface): Surface de l'écran.
+            radius_mult (float): Multiplicateur du rayon d'influence.
+        
+        Returns:
+            tuple[float, float]: Meilleur focus et pan.
+        """
         best = 0.0
         best_pan = 0.0
         for (wx, wy) in centers:
@@ -260,6 +343,11 @@ class SpatialAudioManager:
         return best, best_pan
 
     def _all_island_centers(self):
+        """Récupère tous les centres d'îles (statiques + quantiques).
+        
+        Returns:
+            list: Liste des centres.
+        """
         # static + quantum
         out = []
         if self.static_islands:
@@ -269,6 +357,15 @@ class SpatialAudioManager:
         return out
 
     def _base_focus_pan(self, cam, screen):
+        """Calcule le focus et le pan pour les bases.
+
+        Args:
+            cam (Camera): Instance de la caméra.
+            screen (pygame.Surface): Surface de l'écran.
+
+        Returns:
+            tuple[float, float]: Focus et pan pour les bases.
+        """
         # positions des bases depuis game
         centers = []
         rp = getattr(self.game, "red_platform_spawn", None)
@@ -285,6 +382,12 @@ class SpatialAudioManager:
         return f, pan
 
     def _maybe_trigger_base_oneshot(self, base_focus, base_pan):
+        """Déclenche le one-shot de base si le focus est suffisant et si le cooldown est respecté.
+        
+        Args:
+            base_focus (float): Focus de la base.
+            base_pan (float): Pan de la base.
+        """
         if not self.sfx_base:
             return
         now = pygame.time.get_ticks()
@@ -296,6 +399,13 @@ class SpatialAudioManager:
             self._last_base_trigger_time = now
 
     def _play_spatial_one_shot(self, sfx, world_pos=None, base_vol=1.0):
+        """Joue un one-shot spatialisé.
+        
+        Args:
+            sfx (pygame.mixer.Sound): Son à jouer.
+            world_pos (tuple, optional): Position dans le monde. Par defaut à None.
+            base_vol (float, optional): Volume de base. Par defaut à 1.0.
+        """
         if not sfx:
             return
         cam = getattr(self.game, "camera", None)

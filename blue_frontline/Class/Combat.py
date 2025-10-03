@@ -1,6 +1,8 @@
 import pygame, math
 from Class.units.Unit import Unit
-
+from Utils import resource_path
+from Global import RED_TEAM_PATH, GREEN_TEAM_PATH
+from Utils import load_tileset
 class Projectile(pygame.sprite.Sprite):
     """Classe pour gérer les projectiles tirés par les unités."""
     
@@ -160,18 +162,131 @@ class Projectile(pygame.sprite.Sprite):
         return False
 
 
+class Mine(pygame.sprite.Sprite):
+    """Classe pour gérer les mines posées par les sous-marins."""
+
+    def __init__(self, x: int, y: int, team: str, damage: int = 18):
+        """Initialise une mine.
+
+        Args:
+            x (int): Position x de la mine.
+            y (int): Position y de la mine.
+            team (str): Équipe qui a posé la mine ("red" ou "green").
+            damage (int): Dégâts infligés par la mine. Defaults to 18.
+        """
+        super().__init__()
+
+        # Position et propriétés
+        self.position = [float(x), float(y)]
+        self.team = team
+        self.damage = damage
+        self.is_active = True
+
+        # Charger l'image de la mine
+        self.load_image()
+        self.rect = self.image.get_rect()
+        self.rect.center = (int(self.position[0]), int(self.position[1]))
+
+        # Rayon de détection de collision
+        self.collision_radius = 30
+
+    def load_image(self):
+        """Charge l'image de la mine."""
+        """Charge l'image de la mine selon l'équipe."""
+        try:
+            # Charger le spritesheet de l'équipe appropriée
+            if self.team == "red":
+                team_spritesheet = load_tileset(RED_TEAM_PATH)
+                mine_image = team_spritesheet[5]  # Utiliser l'index 5 pour la mine
+            else:
+                team_spritesheet = load_tileset(GREEN_TEAM_PATH)
+                mine_image = team_spritesheet[5]  # Utiliser l'index 5 pour la mine
+
+            # Redimensionner l'image
+            self.image = pygame.transform.scale(mine_image, (20, 20))
+
+        except (pygame.error, IndexError):
+            # Fallback : créer une mine simple
+            self.image = pygame.Surface((20, 20))
+            color = (200, 0, 0) if self.team == "red" else (0, 200, 0)
+            pygame.draw.circle(self.image, color, (10, 10), 8)
+            pygame.draw.circle(self.image, (50, 50, 50), (10, 10), 8, 2)
+            self.image.set_colorkey((0, 0, 0))
+
+    def update(self, dt: int = 0):
+        """Met à jour la mine.
+
+        Args:
+            dt (int): Delta time en millisecondes.
+        """
+        # Les mines sont statiques, pas besoin de mise à jour particulière
+        pass
+
+    def check_collision(self, unit):
+        """Vérifie la collision avec une unité et inflige des dégâts si c'est un ennemi.
+
+        Args:
+            unit: L'unité à vérifier.
+
+        Returns:
+            bool: True si la mine a explosé, False sinon.
+        """
+        if not self.is_active or not unit.is_alive:
+            return False
+
+        # Vérifier si l'unité est ennemie
+        if unit.team == self.team:
+            return False
+
+        # Calculer la distance
+        dx = unit.position[0] - self.position[0]
+        dy = unit.position[1] - self.position[1]
+        distance = math.sqrt(dx**2 + dy**2)
+
+        # Si la distance est suffisamment petite (collision)
+        if distance < self.collision_radius:
+            # Infliger les dégâts
+            if hasattr(unit, 'take_damage'):
+                unit.take_damage(self.damage)
+
+            # Désactiver la mine (elle explose)
+            self.explode()
+            return True
+
+        return False
+
+    def explode(self):
+        """Fait exploser la mine."""
+        self.is_active = False
+        self.kill()  # Retire la mine du groupe de sprites
+
+    def draw(self, screen: pygame.Surface, camera_offset: tuple[float, float] = (0, 0)):
+        """Dessine la mine sur l'écran.
+
+        Args:
+            screen (pygame.Surface): Surface sur laquelle dessiner.
+            camera_offset (tuple[float, float]): Décalage de la caméra.
+        """
+        if self.is_active:
+            draw_x = int(self.position[0] - camera_offset[0])
+            draw_y = int(self.position[1] - camera_offset[1])
+            screen.blit(self.image, (draw_x - self.image.get_width()//2,
+                                   draw_y - self.image.get_height()//2))
+
+
 class CombatSystem:
-    """Système de gestion du combat et des projectiles."""
-    
+    """Système de gestion du combat, des projectiles et des mines."""
+
     def __init__(self, game: "Game"):
         """Fonction permettant d'initialiser le système de combat.
 
         Args:
             game (Game): L'instance du jeu.
         """
-        
+
         self.projectiles = pygame.sprite.Group()
         self.units = pygame.sprite.Group()
+        self.mines = pygame.sprite.Group()
         self.game = game
     
     def add_unit(self, unit: Unit):
@@ -180,8 +295,17 @@ class CombatSystem:
         Args:
             unit (Unit): Unité à ajouter.
         """
-        
+
         self.units.add(unit)
+
+    def add_mine(self, mine: "Mine"):
+        """Ajoute une mine au système de combat.
+
+        Args:
+            mine (Mine): Mine à ajouter.
+        """
+
+        self.mines.add(mine)
     
     def fire_projectile(self, shooter: Unit, target: Unit):
         """Crée un projectile tiré par une unité vers une cible.
@@ -217,15 +341,18 @@ class CombatSystem:
         return projectile
     
     def update(self, dt: float):
-        """Met à jour tous les projectiles et gère les collisions.
+        """Met à jour tous les projectiles, mines et gère les collisions.
 
         Args:
             dt (float): La différence de temps entre chaque frame.
         """
-        
+
         # Mettre à jour tous les projectiles
         self.projectiles.update(dt)
-        
+
+        # Mettre à jour toutes les mines
+        self.mines.update(dt)
+
         # Vérifier les collisions entre projectiles et unités
         for projectile in self.projectiles:
             if not projectile.is_active:
@@ -237,8 +364,8 @@ class CombatSystem:
                     # === AUDIO: drop coin si l'unité vient de mourir suite à l'impact ===
                     try:
                         # Certaines implémentations mettent à jour is_alive dans check_collision()
-                        if (hasattr(unit, "is_alive") and not unit.is_alive 
-                                and hasattr(unit, "position") 
+                        if (hasattr(unit, "is_alive") and not unit.is_alive
+                                and hasattr(unit, "position")
                                 and hasattr(self, "game") and hasattr(self.game, "sound") and self.game.sound):
                             # On joue le son au centre de l'unité détruite
                             pos = (unit.position[0], unit.position[1])
@@ -248,16 +375,37 @@ class CombatSystem:
                         pass
 
                     break  # Projectile détruit, passer au suivant
+
+        # Vérifier les collisions entre mines et unités
+        for mine in self.mines:
+            if not mine.is_active:
+                continue
+
+            for unit in self.units:
+                if mine.check_collision(unit):
+                    # === AUDIO: explosion de mine ===
+                    try:
+                        if (hasattr(unit, "is_alive") and not unit.is_alive
+                                and hasattr(unit, "position")
+                                and hasattr(self, "game") and hasattr(self.game, "sound") and self.game.sound):
+                            # On joue le son au centre de l'unité détruite
+                            pos = (unit.position[0], unit.position[1])
+                            self.game.sound.on_coin_drop(pos)
+                    except Exception:
+                        # On ne casse jamais la boucle de jeu à cause de l'audio
+                        pass
+                    break  # Mine explosée, passer à la suivante
     
     def draw(self, screen: pygame.Surface, camera_offset: tuple[float, float], zoom: float):
-        """Dessine tous les projectiles en tenant compte du zoom.
+        """Dessine tous les projectiles et mines en tenant compte du zoom.
 
         Args:
-            screen (pygame.Surface): Surface sur laquelle dessiner les projectiles.
+            screen (pygame.Surface): Surface sur laquelle dessiner les projectiles et mines.
             camera_offset (tuple[float, float]): Décalage de la caméra.
             zoom (float): Zoom de la caméra.
-        """        
-        
+        """
+
+        # Dessiner les projectiles
         for projectile in self.projectiles:
             if projectile.is_active:
                 # Position avec décalage de caméra et zoom
@@ -271,4 +419,20 @@ class CombatSystem:
                     )
                 else:
                     scaled_image = projectile.image
+                screen.blit(scaled_image, (screen_x - scaled_image.get_width()//2, screen_y - scaled_image.get_height()//2))
+
+        # Dessiner les mines
+        for mine in self.mines:
+            if mine.is_active:
+                # Position avec décalage de caméra et zoom
+                screen_x = (mine.position[0] - camera_offset[0]) * zoom
+                screen_y = (mine.position[1] - camera_offset[1]) * zoom
+                # Adapter la taille de la mine au zoom
+                if zoom != 1.0:
+                    scaled_image = pygame.transform.scale(
+                        mine.image,
+                        (max(1, int(mine.image.get_width() * zoom)), max(1, int(mine.image.get_height() * zoom)))
+                    )
+                else:
+                    scaled_image = mine.image
                 screen.blit(scaled_image, (screen_x - scaled_image.get_width()//2, screen_y - scaled_image.get_height()//2))

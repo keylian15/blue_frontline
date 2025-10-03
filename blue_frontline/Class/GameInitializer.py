@@ -163,6 +163,9 @@ class GameInitializer:
         Args:
             layer_name (str): Nom du calque à switcher.
             visible (bool): Visibilité du calque.
+            
+        Returns:
+            None: Ne retourne rien.
         """
         
         for layer in self.game.tmx_data.layers:

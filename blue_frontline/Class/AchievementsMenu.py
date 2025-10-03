@@ -6,6 +6,11 @@ class AchievementsMenu:
     """Menu d'affichage des succès du jeu."""
     
     def __init__(self, screen):
+        """Initialise le menu des succès.
+
+        Args:
+            screen (pygame.Surface): Surface de dessin du menu.
+        """
         self.screen = screen
         self.WIDTH, self.HEIGHT = screen.get_size()
         
@@ -51,11 +56,23 @@ class AchievementsMenu:
         self.achievements_system = None
     
     def set_achievements_system(self, achievements_system):
-        """Définit le système de succès à utiliser."""
+        """Définit le système de succès à utiliser.
+        
+        Args:
+            achievements_system (AchievementsSystem): Le système de succès.
+        """
         self.achievements_system = achievements_system
     
     def draw_star(self, surface, x, y, size, filled=False):
-        """Dessine une étoile à 5 branches."""
+        """Dessine une étoile à 5 branches.
+        
+        Args:
+            surface (pygame.Surface): La surface sur laquelle dessiner.
+            x (int): La position x du centre de l'étoile.
+            y (int): La position y du centre de l'étoile.
+            size (int): La taille de l'étoile.
+            filled (bool, optional): Si True, l'étoile est pleine, sinon elle est vide. Par defaut à False .
+        """
         color = self.STAR_FILLED_COLOR if filled else self.STAR_EMPTY_COLOR
         
         # Points pour une étoile à 5 branches
@@ -78,7 +95,14 @@ class AchievementsMenu:
         pygame.draw.polygon(surface, WHITE if filled else color, points, 2)
     
     def draw_gradient_button(self, surface, rect, hovered=False, completed=False):
-        """Dessine un bouton avec dégradé."""
+        """Dessine un bouton avec dégradé.
+        
+        Args:
+            surface (pygame.Surface): La surface sur laquelle dessiner.
+            rect (pygame.Rect): Le rectangle du bouton.
+            hovered (bool, optional): Si True, le bouton est survolé. Par defaut à False .
+            completed (bool, optional): Si True, le succès est débloqué. Par defaut à False .
+        """
         if completed:
             color1 = (30, 80, 30) if not hovered else (40, 100, 40)
             color2 = (60, 120, 60) if not hovered else (80, 140, 80)
@@ -107,7 +131,15 @@ class AchievementsMenu:
         pygame.draw.rect(surface, border_color, rect, 3, border_radius=10)
     
     def draw_achievement_item(self, surface, achievement, x, y, width):
-        """Dessine un élément de succès."""
+        """Dessine un élément de succès.
+        
+        Args:
+            surface (pygame.Surface): La surface sur laquelle dessiner.
+            achievement (dict): Le succès à dessiner.
+            x (int): La position x de l'élément.
+            y (int): La position y de l'élément.
+            width (int): La largeur de l'élément.
+        """
         # Rectangle principal
         rect = pygame.Rect(x, y, width, self.ACHIEVEMENT_HEIGHT)
         completed = achievement['unlocked']
@@ -139,7 +171,17 @@ class AchievementsMenu:
         self.draw_star(surface, star_x, star_y, self.STAR_SIZE // 2, filled=completed)
     
     def draw_category_section(self, surface, category_name, achievements, start_y):
-        """Dessine une section de catégorie avec ses succès."""
+        """Dessine une section de catégorie avec ses succès.
+        
+        Args:
+            surface (pygame.Surface): La surface sur laquelle dessiner.
+            category_name (str): Le nom de la catégorie.
+            achievements (list): La liste des succès de la catégorie.
+            start_y (int): La position y de départ de la section.
+        
+        Returns:
+            int: La position y de fin de la section.
+        """
         current_y = start_y
         
         # Titre de la catégorie
@@ -264,12 +306,23 @@ class AchievementsMenu:
         self.screen.blit(text_surface, text_rect)
     
     def handle_scroll(self, scroll_direction):
-        """Gère le défilement du menu."""
+        """Gère le défilement du menu.
+        
+        Args:
+            scroll_direction (int): La direction du scroll (1 pour vers le bas, -1 pour vers le haut).
+        """
         self.scroll_y -= scroll_direction * self.scroll_speed
         self.scroll_y = max(0, min(self.scroll_y, self.max_scroll))
     
     def handle_click(self, mouse_pos):
-        """Gère les clics dans le menu."""
+        """Gère les clics dans le menu.
+        
+        Args:
+            mouse_pos (tuple[int, int]): La position de la souris.
+        
+        Returns:
+            str: 'back' si le bouton retour est cliqué, 'reset' si le bouton reset est cliqué, None sinon.
+        """
         if self.back_button['rect'].collidepoint(mouse_pos):
             return 'back'
         elif self.reset_button['rect'].collidepoint(mouse_pos):
