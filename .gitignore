@@ -1,3 +1,6 @@
+# Le fichier d'achivement
+achievements.json
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

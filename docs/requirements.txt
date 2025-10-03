@@ -1,0 +1,10 @@
+pygame
+pytmx
+pyscroll
+perlin-noise
+auto-py-to-exe
+pyinstaller
+shapely
+mkdocs
+mkdocs-material
+mkdocstrings[python]

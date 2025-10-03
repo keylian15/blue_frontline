@@ -1,0 +1,17 @@
+site_name: Blue Frontline Docs
+
+nav:
+  - Home: index.md
+  - Installation: installation.md
+  - API: api.md
+
+theme:
+  name: material
+
+plugins:
+  - search
+  - mkdocstrings:
+      handlers:
+        python:
+          paths : 
+            - ../blue_frontline
