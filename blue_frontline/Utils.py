@@ -1,7 +1,7 @@
 import sys, pygame, random, os
 from shapely.geometry import Point, Polygon
 
-def load_tileset(path):
+def load_tileset(path: str):
     """
     Charge un spritesheet et le découpe en tuiles.
     
@@ -88,7 +88,7 @@ def point_in_many_polygons(polygons_points:list[list[tuple]], test_point:tuple) 
 
 from collections.abc import Iterable
 
-def get_types(obj):
+def get_types(obj: any):
     """
     Affiche les types contenus dans obj.
     - Si obj est un dict : affiche les types des clés et des valeurs
