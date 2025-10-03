@@ -85,7 +85,9 @@ class GameUpdater:
             
             # Recréer le groupe avec le nouveau map_layer
             self.game.group = pyscroll.PyscrollGroup(map_layer=self.game.map_layer, default_layer=3)
-            self.game.group.add(self.game.camera)
+            
+            if hasattr(self.game, 'camera'):
+                self.game.group.add(self.game.camera)
             
             # Ajouter toutes les unités existantes au nouveau groupe
             for unit in self.game.units:

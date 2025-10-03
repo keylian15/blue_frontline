@@ -32,20 +32,28 @@ class Renderer:
         elif hasattr(self.game, 'map_layer'):
             self.game.map_layer = map_layer
         
-        # Créer un nouveau PyscrollGroup
-        self.game.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=1)
-                
-        # Remettre les iles quantiques
+        # Créer un nouveau PyscrollGroup avec le bon layer par défaut
+        self.game.group = pyscroll.PyscrollGroup(map_layer=map_layer, default_layer=3)
+        
+        if hasattr(self.game, 'camera'):
+            self.game.group.add(self.game.camera)
+        
+        # Ajouter toutes les unités vivantes au groupe
+        if hasattr(self.game, 'units') and self.game.units:
+            for unit in self.game.units:
+                if unit.is_alive:
+                    # S'assurer que l'unité n'est pas déjà dans le groupe
+                    if unit not in self.game.group.sprites():
+                        self.game.group.add(unit)
+                    
+        # Remettre les îles quantiques si en marée haute
         if self.game.hud.timer.maree_haute:
             self.restore_quantum_islands()
-
-        for unit in self.game.units:
-            if unit.is_alive:
-                self.game.group.add(unit)
-                    
+        
         # Marquer comme terminé
         self.map_needs_refresh = False
         
+        # Actualiser les références
         self.game.refresh_all_references(self.game)
 
     def restore_quantum_islands(self):
@@ -163,14 +171,6 @@ class Renderer:
                 text_surface = font.render(message, True, (255, 255, 255))
                 
                 # Position du texte au-dessus du cercle de portée
-                text_x = int(unit_screen_x - text_surface.get_width() // 2)
-                text_y = int(unit_screen_y - range_radius - 50)
-                
-                # Fond semi-transparent pour le texte
-                text_bg = pygame.Surface((text_surface.get_width() + 20, text_surface.get_height() + 10), pygame.SRCALPHA)
-                text_bg.fill((0, 0, 0, 180))
-                self.game.screen.blit(text_bg, (text_x - 10, text_y - 5))
-                self.game.screen.blit(text_surface, (text_x, text_y))
                 text_x = int(unit_screen_x - text_surface.get_width() // 2)
                 text_y = int(unit_screen_y - range_radius - 50)
                 
