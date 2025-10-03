@@ -253,7 +253,7 @@ class Unit(pygame.sprite.Sprite):
                 if (to_target_before[0] * to_target_after[0] + 
                     to_target_before[1] * to_target_after[1]) <= 0:
                     
-                    self.move_to(self.target_position[0], self.target_position[1], self.max_speed/2)
+                    # self.move_to(self.target_position[0], self.target_position[1], self.max_speed/2)
                     self.stop()
 
             else : 

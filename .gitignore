@@ -30,7 +30,6 @@ dist/*
 Thumbs.db
 
 # --- Achivements --- 
-achievements.json
-
+# blue_frontline/data/achievements.json
 # --- Exceptions ---
 !BlueFrontline.spec

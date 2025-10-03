@@ -9,7 +9,7 @@ class AchievementsSystem:
         self.achievements = self._init_achievements()
         self.unlocked_achievements = set()
         self.pending_notifications = []  # Queue des notifications à afficher
-        self.save_file = "achievements.json"
+        self.save_file = ACHIVEMENTS_PATH
         
         # Statistiques de jeu
         self.stats = {
