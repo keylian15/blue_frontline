@@ -284,9 +284,9 @@ class Unit(pygame.sprite.Sprite):
         
         if distance > 0:
             # Normaliser le vecteur direction et appliquer la vitesse
-            self.angle = math.degrees(math.atan2(-dy, dx)) + 90
+            self.angle = math.degrees(math.atan2(-dy, dx)) - 90
             self.angle %= 360
-            self.image = pygame.transform.rotate(self.image_original, -self.angle)
+            self.image = pygame.transform.rotate(self.image_original, self.angle)
             self.rect = self.image.get_rect(center=self.rect.center)
             self.speed_x = (dx / distance) * speed
             self.speed_y = (dy / distance) * speed
