@@ -304,12 +304,7 @@ class Perlin:
 
         Returns:
             int: Type de zone (0 = eau profonde, 1 = eau peu profonde, 2 = île, 3 = terre).
-        """
-        
-        from Utils import get_types
-        print('Affichage de test :')
-        get_types(island)
-        
+        """        
         # Conversion monde -> local
         local_x = x_pixel - island.rect.x
         local_y = y_pixel - island.rect.y
