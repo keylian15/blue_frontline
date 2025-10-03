@@ -195,7 +195,7 @@ class EventHandler:
             world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
             # Chercher une unité à cette position
             clicked_unit = self.game.find_unit_at_position(world_x, world_y)
-            
+
             if clicked_unit:
                 self.game.select_unit(clicked_unit)
             elif self.game.selected_unit and self.game.selected_unit.is_alive and hasattr(self.game.selected_unit, 'move_to_position'):
@@ -203,6 +203,27 @@ class EventHandler:
                 self.game.selected_unit.move_to_position((world_x, world_y))
             else:
                 self.game.select_unit(None)
+
+        # Clic droit
+        elif event.button == 3:  # Clic droit
+            world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
+
+            # Si un sous-marin est sélectionné, poser une mine
+            if (self.game.selected_unit and
+                self.game.selected_unit.is_alive and
+                hasattr(self.game.selected_unit, 'special_ability') and
+                self.game.selected_unit.special_ability == "mines"):
+
+                # Vérifier que la position n'est pas dans un obstacle
+                from Utils import point_in_many_polygons
+                if not point_in_many_polygons(self.game.obstacles, (world_x, world_y)):
+                    x, y = self.game.selected_unit.position
+
+                    # Poser la mine
+                    if self.game.selected_unit.place_mine(x, y):
+                        print(f"Mine posée à la position ({x}, {y}) par {self.game.selected_unit.unit_name}")
+                else:
+                    print("Impossible de poser une mine sur un obstacle")
         
         # Molette haut
         elif event.button == 4:
