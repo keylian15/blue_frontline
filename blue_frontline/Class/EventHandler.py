@@ -159,6 +159,12 @@ class EventHandler:
             # Synchroniser la vitesse du pétrole avec le timer
             self.game.hud.petrole_red.set_speed(new_speed)
             self.game.hud.petrole_green.set_speed(new_speed)
+            
+            # Synchorniser les vitesses de bateaux avec la nouvelle vitesse
+            for unit in self.game.units:
+                # Verification sur l'entité
+                if hasattr(unit, 'is_moving') and unit.is_moving : 
+                    unit.move_to(unit.target_position[0], unit.target_position[1], unit.max_speed * new_speed)
             return True
         
         if event.key == pygame.K_j :
