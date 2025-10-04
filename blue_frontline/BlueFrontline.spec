@@ -19,6 +19,8 @@ a = Analysis(
         'perlin_noise',
         'shapely',
         'shapely.geometry',
+        'numpy',
+        'numpy.core',
         
         # Modules du jeu (Class/)
         'Class.menu',
