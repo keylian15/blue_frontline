@@ -1,6 +1,6 @@
 # Fichier des variables globales (Chemin, variables, etc.)
 import os, pygame
-from Utils import resource_path  
+from Utils import resource_path, user_data_path  
 
 # Chemin du dossier courant
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -11,7 +11,7 @@ TIME_STEP = 1000 # en ms => 1 seconde
 TIME_MAREE = 180
 
 # === Achivements ===
-ACHIVEMENTS_PATH = resource_path("data/achievements.json")
+ACHIVEMENTS_PATH = user_data_path("data/achievements.json")
 
 # Vitesses de temps disponibles
 TIME_SPEEDS = [1, 2, 4, 8, 10, 20, 0.5]

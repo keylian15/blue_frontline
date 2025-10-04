@@ -6,3 +6,4 @@ pytmx==3.32
 pyscroll==2.30.0
 perlin-noise==1.12
 shapely==2.0.2
+numpy<2.0.0
