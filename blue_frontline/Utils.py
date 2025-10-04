@@ -38,6 +38,21 @@ def resource_path(relative_path: str):
         return os.path.join(sys._MEIPASS, relative_path)  # exe PyInstaller
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)  # script normal
 
+def save_path(filename: str ="achievements.json"):
+    """Retourne le chemin pour les sauvegardes (lecture/écriture).
+    
+    Args:
+        filename (str): Chemin relatif vers la ressource.
+
+    Returns:
+        path (str): Chemin absolu vers la ressource.
+    """
+    if getattr(sys, 'frozen', False):  # si exe
+        base_path = os.path.dirname(sys.executable)  # dossier du .exe
+    else:  # si script normal
+        base_path = os.path.dirname(__file__)
+    return os.path.join(base_path, filename)
+
 def random_point_in_polygon(points: tuple[int, int]):
     """Génère un point aléatoire à l'intérieur d'un polygone défini par ses sommets.
 
