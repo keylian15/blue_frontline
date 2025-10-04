@@ -1,46 +1,90 @@
 # Fichier des variables globales (Chemin, variables, etc.)
 import os, pygame
-from Utils import resource_path
-import json
+from Utils import resource_path, user_data_path  
 
 # Chemin du dossier courant
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# === Temps ===
+# === Temps === 
 FPS = 60
-TIME_STEP = 1000  # en ms => 1 seconde
-TIME_SPEED = 20  # Vitesse du temps (1 = normal, 2 = x2, 0.5 = x0.5)
+TIME_STEP = 1000 # en ms => 1 seconde
 TIME_MAREE = 180
+
+# === Achivements ===
+ACHIVEMENTS_PATH = user_data_path("data/achievements.json")
+
+# Vitesses de temps disponibles
+TIME_SPEEDS = [1, 2, 4, 8, 10, 20, 0.5]
 
 # === MAP ===
 MAP_PATH = resource_path("map.tmx")
-ISLAND_TILESET_PATH = resource_path("assets/island/png/island_spritesheet.png")
-DEEP_WATER_TILESET_PATH = resource_path(
-    "assets/deep_water/png/deep_water_spritesheet.png"
-)
-WATER_TILESET_PATH = resource_path("assets/water/png/water_spritesheet.png")
+ISLAND_TILESET_PATH = resource_path('assets/island/png/island_spritesheet.png')
+DEEP_WATER_TILESET_PATH = resource_path('assets/deep_water/png/deep_water_spritesheet.png')
+WATER_TILESET_PATH = resource_path('assets/water/png/water_spritesheet.png')
 
-# === HUD ===
-PIECE_IMAGE_PATH = resource_path("assets/HUD/piece.png")
-PETROLE_IMAGE_PATH = resource_path("assets/HUD/petrole.png")
-
+# === HUD === 
+PIECE_IMAGE_PATH = resource_path('assets/HUD/piece.png')
+PETROLE_IMAGE_PATH = resource_path('assets/HUD/petrole.png')
+MAREE_HAUTE_IMAGE_PATH = resource_path('assets/HUD/maree_haute.png')
+MAREE_BASSE_IMAGE_PATH = resource_path('assets/HUD/maree_basse.png')
 
 # === EVENEMENTS ===
 PETROLE_EVENT = pygame.USEREVENT + 1
 TIMER_EVENT = pygame.USEREVENT + 2
 
 # === Ile Quantique ===
-WATER_PATH = resource_path("assets/water/png/water.png")
+WATER_PATH = resource_path('assets/water/png/water.png')
 
-# === SONS ===
-SOUND = resource_path("blue_frontline_sounds/son_base.mp3")
+# === SONS – système historique ===
+# (on remet SOUND sur la musique du jeu pour compatibilité éventuelle)
+SOUND = resource_path('blue_frontline_sounds/son_jeu.mp3')
 VOLUME_SOUND = 0.5  # Volume du son (0.0 à 1.0)
+
+# === SONS – nouveau système spatial ===
+# Musique / beds / one-shots / drops (tout en .mp3)
+MUSIC_GAME           = resource_path('blue_frontline_sounds/son_jeu.mp3')             # musique de fond
+ISLAND_BED           = resource_path('blue_frontline_sounds/son_iles.mp3')            # ambiance îles "normales" (bed)
+SEA_BED              = resource_path('blue_frontline_sounds/sea-waves-169411.mp3')    # ambiance mer (bed)
+BASE_BED             = resource_path('blue_frontline_sounds/son_base.mp3')            # son court base (one-shot ~3s)
+APPARITION_QUANTIQUE = resource_path('blue_frontline_sounds/apparition_ile_quantique.mp3')
+DROP_MINE          = resource_path('blue_frontline_sounds/drop_mine.mp3')
+DROP_COIN          = resource_path('blue_frontline_sounds/drop_coin.mp3')
+EXPLOSION_MINE     = resource_path('blue_frontline_sounds/explosion_mine.mp3')
+DROP_ECLAIREURS    = resource_path('blue_frontline_sounds/drop_eclaireurs.mp3')
+
+# Drops unités
+DROP_CHALOUPe        = resource_path('blue_frontline_sounds/drop_chaloupe.mp3')       # (nom d'origine conservé)
+DROP_CHALOUPE        = DROP_CHALOUPe                                                  # alias propre, pour compatibilité
+DROP_BATEAU          = resource_path('blue_frontline_sounds/drop_bateau.mp3')
+DROP_PAQUEBOT        = resource_path('blue_frontline_sounds/drop_paquebot.mp3')
+DROP_SOUSMARIN       = resource_path('blue_frontline_sounds/drop_sous_marin.mp3')
+
+# Volumes (0.0–1.0)
+VOL_MUSIC  = VOLUME_SOUND  # volume nominal de la musique (capé par la règle zoom -> 0)
+VOL_ISLAND = 0.8
+VOL_BASE   = 0.8
+VOL_SEA    = 0.2
+VOL_DROPS  = 0.8
+
+# === MIXAGE CONTEXTUEL / COMPORTEMENTS ===
+# La musique est gérée dans Sound.py pour faire : 0% zoom -> 90% ; 100% zoom -> 0%
+SEA_ON_ISLAND_FACTOR   = 0.0     # part de mer qui reste quand on est sur une île/base (0.0 = coupée)
+ISLAND_BASE_CURVE      = "smooth" # "linear" ou "smooth" (smoothstep) pour la montée/descente de focus
+
+# Zones d'influence (agrandies)
+FOCUS_RADIUS_MULT      = 1.6     # >1.0 = la "bulle" d'influence des ÎLES est plus large
+BASE_FOCUS_RADIUS_MULT = 1.6     # idem pour les BASES
+
+# Déclenchement du one-shot de BASE
+BASE_TRIGGER_THRESHOLD = 0.5     # 0..1 : seuil de focus où on déclenche le son de base
+BASE_COOLDOWN_MS       = 2500    # anti-spam : temps mini entre 2 déclenchements
+BASE_ONE_SHOT_VOL      = 0.9     # volume de base pour le one-shot (avant pan)
 
 # Les images de mapping font 512 pixels par 512 pixels
 # Chaque tuile fait 32 pixels par 32 pixels
 # Nous avons laissé de la place pour d'autres tuiles au cas ou.
 # Pour le mapping se referer au fichier "tile_bitmask.xlsx"
-MAPPING = {
+MAPPING = {    
     "corner_top_left": 0,
     "edge_top": 1,
     "corner_top_right": 2,
@@ -53,7 +97,7 @@ MAPPING = {
     "missing_corner_top_right": 9,
     # Passage a la ligne 2
     "edge_left": 16,
-    "full": 17,
+    "full" : 17,
     "edge_right": 18,
     "edge_vertical": 19,
     "d_shape_top_left": 20,
@@ -81,7 +125,7 @@ MAPPING = {
     "edge_top_corner_bottom_right": 55,
     "edge_left_corner": 56,
     "edge_top_corner": 57,
-    # Passage a la ligne 5
+    # Passage a la ligne 5  
     "l_shape_top_right": 64,
     "l_shape_top_left": 65,
     "t_shape_top": 66,
@@ -98,63 +142,62 @@ MAPPING = {
 MASK_MAPPING = {
     # Centre (aucun voisin de transition)
     0: MAPPING["full"],
-    128: MAPPING["l_shape_bottom_right"],
-    64: MAPPING["l_shape_bottom_left"],
-    64 + 128: MAPPING["t_shape_bottom"],
-    32: MAPPING["l_shape_top_right"],
-    32 + 128: MAPPING["t_shape_right"],
-    32 + 64: MAPPING["d_shape_top_left"],
-    32 + 64 + 128: MAPPING["missing_corner_top_left"],
-    16: MAPPING["l_shape_top_left"],
-    16 + 128: MAPPING["d_shape_top_right"],
-    16 + 64: MAPPING["t_shape_left"],
-    16 + 64 + 128: MAPPING["missing_corner_top_right"],
-    16 + 32: MAPPING["t_shape_top"],
-    16 + 32 + 128: MAPPING["missing_corner_bottom_left"],
-    16 + 32 + 64: MAPPING["missing_corner_bottom_right"],
-    16 + 32 + 64 + 128: MAPPING["les_avengers"],
+    128 : MAPPING["l_shape_bottom_right"],
+    64 : MAPPING["l_shape_bottom_left"],
+    64 + 128 : MAPPING["t_shape_bottom"],
+    32 : MAPPING["l_shape_top_right"],
+    32 + 128 : MAPPING["t_shape_right"],
+    32 + 64 : MAPPING["d_shape_top_left"],
+    32 + 64 + 128 : MAPPING["missing_corner_top_left"],
+    16 : MAPPING["l_shape_top_left"],
+    16 + 128 : MAPPING["d_shape_top_right"],
+    16 + 64 : MAPPING["t_shape_left"],
+    16 + 64 + 128 : MAPPING["missing_corner_top_right"],
+    16 + 32 : MAPPING["t_shape_top"],
+    16 + 32 + 128 : MAPPING["missing_corner_bottom_left"],
+    16 + 32 + 64 : MAPPING["missing_corner_bottom_right"],
+    16 + 32 + 64 + 128 : MAPPING["les_avengers"],
     8: MAPPING["edge_left"],
-    8 + 128: MAPPING["edge_left_corner_bottom_right"],
-    8 + 32: MAPPING["edge_left_corner_top_right"],
-    8 + 32 + 128: MAPPING["edge_left_corner"],
+    8 + 128 : MAPPING["edge_left_corner_bottom_right"],
+    8 + 32 : MAPPING["edge_left_corner_top_right"],
+    8 + 32 + 128 : MAPPING["edge_left_corner"],
     4: MAPPING["edge_bottom"],
-    4 + 32: MAPPING["edge_bottom_corner_top_right"],
-    4 + 16: MAPPING["edge_bottom_corner_top_left"],
-    4 + 16 + 32: MAPPING["edge_bottom_corner"],
-    4 + 8: MAPPING["corner_bottom_left"],
-    4 + 8 + 32: MAPPING["corner_bottom_left_l_shape_top_right"],
+    4 + 32 : MAPPING["edge_bottom_corner_top_right"],
+    4 + 16 : MAPPING["edge_bottom_corner_top_left"],
+    4 + 16 + 32 : MAPPING["edge_bottom_corner"],
+    4 + 8 : MAPPING["corner_bottom_left"],
+    4 + 8 + 32 : MAPPING["corner_bottom_left_l_shape_top_right"],
     2: MAPPING["edge_right"],
-    2 + 64: MAPPING["edge_right_corner_bottom_left"],
-    2 + 16: MAPPING["edge_right_corner_top_left"],
-    2 + 16 + 64: MAPPING["edge_right_corner"],
-    2 + 8: MAPPING["edge_vertical"],
-    2 + 4: MAPPING["corner_bottom_right"],
-    2 + 4 + 16: MAPPING["corner_bottom_right_l_shape_top_left"],
-    2 + 4 + 8: MAPPING["end_bottom"],
+    2 + 64 : MAPPING["edge_right_corner_bottom_left"],
+    2 + 16 : MAPPING["edge_right_corner_top_left"],
+    2 + 16 + 64 : MAPPING["edge_right_corner"],
+    2 + 8 : MAPPING["edge_vertical"],
+    2 + 4 : MAPPING["corner_bottom_right"],
+    2 + 4 + 16 : MAPPING["corner_bottom_right_l_shape_top_left"],
+    2 + 4 + 8 : MAPPING["end_bottom"],
     1: MAPPING["edge_top"],
-    1 + 128: MAPPING["edge_top_corner_bottom_right"],
-    1 + 64: MAPPING["edge_top_corner_bottom_left"],
-    1 + 64 + 128: MAPPING["edge_top_corner"],
+    1 + 128 : MAPPING["edge_top_corner_bottom_right"],
+    1 + 64 : MAPPING["edge_top_corner_bottom_left"],
+    1 + 64 + 128 : MAPPING["edge_top_corner"],
     1 + 8: MAPPING["corner_top_left"],
     1 + 8 + 128: MAPPING["corner_top_left_l_shape_bottom_right"],
-    1 + 4: MAPPING["edge_horizontal"],
-    1 + 4 + 8: MAPPING["end_left"],
-    1 + 2: MAPPING["corner_top_right"],
-    1 + 2 + 64: MAPPING["corner_top_right_l_shape_bottom_left"],
-    1 + 2 + 8: MAPPING["end_top"],
-    1 + 2 + 4: MAPPING["end_right"],
-    1 + 2 + 4 + 8: MAPPING["center"],
-}
-
+    1 + 4 : MAPPING["edge_horizontal"],
+    1 + 4 + 8 : MAPPING["end_left"],
+    1 + 2 : MAPPING["corner_top_right"],
+    1 + 2 + 64 : MAPPING["corner_top_right_l_shape_bottom_left"],
+    1 + 2 + 8 : MAPPING["end_top"],
+    1 + 2 + 4 : MAPPING["end_right"],
+    1 + 2 + 4 + 8 : MAPPING["center"],
+    }
 
 # === Unités ===
 
-RED_TEAM_PATH = resource_path("assets/Red_team/png/red_team_spritesheet.png")
-GREEN_TEAM_PATH = resource_path("assets/Green_team/png/Green_team_spritesheet.png")
+RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
+GREEN_TEAM_PATH = resource_path('assets/Green_team/png/Green_team_spritesheet.png')
 
 # === BASE ===
-RED_BASE_TEAM_PATH = resource_path("assets/Red_team/png/red_base.png")
-GREEN_BASE_TEAM_PATH = resource_path("assets/Green_team/png/Green_base.png")
+RED_BASE_TEAM_PATH = resource_path('assets/Red_team/png/red_base.png')
+GREEN_BASE_TEAM_PATH = resource_path('assets/Green_team/png/Green_base.png')
 
 # Dictionnaire centralisé contenant toutes les statistiques des unités
 UNIT_CONFIGS = {
@@ -168,15 +211,21 @@ UNIT_CONFIGS = {
         "fire_rate": 1.0,
         "unit_type": "chaloupe",
         "tile_index": {
-            "red": 0,  # Index de la tuile pour équipe rouge
-            "green": 0,  # Index de la tuile pour équipe verte
+            "red": 0,    # Index de la tuile pour équipe rouge
+            "green": 0   # Index de la tuile pour équipe verte
         },
-        "tileset_paths": {"red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH},
-        "image_paths": {"red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH},
+        "tileset_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "image_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
         "range_color": {
-            "red": (255, 0, 0, 50),  # Rouge semi-transparent
-            "green": (0, 255, 0, 50),  # Vert semi-transparent
-        },
+            "red": (255, 0, 0, 50),    # Rouge semi-transparent
+            "green": (0, 255, 0, 50)   # Vert semi-transparent
+        }
     },
     "bateau": {
         "cost": 60,
@@ -188,12 +237,21 @@ UNIT_CONFIGS = {
         "fire_rate": 1.0,
         "unit_type": "bateau",
         "tile_index": {
-            "red": 1,  # Index de la tuile pour équipe rouge
-            "green": 1,  # Index de la tuile pour équipe verte
+            "red": 1,    # Index de la tuile pour équipe rouge
+            "green": 1   # Index de la tuile pour équipe verte
         },
-        "tileset_paths": {"red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH},
-        "image_paths": {"red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH},
-        "range_color": {"red": (255, 0, 0, 50), "green": (0, 255, 0, 50)},
+        "tileset_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "image_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "range_color": {
+            "red": (255, 0, 0, 50),
+            "green": (0, 255, 0, 50)
+        }
     },
     "eclaireur": {
         "cost": 40,
@@ -205,12 +263,21 @@ UNIT_CONFIGS = {
         "fire_rate": 1.5,
         "unit_type": "eclaireur",
         "tile_index": {
-            "red": 3,  # Index de la tuile pour équipe rouge
-            "green": 3,  # Index de la tuile pour équipe verte
+            "red": 3,    # Index de la tuile pour équipe rouge
+            "green": 3   # Index de la tuile pour équipe verte
         },
-        "tileset_paths": {"red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH},
-        "image_paths": {"red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH},
-        "range_color": {"red": (255, 0, 0, 50), "green": (0, 255, 0, 50)},
+        "tileset_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "image_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "range_color": {
+            "red": (255, 0, 0, 50),
+            "green": (0, 255, 0, 50)
+        }
     },
     "paquebot": {
         "cost": 120,
@@ -222,12 +289,21 @@ UNIT_CONFIGS = {
         "fire_rate": 0.8,
         "unit_type": "paquebot",
         "tile_index": {
-            "red": 2,  # Index de la tuile pour équipe rouge
-            "green": 2,  # Index de la tuile pour équipe verte
+            "red": 2,    # Index de la tuile pour équipe rouge
+            "green": 2   # Index de la tuile pour équipe verte
         },
-        "tileset_paths": {"red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH},
-        "image_paths": {"red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH},
-        "range_color": {"red": (255, 0, 0, 50), "green": (0, 255, 0, 50)},
+        "tileset_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "image_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "range_color": {
+            "red": (255, 0, 0, 50),
+            "green": (0, 255, 0, 50)
+        }
     },
     "sousmarin": {
         "cost": 180,
@@ -240,15 +316,23 @@ UNIT_CONFIGS = {
         "unit_type": "sousmarin",
         "special_ability": "mines",  # Capacité spéciale
         "tile_index": {
-            "red": 4,  # Index de la tuile pour équipe rouge
-            "green": 4,  # Index de la tuile pour équipe verte
+            "red": 4,    # Index de la tuile pour équipe rouge
+            "green": 4   # Index de la tuile pour équipe verte
         },
-        "tileset_paths": {"red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH},
-        "image_paths": {"red": RED_TEAM_PATH, "green": GREEN_TEAM_PATH},
-        "range_color": {"red": (255, 0, 0, 50), "green": (0, 255, 0, 50)},
-    },
+        "tileset_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "image_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "range_color": {
+            "red": (255, 0, 0, 50),
+            "green": (0, 255, 0, 50)
+        }
+    }
 }
-
 
 # === Couleurs marines et interface ===
 WHITE = (255, 255, 255)
@@ -268,8 +352,8 @@ BUTTON_MARGIN_LEFT = 40
 BUTTON_MARGIN_BOTTOM = 40
 
 # === IMAGES ===
-MENU_PATH = resource_path("assets/menu/menu.png")
-ANCHOR_PATH = resource_path("assets/menu/NotoV1Anchor.png")
+MENU_PATH = resource_path('assets/menu/menu.png')
+ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
 
 # === Contrôles du jeu ===
 KEYS_PATH = resource_path("./data/keys.json")

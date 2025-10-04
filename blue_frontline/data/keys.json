@@ -62,5 +62,13 @@
     "TIME_SPEED": {
         "description": "Changer la vitesse du temps",
         "key": "K_v"
+    },
+    "SWITCH_TEAM": {
+        "description": "Changer d'équipe",
+        "key": "K_j"
+    },
+    "MINE": {
+        "description": "Poser une mine",
+        "key": "BUTTON_RIGHT"
     }
 }

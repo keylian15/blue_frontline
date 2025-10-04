@@ -233,7 +233,6 @@ class OptionsMenu:
             control_rects[control_name] = control_rect
             y_pos += self.VERTICAL_SPACING
 
-        # Dessin du bouton retour
         self._draw_back_button()
 
         return control_rects
@@ -286,14 +285,12 @@ class OptionsMenu:
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
                         if not self.waiting_for_key:
-                            # Plus besoin de faire un update ici car les changements sont déjà appliqués
                             return True
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:  # Clic gauche
                         mouse_pos = pygame.mouse.get_pos()
                         if self.back_button["rect"].collidepoint(mouse_pos):
-                            # Plus besoin de faire un update ici car les changements sont déjà appliqués
                             return True
 
                         # Vérification des clics sur les contrôles
