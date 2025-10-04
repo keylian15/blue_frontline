@@ -7,7 +7,7 @@ on:
 
 jobs:
   build-and-release:
-    runs-on: ubuntu-latest
+    runs-on: windows-latest 
 
     steps:
     # 1. Récupérer le code
@@ -20,7 +20,7 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Install dependencies
+    - name: Install PyInstaller
       run: |
         python -m pip install --upgrade pip
         pip install pyinstaller
@@ -29,7 +29,7 @@ jobs:
     - name: Zip source code
       run: |
         cd blue_frontline
-        zip -r ../blue_frontline_source.zip .
+        Compress-Archive -Path * -DestinationPath ../blue_frontline_source.zip
 
     # 4. Compiler avec PyInstaller
     - name: Build with PyInstaller
@@ -38,19 +38,11 @@ jobs:
         pyinstaller BlueFrontline.spec
 
     # 5. Créer la release GitHub
-    - name: Create GitHub release
-      uses: softprops/action-gh-release@v1
-      with:
-        tag_name: ${{ github.ref }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-    # 6. Uploader les fichiers générés
-    - name: Upload release assets
+    - name: Create and upload release
       uses: softprops/action-gh-release@v1
       with:
         files: |
           blue_frontline_source.zip
-          blue_frontline/dist/*
+          blue_frontline/dist/BlueFrontline.exe
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
