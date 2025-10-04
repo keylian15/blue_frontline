@@ -38,7 +38,7 @@ def resource_path(relative_path: str):
         return os.path.join(sys._MEIPASS, relative_path)  # exe PyInstaller
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)  # script normal
 
-def save_path(filename: str ="achievements.json"):
+def user_data_path(filename: str):
     """Retourne le chemin pour les sauvegardes (lecture/écriture).
     
     Args:
@@ -47,10 +47,15 @@ def save_path(filename: str ="achievements.json"):
     Returns:
         path (str): Chemin absolu vers la ressource.
     """
-    if getattr(sys, 'frozen', False):  # si exe
+    if hasattr(sys, '_MEIPASS'):  # si exe
         base_path = os.path.dirname(sys.executable)  # dossier du .exe
     else:  # si script normal
         base_path = os.path.dirname(__file__)
+    
+    # Crée un sous-dossier "data" à côté de l'exe
+    data_dir = os.path.join(base_path, "data")
+    os.makedirs(data_dir, exist_ok=True)
+
     return os.path.join(base_path, filename)
 
 def random_point_in_polygon(points: tuple[int, int]):
