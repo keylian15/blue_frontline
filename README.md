@@ -45,7 +45,7 @@ BlueFrontline est un projet de jeu/application en Python avec interface graphiqu
 ```
 ---
 
-## 📦 Prérequis
+## Prérequis
 
 - Python **3.8+**  
 - `pip`  
