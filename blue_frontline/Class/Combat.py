@@ -192,7 +192,6 @@ class Mine(pygame.sprite.Sprite):
 
     def load_image(self):
         """Charge l'image de la mine."""
-        """Charge l'image de la mine selon l'équipe."""
         try:
             # Charger le spritesheet de l'équipe appropriée
             if self.team == "red":
