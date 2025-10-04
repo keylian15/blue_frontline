@@ -30,6 +30,9 @@ class OptionsMenu:
             'rect': pygame.Rect(self.MARGIN_LEFT, self.HEIGHT - 70, back_button_width, self.BUTTON_HEIGHT)
         }
 
+        self.waiting_for_key = None
+        self.controls = CONTROLS_KEYS.copy()
+        
     def draw_gradient_button(self, rect, hovered=False):
         """Dessine un bouton avec dégradé comme dans le menu principal"""
         button_surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
@@ -66,9 +69,13 @@ class OptionsMenu:
         
         adapted_rect = pygame.Rect(rect.x, rect.y, button_width, rect.height)
         
-        button_surf = self.draw_gradient_button(adapted_rect)
+        # Change la couleur si en attente d'une touche
+        is_selected = self.waiting_for_key and action == self.waiting_for_key
+        button_surf = self.draw_gradient_button(adapted_rect, is_selected)
+        
         self.screen.blit(button_surf, adapted_rect)
-        pygame.draw.rect(self.screen, WHITE, adapted_rect, 2, border_radius=BUTTON_BORDER_RADIUS)
+        pygame.draw.rect(self.screen, LIGHT_BLUE if is_selected else WHITE, 
+                        adapted_rect, 2, border_radius=BUTTON_BORDER_RADIUS)
         
         anchor_rect = self.anchor_img.get_rect(midleft=(adapted_rect.x + 20, adapted_rect.centery))
         self.screen.blit(self.anchor_img, anchor_rect)
@@ -82,6 +89,38 @@ class OptionsMenu:
             midleft=(max(self.ACTION_MARGIN, adapted_rect.right + 40), adapted_rect.centery)
         )
         self.screen.blit(action_surf, action_rect)
+        
+        return adapted_rect  # Retourne le rectangle pour la détection des clics
+
+    def handle_key_binding(self, event, control_name):
+        """Gère l'attribution d'une nouvelle touche"""
+        if event.type == pygame.KEYDOWN:
+            self.controls[control_name] = event.key
+            # Mettre à jour immédiatement la touche dans CONTROLS_KEYS
+            CONTROLS_KEYS[control_name]["key"] = event.key
+            self.waiting_for_key = None
+            return True
+        elif event.type == pygame.MOUSEBUTTONDOWN:
+            self.controls[control_name] = event.button
+            # Mettre à jour immédiatement la touche dans CONTROLS_KEYS
+            CONTROLS_KEYS[control_name]["key"] = event.button
+            self.waiting_for_key = None
+            return True
+        return False
+
+    def get_key_name(self, key_value):
+        """Convertit une valeur de touche en nom lisible"""
+        if isinstance(key_value, int):
+            if key_value >= pygame.BUTTON_LEFT and key_value <= pygame.BUTTON_WHEELDOWN:
+                button_names = {
+                    pygame.BUTTON_LEFT: "CLIC GAUCHE",
+                    pygame.BUTTON_RIGHT: "CLIC DROIT",
+                    pygame.BUTTON_WHEELUP: "MOLETTE HAUT",
+                    pygame.BUTTON_WHEELDOWN: "MOLETTE BAS"
+                }
+                return button_names.get(key_value, str(key_value))
+            return pygame.key.name(key_value).upper()
+        return str(key_value)
 
     def draw(self):
         """Dessine le menu des options"""
@@ -102,29 +141,24 @@ class OptionsMenu:
 
         # Récupération et affichage des contrôles depuis Global
         y_pos = 180
-        controls_list = [
-            ("ENTREE", CtrlDescription[pygame.K_RETURN]),
-            ("ECHAP", CtrlDescription[pygame.K_ESCAPE]),
-            ("FLÈCHE HAUT", CtrlDescription[pygame.K_UP]),
-            ("FLÈCHE BAS", CtrlDescription[pygame.K_DOWN]),
-            ("Scroll Haut", CtrlDescription['Molette Haut']),
-            ("Scroll Bas", CtrlDescription['Molette Bas']),
-            ("Clic Gauche", CtrlDescription['Clic Gauche']),
-        ]
-
-        # Affichage des contrôles avec largeur adaptée
-        for key, action in controls_list:
+        control_rects = {}  # Pour stocker les rectangles des contrôles
+        
+        for control_name, control_info in CONTROLS_KEYS.items():
+            key_name = self.get_key_name(self.controls[control_name])
             base_rect = pygame.Rect(
                 self.MARGIN_LEFT, 
                 y_pos - 5, 
-                self.MIN_BUTTON_WIDTH,  # La largeur sera ajustée dans draw_control_button
+                self.MIN_BUTTON_WIDTH,
                 self.BUTTON_HEIGHT
             )
-            self.draw_control_button(key, base_rect, action)
+            control_rect = self.draw_control_button(key_name, base_rect, control_info["description"])
+            control_rects[control_name] = control_rect
             y_pos += self.VERTICAL_SPACING
 
         # Dessin du bouton retour
         self._draw_back_button()
+        
+        return control_rects
 
     def _draw_back_button(self):
         """Dessine le bouton retour"""
@@ -152,17 +186,32 @@ class OptionsMenu:
         """Exécute la boucle du menu options"""
         running = True
         while running:
+            control_rects = self.draw()
+            pygame.display.flip()
+
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     return False
+                    
+                if self.waiting_for_key:
+                    if self.handle_key_binding(event, self.waiting_for_key):
+                        continue
+                        
                 elif event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_ESCAPE:
-                        return True
+                        if not self.waiting_for_key:
+                            # Plus besoin de faire un update ici car les changements sont déjà appliqués
+                            return True
+                            
                 elif event.type == pygame.MOUSEBUTTONDOWN:
                     if event.button == 1:  # Clic gauche
                         mouse_pos = pygame.mouse.get_pos()
                         if self.back_button['rect'].collidepoint(mouse_pos):
+                            # Plus besoin de faire un update ici car les changements sont déjà appliqués
                             return True
-
-            self.draw()
-            pygame.display.flip()
+                            
+                        # Vérification des clics sur les contrôles
+                        for control_name, rect in control_rects.items():
+                            if rect.collidepoint(mouse_pos):
+                                self.waiting_for_key = control_name
+                                break

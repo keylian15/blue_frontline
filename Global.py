@@ -310,13 +310,38 @@ BUTTON_MARGIN_BOTTOM = 40
 MENU_PATH = resource_path('assets/menu/menu.png')
 ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
 
-# === Contrôles et descriptions ===
-CtrlDescription = {
-    pygame.K_ESCAPE: "Options",
-    pygame.K_RETURN: "Créer unité",
-    pygame.K_DOWN: "Volume -",
-    pygame.K_UP: "Volume +",
-    "Clic Gauche": "Sélectionner / Déplacer",
-    "Molette Haut": "Zoom +",
-    "Molette Bas": "Zoom -"
+# === Contrôles du jeu ===
+CONTROLS_KEYS = {
+    "CREATE_UNIT": {
+        "description": "Ouvrir/Fermer le menu de création d'unités",
+        "key": pygame.K_e
+    },
+    "OPTIONS": {
+        "description": "Ouvrir/Fermer le menu options",
+        "key": pygame.K_ESCAPE
+    },
+    "VOLUME_UP": {
+        "description": "Augmenter le volume",
+        "key": pygame.K_UP
+    },
+    "VOLUME_DOWN": {
+        "description": "Diminuer le volume",
+        "key": pygame.K_DOWN
+    },
+    "SELECT_MOVE": {
+        "description": "Sélectionner/Déplacer une unité",
+        "key": pygame.BUTTON_LEFT
+    },
+    "QUANTUM_ISLAND": {
+        "description": "Activer l'île quantique (marée haute)",
+        "key": pygame.BUTTON_RIGHT
+    },
+    "ZOOM_IN": {
+        "description": "Zoom avant",
+        "key": pygame.BUTTON_WHEELUP
+    },
+    "ZOOM_OUT": {
+        "description": "Zoom arrière",
+        "key": pygame.BUTTON_WHEELDOWN
+    }
 }
