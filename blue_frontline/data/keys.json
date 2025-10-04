@@ -1,0 +1,66 @@
+{
+    "OPTIONS": {
+        "description": "Ouvrir/Fermer le menu options",
+        "key": "K_ESCAPE"
+    },
+    "VOLUME_UP": {
+        "description": "Augmenter le volume",
+        "key": "K_UP"
+    },
+    "VOLUME_DOWN": {
+        "description": "Diminuer le volume",
+        "key": "K_DOWN"
+    },
+    "SELECT_MOVE": {
+        "description": "Sélectionner/Déplacer une unité",
+        "key": "BUTTON_LEFT"
+    },
+    "ZOOM_IN": {
+        "description": "Zoom avant",
+        "key": "BUTTON_WHEELUP"
+    },
+    "ZOOM_OUT": {
+        "description": "Zoom arrière",
+        "key": "BUTTON_WHEELDOWN"
+    },
+    "CAMERA_UP": {
+        "description": "Déplacer la caméra vers le haut",
+        "key": "K_z"
+    },
+    "CAMERA_DOWN": {
+        "description": "Déplacer la caméra vers le bas",
+        "key": "K_s"
+    },
+    "CAMERA_LEFT": {
+        "description": "Déplacer la caméra vers la gauche",
+        "key": "K_q"
+    },
+    "CAMERA_RIGHT": {
+        "description": "Déplacer la caméra vers la droite",
+        "key": "K_d"
+    },
+    "HUD_TOGGLE": {
+        "description": "Afficher/Masquer le HUD",
+        "key": "K_h"
+    },
+    "SHOOT": {
+        "description": "Tirer",
+        "key": "K_t"
+    },
+    "CREATE_UNIT": {
+        "description": "création d'unités",
+        "key": "K_RETURN"
+    },
+    "HUD_LEFT": {
+        "description": "Naviguer à gauche dans le HUD",
+        "key": "K_LEFT"
+    },
+    "HUD_RIGHT": {
+        "description": "Naviguer à droite dans le HUD",
+        "key": "K_RIGHT"
+    },
+    "TIME_SPEED": {
+        "description": "Changer la vitesse du temps",
+        "key": "K_v"
+    }
+}
