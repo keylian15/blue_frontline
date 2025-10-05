@@ -40,6 +40,10 @@ WATER_PATH = resource_path('assets/water/png/water.png')
 # (on remet SOUND sur la musique du jeu pour compatibilité éventuelle)
 SOUND = resource_path('blue_frontline_sounds/son_jeu.mp3')
 VOLUME_SOUND = 0.5  # Volume du son (0.0 à 1.0)
+MASTER_VOL_DEFAULT = 0.5
+MASTER_VOL_MAX = 1.0
+MASTER_VOL_MIN = 0.0
+MASTER_VOL_STEP = 0.1
 
 # === SONS – nouveau système spatial ===
 # Musique / beds / one-shots / drops (tout en .mp3)
