@@ -9,17 +9,41 @@ Dans un monde moderne bouleversé par la chute d’une météorite, l’environn
 
 ## Sections
 
-- L'histoire
-- Le menu
-- Le jeu
-- Les contrôles
-- HUD
-- Les unités
-- Les marées et les iles quantiques
+- [L'histoire](#lhistoire)
+- [L'installation](#linstallation)
+- [Le menu](#le-menu)
+- [Le jeu](#le-jeu)
+- [Les contrôles](#les-contrôles)
+- [HUD](#hud)
+- [Les unités](#les-unités)
+- [Les marées et les iles quantiques](#les-marées-et-les-iles-quantiques)
 
 ## L'histoire
 
 La chute d’une météorite a altéré le monde et créé des **îles quantiques** changeantes. Deux puissances rivales se disputent la zone de l’impact pour y conduire des recherches. Dans ce théâtre mouvant, chaque bataille a un but clair: **détruire la base ennemie**.
+
+## L'installation
+
+Il existe deux façons d'installer et de lancer **Blue Frontline** :  
+
+## 1. Téléchargement de l'exécutable
+
+1. Rendez-vous sur le dépôt GitHub officiel : [Blue Frontline GitHub](https://github.com/keylian15/blue_frontline).  
+2. Cliquez sur l’onglet **Releases**.  
+3. Téléchargez l'exécutable correspondant à votre système.  
+
+> ⚠️ Note : Certains antivirus peuvent détecter l'exécutable comme un faux positif.
+
+## 2. Lancement depuis le code source
+
+1. Toujours depuis l'onglet **Releases**, téléchargez le code source si vous ne souhaitez pas utiliser l’exécutable.  
+2. Décompressez le fichier téléchargé.  
+3. Assurez-vous d’avoir **Python** installé sur votre machine.  
+4. Ouvrez un terminal dans le dossier du projet et lancez :  
+
+```bash
+python blue_frontline/main.py
+```
 
 ## Le menu
 
@@ -54,14 +78,15 @@ La chute d’une météorite a altéré le monde et créé des **îles quantique
 
 ## Les contrôles
 
-- **ZQSD**: se déplacer sur la carte.
-- **Flèches directionnelles Gauche Droite**: choisir l’unité à poser.
-- **Clic gauche**: sélectionner une unité, puis cliquer sur une destination pour la déplacer.
-- **T**: tirer lorsqu’une unité ennemie est à portée.
-- **V**: changer la vitesse du jeu.
-- **H**: afficher/masquer l’interface.
-- **J**: changer d’équipe.
-- **E**: menu debug.
+- **ZQSD**: D&plcaer la caméra sur la carte.
+- **Flèches directionnelles Gauche Droite**: Choisir l’unité à poser.
+- **Entrée**: Poser l’unité sélectionnée.
+- **Clic gauche**: Sélectionner une unité, puis cliquer sur une destination pour la déplacer.
+- **Clic droit**: ultiliser la capacité spécial de l'unité.
+- **T**: Tirer lorsqu’une unité ennemie est à portée.
+- **V**: Changer la vitesse du jeu.
+- **H**: Afficher/masquer l’interface.
+- **J**: Changer d’équipe.
 
 Remapping: possible dans le **menu Options**.
 
@@ -69,13 +94,13 @@ Remapping: possible dans le **menu Options**.
 
 ![HUD](images/HUD.png)
 
-1 **Timer**: temp passée depuis le debut de la partie.  
-2 **Icône de marée**: état actuel (haute/basse).  
-3 **menu d'unité**: permet de deployer des unités.    
-4 **Compteurs de ressources**: **pétrole** et **argent** disponibles.  
+1 - **Timer**: Temps passé depuis le debut de la partie.  
+2 - **Icône de marée**: Etat actuel (haute/basse).  
+3 - **menu d'unité**: Permet de deployer des unités.    
+4 - **Compteurs de ressources**: **Pétrole** et **argent** disponibles.  
 
 ## Les unités
-- Sélectionner une unité dans le menu des unité a l'aide des fleches directionnels puis appuyer sur entré pour la faire apparait au prêt de votre base 
+- Sélectionner une unité dans le menu des unité a l'aide des fleches directionnelles puis appuyer sur entré pour la faire apparaitre près de votre base 
 ![Menu unités](images/menu_unite.png)
 - Cliquez sur une unité pour la **sélectionner**, puis sur une **destination** pour la déplacer.
 - Appuyez sur **T** pour tirer lorsqu’une cible est à portée.
@@ -86,55 +111,60 @@ il ya plusieurs unités disponibles:
 ### Les chaloupes
 ![unite](images/chaloupe.png)  
 **Description**  
-Les chaloupes sont les unité de bases elle sont rapide et peu cher mais fragiles  
+Les chaloupes sont des unités de base : elles sont rapides et peu chères, mais fragiles.
+
 **Stats**  
 **Coût**:20  
 **PV max**:20  
 **Vitesse**:80px/s  
 **Portée**:2  
 **Dégâts**:2  
-**cadence**:1/s  
+**Cadence**:1/s  
 __________________________________  
 ### Les bateaux
 ![unite](images/bateaux.png)  
 **Description**  
-Les bateaux sont les unité moyenne elle sont plus résistante que les chaloupes tire plus mais sont légèrement plus lente et plus cher   
+Les bateaux sont des unités de taille moyenne : ils sont plus résistants que les chaloupes, tirent davantage, mais sont légèrement plus lents et plus chers.
+
 **Stats**  
 **Coût**:60  
 **PV max**:30  
 **Vitesse**:70px/s  
 **Portée**:6  
 **Dégâts**:6  
-**cadence**:1/s 
+**Cadence**:1/s 
 __________________________________  
-### Les paquebot
+### Les paquebots
 ![unite](images/paquebot.png)  
 **Description**  
-La meilleur unité disponible , elle est **très lente** mais compense sa lenteur grace a ca robustesse et ca puissance de tire accrue  
+La meilleure unité disponible : elle est très lente, mais compense sa lenteur grâce à sa robustesse et à sa puissance de tir accrue.  
+
 **Stats**  
 **Coût**:120  
 **PV max**:50  
 **Vitesse**:60px/s  
 **Portée**:8  
 **Dégâts**:10  
-**cadence**:0.8/s
+**Cadence**:0.8/s
 __________________________________  
 ### Les éclaireurs
 ![unite](images/eclaireurs.png)  
 **Description**  
-Les éclaireurs ne sont pas une unité de combats ils servent principalement a découvrir les zones de brouillard sur la carte et donc de pouvoir traverser les zone d'iles quantique  
+Les éclaireurs ne sont pas des unités de combat : ils servent principalement à découvrir les zones de brouillard sur la carte et permettent ainsi de traverser les zones d’îles quantiques.
+
 **Stats**  
 **Coût**:40    
 **PV max**:15    
 **Vitesse**:100px/s    
 **Portée**:-  
 **Dégâts**:-  
-**cadence**:-  
+**Cadence**:-  
 __________________________________  
 ### Les sous marin
 ![unite](images/sous_marin.png)  
 **Description**    
-Les sous marin sont des unité classique mais on la particularité de pouvoir déposé des mines  
+Les sous-marins sont des unités classiques, mais ont la particularité de pouvoir déposer des mines.  
+
 **Stats**  
 **Coût**:180    
 **PV max**:35   
@@ -146,7 +176,7 @@ __________________________________
 ### Pompes
 ![unite](images/pompe.png)  
 **Description**  
-Les pompes permettent d'amélioré votre rendement de pétrole  
+Les pompes permettent d’améliorer votre rendement en pétrole.
 
 ## Les marées et les iles quantiques
 

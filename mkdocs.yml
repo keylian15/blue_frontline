@@ -1,10 +1,9 @@
 site_name: Blue Frontline Docs
 
 nav:
-  - Home: index.md
-  - Installation: installation.md
-  - API: api.md
+  - Ustilisateur: index.md
   - Admin: MANUEL_ADMINISTRATEUR.md
+  - API: api.md
 
 theme:
   name: material
