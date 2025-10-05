@@ -1,4 +1,5 @@
 # Fichier des variables globales (Chemin, variables, etc.)
+import json
 import os, pygame
 from Utils import resource_path, user_data_path  
 
@@ -356,13 +357,47 @@ MENU_PATH = resource_path('assets/menu/menu.png')
 ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
 
 # === Contrôles du jeu ===
-CONTROLS_DESCRIPTION = {
-    "CREATE_UNIT": "Ouvrir/Fermer le menu de création d'unités",
-    "OPTIONS": "Ouvrir/Fermer le menu options", 
-    "VOLUME_UP": "Augmenter le volume",
-    "VOLUME_DOWN": "Diminuer le volume",
-    "SELECT_MOVE": "Sélectionner/Déplacer une unité",
-    "QUANTUM_ISLAND": "Activer l'île quantique (marée haute)",
-    "ZOOM_IN": "Zoom avant",
-    "ZOOM_OUT": "Zoom arrière"
-}
+KEYS_PATH = resource_path("data/keys.json")
+
+def load_keys(path):
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+CONTROLS_KEYS = load_keys(KEYS_PATH)
+
+def get_pygame_key(key_str):
+    # Convertit la chaîne en constante pygame (ex: "K_e" -> pygame.K_e)
+    if key_str.startswith("K_"):
+        return getattr(pygame, key_str)
+    if key_str.startswith("BUTTON_"):
+        return getattr(pygame, key_str)
+    return key_str  # Pour les boutons souris ou autres
+
+def load_controls_runtime():
+    """Charge les contrôles depuis keys.json à chaque appel et retourne un dict
+    avec les valeurs des touches converties en constantes pygame."""
+    raw = load_keys(KEYS_PATH)
+    return {
+        action: {
+            "description": data["description"],
+            "key": get_pygame_key(data["key"]),
+        }
+        for action, data in raw.items()
+    }
+
+def get_action_key(action):
+    """Retourne la valeur pygame de la touche pour une action en lisant keys.json.
+    En cas d'erreur, se replie sur CONTROLS_KEYS."""
+    try:
+        raw = load_keys(KEYS_PATH)
+        data = raw.get(action)
+        if data and "key" in data:
+            return get_pygame_key(data["key"])
+    except Exception:
+        pass
+    # Fallback: recharger dynamiquement depuis le fichier
+    try:
+        controls = load_controls_runtime()
+        return controls.get(action, {}).get("key")
+    except Exception:
+        return None

@@ -1,4 +1,5 @@
 import pygame
+from Global import get_action_key
 
 class InputManager:
     """Gestionnaire des entrées continues pour le jeu."""
@@ -30,13 +31,13 @@ class InputManager:
         """
         
         dx, dy = 0, 0
-        if pressed[pygame.K_z]:  # Haut
+        if pressed[get_action_key("CAMERA_UP")]:  # Haut
             dy -= self.game.camera.camera_move
-        if pressed[pygame.K_s]:  # Bas
+        if pressed[get_action_key("CAMERA_DOWN")]:  # Bas
             dy += self.game.camera.camera_move
-        if pressed[pygame.K_q]:  # Gauche 
+        if pressed[get_action_key("CAMERA_LEFT")]:  # Gauche
             dx -= self.game.camera.camera_move
-        if pressed[pygame.K_d]:  # Droite
+        if pressed[get_action_key("CAMERA_RIGHT")]:  # Droite
             dx += self.game.camera.camera_move
         
         # Déplacer la caméra seulement s'il y a un déplacement
@@ -51,8 +52,8 @@ class InputManager:
         """
         
         current_time = pygame.time.get_ticks()
-        
-        if pressed[pygame.K_h] :
+
+        if pressed[get_action_key("HUD_TOGGLE")]:
             if current_time - self.last_hud_toggle_time > self.hud_toggle_cooldown:
                 self.game.hud.switch()
                 self.last_hud_toggle_time = current_time
@@ -64,7 +65,7 @@ class InputManager:
             pressed (tuple[bool]): Un tuple de booléens indiquant si les touches sont enfoncées.
         """
         
-        if pressed[pygame.K_t]:
+        if pressed[get_action_key("SHOOT")]:
             self.trigger_shooting()
     
     def trigger_shooting(self):

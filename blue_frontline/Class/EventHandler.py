@@ -1,5 +1,6 @@
 import pygame
 from Class.OptionsMenu import OptionsMenu
+from Global import get_action_key
 from Global import UNIT_CONFIGS
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
 from Class.units.Bateau import BateauRouge, BateauVert
@@ -56,7 +57,7 @@ class EventHandler:
             elif event.type == pygame.KEYDOWN:
                 if not self.handle_keydown_events(event):
                     continue
-            
+
             # Gestion des clics souris
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 self.handle_mouse_events(event)
@@ -143,21 +144,20 @@ class EventHandler:
             self.game.refresh_all_references(self.game)
             return True
 
-        elif event.key == pygame.K_UP:  
-
+        # Volume
+        if event.key == get_action_key("VOLUME_UP"):
             self.game.sound.increase_volume()
-        
-        elif event.key == pygame.K_DOWN:
+        elif event.key == get_action_key("VOLUME_DOWN"):
             self.game.sound.decrease_volume()
 
-        if event.key == pygame.K_LEFT:
+        if event.key == get_action_key("HUD_LEFT"):
             self.game.hud.popup_selection = (self.game.hud.popup_selection - 1) % len(self.game.hud.unit_names)
             return True
-        if event.key == pygame.K_RIGHT:
+        if event.key == get_action_key("HUD_RIGHT"):
             self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
             return True
-        
-        if event.key == pygame.K_v:
+
+        if event.key == get_action_key("TIME_SPEED"):
             # Cycler la vitesse du temps
             new_speed = self.game.hud.timer.cycle_speed()
             # Synchroniser la vitesse du pétrole avec le timer
@@ -172,7 +172,8 @@ class EventHandler:
                     unit.move_to(unit.target_position[0], unit.target_position[1])
             return True
         
-        if event.key == pygame.K_j :
+        if event.key ==  get_action_key("SWITCH_TEAM"):
+            # Changer d'équipe dans le HUD:
             self.game.hud.toggle_popup_team()
             self.game.hud.switch_team()
             return True
@@ -192,7 +193,7 @@ class EventHandler:
             return
         
         # Clic gauche
-        if event.button == 1:  # Clic gauche
+        if event.button == get_action_key("SELECT_MOVE"):  # Clic gauche
             world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
             # Chercher une unité à cette position
             clicked_unit = self.game.find_unit_at_position(world_x, world_y)
@@ -206,7 +207,7 @@ class EventHandler:
                 self.game.select_unit(None)
 
         # Clic droit
-        elif event.button == 3:  # Clic droit
+        elif event.button == get_action_key("MINE"):  # Clic droit
             world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
 
             # Si un sous-marin est sélectionné, poser une mine
@@ -227,12 +228,12 @@ class EventHandler:
                     print("Impossible de poser une mine sur un obstacle")
         
         # Molette haut
-        elif event.button == 4:
+        elif event.button == get_action_key("ZOOM_IN"):
             if not getattr(self.game, 'paused', False):
                 self.game.camera.zoom_in()
         
         # Molette bas
-        elif event.button == 5:
+        elif event.button == get_action_key("ZOOM_OUT"):
             if not getattr(self.game, 'paused', False):
                 self.game.camera.zoom_out()
     
