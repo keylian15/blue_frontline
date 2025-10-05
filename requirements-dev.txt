@@ -1,5 +1,6 @@
 # ==============================================
 # ./requirements-dev.txt - (pour générer l'exe)
+# cd blue_frontline 
+# pyinstaller BlueFrontline.spec
 # ==============================================
-auto-py-to-exe==2.43.3
 pyinstaller==6.3.0

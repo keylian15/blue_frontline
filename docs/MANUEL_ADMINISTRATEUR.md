@@ -5,7 +5,7 @@
 
 **Version :** 1.0  
 **Date :** 30 septembre 2025  
-**Auteur :** CHAMPY Thomas 
+**Auteur :** CHAMPY Thomas  
 **Destinataires :** Professeurs, Administrateurs système, DevOps, Développeurs
 
 ---
@@ -48,18 +48,18 @@ Blue Frontline est une application standalone Python utilisant l'architecture MV
 
 ```
 blue_frontline/
-├── main.py                 # Point d'entrée principal
+├── main.py                # Point d'entrée principal
 ├── Global.py              # Variables globales et constantes
 ├── Utils.py               # Utilitaires partagés
 ├── requirements.txt       # Dépendances Python
 ├── Class/                 # Classes métier
-│   ├── Game.py           # Moteur de jeu principal
-│   ├── menu.py           # Interface menu
-│   ├── units/            # Unités de combat
+│   ├── Game.py            # Moteur de jeu principal
+│   ├── menu.py            # Interface menu
+│   ├── units/             # Unités de combat
 │   └── ...
-├── assets/               # Ressources graphiques
+├── assets/                # Ressources graphiques
 ├── blue_frontline_sounds/ # Ressources audio
-└── output/               # Builds compilés
+└── dist/                  # Builds compilés
 ```
 
 ### 2.2 Composants principaux
@@ -94,20 +94,8 @@ Utilisateur → Interface Menu → Game Engine → Rendu Pygame → Écran
 **Configuration recommandée :**
 - Python : 3.10+
 - RAM : 4 GB ou plus
-### 3.2 Dépendances
 
-**Dépendances Python requises :**
-```txt
-pygame==2.5.2
-pytmx==3.32
-pyscroll
-perlin-noise
-shapely
-auto-py-to-exe
-pyinstaller
-```
-
-### 3.3 Procédure d'installation
+### 3.2 Procédure d'installation
 
 #### Étape 1 : Clonage du dépôt
 ```bash
@@ -128,16 +116,30 @@ source venv/bin/activate
 ```
 
 #### Étape 3 : Installation des dépendances
-```bash
-pip install -r docs/requirements.txt  # Chemin recommandé
+
+Pour installer les dépendances du projet, selon le cas il vous suffit de faire :  
+Pour travailler sur le projet : 
+```text
+pip install -r requirements.txt
 ```
+
+Pour faire la documentation du projet :
+```text
+pip install -r docs/requirements.txt
+```
+
+Pour faire un .exe du porjet : 
+```text
+pip install -r requirements_dev.txt
+```
+
 
 #### Étape 4 : Vérification de l'installation
 ```bash
 python main.py
 ```
 
-### 3.4 Erreurs courantes d'installation
+### 3.3 Erreurs courantes d'installation
 
 | Erreur | Cause | Solution |
 |--------|-------|----------|
@@ -201,6 +203,11 @@ Aucune variable d'environnement requise par défaut. Options disponibles :
 
 ### 5.1 Lancement de l'application
 
+#### Aller dans le dossier 
+```bash
+cd blue_frontline
+```
+
 #### Mode normal
 ```bash
 python main.py
@@ -240,7 +247,8 @@ fps = clock.get_fps()
 
 | Fichier | Description | Sauvegarde |
 |---------|-------------|------------|
-| `achievements.json` | Progression succès | Automatique |
+| `data/achievements.json` | Progression succès | Automatique |
+| `data/keys.json` | Assignation de touches | Automatique |
 | `map.tmx` | Carte de jeu | Statique |
 | `assets/*` | Ressources graphiques | Statique |
 
@@ -253,7 +261,9 @@ fps = clock.get_fps()
 #### Données utilisateur
 ```bash
 # Sauvegarde progression
-cp achievements.json backup/achievements_$(date +%Y%m%d).json
+cp data/achievements.json backup/achievements_$(date +%Y%m%d).json
+# Sauvegarde touches
+cp data/key.json backup/keys_$(date +%Y%m%d).json
 
 # Sauvegarde complète
 tar -czf blue_frontline_backup_$(date +%Y%m%d).tar.gz .
@@ -262,7 +272,9 @@ tar -czf blue_frontline_backup_$(date +%Y%m%d).tar.gz .
 #### Restauration
 ```bash
 # Restaurer progression
-cp backup/achievements_20250930.json achievements.json
+cp backup/achievements_20250930.json data/achievements.json
+# Restaurer touches
+cp backup/keys_20250930.json data/keys.json
 ```
 
 ### 6.2 Mises à jour
@@ -270,15 +282,13 @@ cp backup/achievements_20250930.json achievements.json
 #### Procédure de mise à jour
 ```bash
 # 1. Sauvegarde des données
-cp achievements.json achievements_backup.json
+cp data/achievements.json achievements_backup.json
+cp data/keys.json keys_backup.json
 
 # 2. Mise à jour du code
 git pull origin main
 
-# 3. Mise à jour des dépendances
-pip install -r docs/requirements.txt --upgrade
-
-# 4. Test de fonctionnement
+# 3. Test de fonctionnement
 python main.py
 ```
 
@@ -288,7 +298,8 @@ python main.py
 ```bash
 # Linux/macOS - Sécurisation
 chmod 755 *.py
-chmod 644 achievements.json
+chmod 644 data/achievements.json
+chmod 644 data/keys.json
 chmod -R 644 assets/
 ```
 
@@ -304,7 +315,6 @@ python -m py_compile Class/*.py
 | Problème | Diagnostic | Solution |
 |----------|------------|----------|
 | Jeu ne démarre pas | `python main.py` → erreur | Vérifier dépendances |
-| Succès non sauvés | `achievements.json` absent | Vérifier droits écriture |
 | Sons absents | Erreur mixer | Installer codecs audio |
 | Performances lentes | FPS < 30 | Réduire résolution |
 
@@ -320,14 +330,6 @@ python -m py_compile Class/*.py
 - **TMX** : Format de fichier XML pour cartes de jeu Tiled
 
 ### 7.2 Scripts utiles
-
-#### Reset complet des succès
-```python
-import os
-if os.path.exists("achievements.json"):
-    os.remove("achievements.json")
-    print("Succès remis à zéro")
-```
 
 #### Vérification dépendances
 ```bash
@@ -354,7 +356,7 @@ pip list --outdated
 
 ### 7.5 Contact support
 
-**Développeur** : CHAMPY Thomas, TURBE Keylian, SIAME Romain, LE PALLEC Hippolyte, ARNOULT Antoine, BERGHOL Samy
+**Développeur** : CHAMPY Thomas, TURBE Keylian, SIAME Romain, LE PALLEC Hippolyte, ARNOULT Antoine, BERGHOL Samy  
 **Repository** : https://github.com/keylian15/blue_frontline  
 
 ---
