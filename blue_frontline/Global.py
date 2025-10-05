@@ -204,7 +204,6 @@ GREEN_BASE_TEAM_PATH = resource_path('assets/Green_team/png/Green_base.png')
 UNIT_CONFIGS = {
     "chaloupe": {
         "cost": 20,
-        "build_time": 20,
         "max_speed": 80,
         "max_health": 20,
         "range": 2,
@@ -230,7 +229,6 @@ UNIT_CONFIGS = {
     },
     "bateau": {
         "cost": 60,
-        "build_time": 60,
         "max_speed": 70,
         "max_health": 30,
         "range": 6,
@@ -256,7 +254,6 @@ UNIT_CONFIGS = {
     },
     "eclaireur": {
         "cost": 40,
-        "build_time": 40,
         "max_speed": 100,
         "max_health": 15,
         "range": 4,
@@ -282,7 +279,6 @@ UNIT_CONFIGS = {
     },
     "paquebot": {
         "cost": 120,
-        "build_time": 120,
         "max_speed": 60,
         "max_health": 50,
         "range": 8,
@@ -308,7 +304,6 @@ UNIT_CONFIGS = {
     },
     "sousmarin": {
         "cost": 180,
-        "build_time": 180,
         "max_speed": 65,
         "max_health": 35,
         "range": 5,

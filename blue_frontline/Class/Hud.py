@@ -246,7 +246,6 @@ class Hud:
             title = self.unit_names[selection_index]
             lines = [
                 f"Coût: {config.get('cost', '?')}",
-                f"Temps: {config.get('build_time', '?')} s",
                 f"PV max: {config.get('max_health', '?')}",
                 f"Vitesse: {config.get('max_speed', '?')} px/s",
                 f"Portée: {config.get('range', '?')}",
