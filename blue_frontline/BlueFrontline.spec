@@ -10,8 +10,7 @@ a = Analysis(
         ('assets', 'assets'),
         ('blue_frontline_sounds', 'blue_frontline_sounds'),
         ('map.tmx', '.'),
-        ('data/keys.json', 'data'),
-        ('data/achievement.json', 'data'),
+        ('data/keys.json', 'data/keys.json'),
     ],
     hiddenimports=[
         # Bibliothèques externes
