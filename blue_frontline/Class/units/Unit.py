@@ -230,8 +230,9 @@ class Unit(pygame.sprite.Sprite):
             self.speed = self.reducte_speed
         
         # On met a jour la vitesse de l'unité, speed est la valeur de déplacement, move_to va redefinir la vitesse de déplacement jusqu'a la cible
-        self.move_to(self.target_position[0], self.target_position[1])
-        self.position = next_position
+        if self.is_moving : 
+            self.move_to(self.target_position[0], self.target_position[1])
+            self.position = next_position
 
     def move(self, dt: int):
         """Déplace l'unité selon sa vitesse. Appelé a chaque tick.
@@ -254,18 +255,20 @@ class Unit(pygame.sprite.Sprite):
             # Verifier le prochain déplacement.
             self.check_area(dt)
             
-            # On prend un vecteur après le déplacement
-            to_target_after = (
-                self.target_position[0] - self.position[0],
-                self.target_position[1] - self.position[1]
-            )
+            if self.is_moving:
+                
+                # On prend un vecteur après le déplacement
+                to_target_after = (
+                    self.target_position[0] - self.position[0],
+                    self.target_position[1] - self.position[1]
+                )
 
-            # Produit scalaire : si le signe change, c'est qu'on a dépassé la cible
-            if (to_target_before[0] * to_target_after[0] + 
-                to_target_before[1] * to_target_after[1]) <= 0:
-                self.stop()
-                self.is_moving = False
-                self.target_position = None
+                # Produit scalaire : si le signe change, c'est qu'on a dépassé la cible
+                if (to_target_before[0] * to_target_after[0] + 
+                    to_target_before[1] * to_target_after[1]) <= 0:
+                    self.stop()
+                    self.is_moving = False
+                    self.target_position = None
         else:
             # Vérifier si on a atteint la destination
             dx = self.position[0] - self.target_position[0]
