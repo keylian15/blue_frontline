@@ -210,9 +210,9 @@ UNIT_CONFIGS = {
         "cost": 20,
         "max_speed": 80,
         "max_health": 20,
-        "range": 0,
-        "damage": 0,
-        "fire_rate": 0,
+        "range": 2,
+        "damage": 2,
+        "fire_rate": 1.0,
         "unit_type": "chaloupe",
         "tile_index": {
             "red": 0,    # Index de la tuile pour équipe rouge
@@ -260,9 +260,9 @@ UNIT_CONFIGS = {
         "cost": 40,
         "max_speed": 100,
         "max_health": 15,
-        "range": 4,
-        "damage": 3,
-        "fire_rate": 1.5,
+        "range": 0,
+        "damage": 0,
+        "fire_rate": 0,
         "unit_type": "eclaireur",
         "tile_index": {
             "red": 3,    # Index de la tuile pour équipe rouge
