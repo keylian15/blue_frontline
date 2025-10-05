@@ -178,7 +178,25 @@ __________________________________
 **Description**  
 Les pompes permettent d’améliorer votre rendement en pétrole.
 
-## Les marées et les iles quantiques
+## Améliorations  
+Lorsque vous détruisez des troupes adverse vous recuperé des pieces qui peuvent etre utiliser pour des améliorations:  
+### Destruction :  
+• 1 : 1 pièce – Coût : Gratuit (défaut)  
+• 2 : 2 pièces – Coût : 100 pièces  
+• 3 : 3 pièces – Coût : 200 pièces  
+• 4 : 4 pièces – Coût : 500 pièces  
+### Dégâts de la base :  
+• 1 : 10% du blindage de la Chaloupe – Coût : Gratuit (défaut)  
+• 2 : 20% du blindage de la Chaloupe – Coût : 200 pièces  
+• 3 : 30% du blindage de la Chaloupe – Coût : 400 pièces  
+• 4 : 40% du blindage de la Chaloupe – Coût : 600 pièces  
+### Vitesse de la base :  
+• 1 : 1 tir / 4 secondes – Coût : Gratuit (défaut)  
+• 2 : 2 tirs / 4 secondes – Coût : 200 pièces  
+• 3 : 3 tirs / 4 secondes – Coût : 400 pièces  
+• 4 : 4 tirs / 4 secondes – Coût : 600 pièces  
+
+## Les marées et les iles quantiques  
 
 - La **marée** alterne toutes les 3 minutes entre **haute** et **basse**, changeant la topographie.
 - Les **îles quantiques** se **submergent** puis **réapparaissent** différemment après chaque cycle.
