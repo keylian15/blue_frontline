@@ -121,9 +121,12 @@ class Projectile(pygame.sprite.Sprite):
             bool: True si il y a collision, False sinon.
         """
 
-        if not self.is_active :
+        if not self.is_active:
             return False
-            
+
+        if target is self.shooter:
+            return False
+
         # Vérifier que l'unité cible n'est pas de la même équipe (sauf pour les plateformes)
         if self.shooter and hasattr(target, 'team') and target.team == self.shooter.team:
             # Les plateformes peuvent être ciblées par toutes les équipes
