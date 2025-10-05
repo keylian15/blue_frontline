@@ -329,7 +329,7 @@ UNIT_CONFIGS = {
         }
     }, 
     "pompe_petroliere": {
-        "cost": 50,
+        "cost": 500,
         "max_speed": 0,
         "max_health": 100,
         "range": 0,
