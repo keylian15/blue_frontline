@@ -308,7 +308,7 @@ UNIT_CONFIGS = {
         "max_health": 35,
         "range": 5,
         "damage": 18,
-        "fire_rate": 0.5,
+        "fire_rate": 0.0333,
         "unit_type": "sousmarin",
         "special_ability": "mines",  # Capacité spéciale
         "tile_index": {

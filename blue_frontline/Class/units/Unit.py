@@ -402,7 +402,7 @@ class Unit(pygame.sprite.Sprite):
         current_time = time.time()
         time_since_last_shot = current_time - self.last_shot_time
         multiplica = self.game.hud.timer.get_speed_multiplier()
-        return time_since_last_shot >= (1.0 * multiplica / self.fire_rate)
+        return time_since_last_shot >= (1.0 / (self.fire_rate * multiplica))
     
     def attack(self, target: "Unit", combat_system: "CombatSystem" = None):
         """Attaque une cible si possible. Si un système de combat est fourni, créer un projectile.

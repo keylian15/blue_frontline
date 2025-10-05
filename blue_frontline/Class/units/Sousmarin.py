@@ -1,3 +1,4 @@
+import time
 import pygame
 from Class.units.Unit import Unit
 from Class.Combat import CombatSystem, Mine
@@ -77,8 +78,7 @@ class SousMarin(Unit):
             mine = Mine(x, y, self.team, damage=18)
             if hasattr(self.game, 'combat_system') and self.game.combat_system:
                 self.game.combat_system.add_mine(mine)
-  
-
+                self.last_shot_time = time.time()
             # -- AUDIO : drop mine --
             try:
                 if hasattr(self.game, "sound") and self.game.sound:

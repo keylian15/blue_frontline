@@ -221,12 +221,11 @@ class EventHandler:
                 if not point_in_many_polygons(self.game.obstacles, (world_x, world_y)):
                     x, y = self.game.selected_unit.position
 
-                    # Poser la mine
-                    if self.game.selected_unit.place_mine(x, y):
-                        print(f"Mine posée à la position ({x}, {y}) par {self.game.selected_unit.unit_name}")
-                else:
-                    print("Impossible de poser une mine sur un obstacle")
-        
+                    if self.game.selected_unit.can_attack() : 
+                            
+                        # Poser la mine
+                        self.game.selected_unit.place_mine(x, y)
+                                
         # Molette haut
         elif event.button == get_action_key("ZOOM_IN"):
             if not getattr(self.game, 'paused', False):
