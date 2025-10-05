@@ -206,9 +206,9 @@ UNIT_CONFIGS = {
         "cost": 20,
         "max_speed": 80,
         "max_health": 20,
-        "range": 2,
-        "damage": 2,
-        "fire_rate": 1.0,
+        "range": 0,
+        "damage": 0,
+        "fire_rate": 0,
         "unit_type": "chaloupe",
         "tile_index": {
             "red": 0,    # Index de la tuile pour équipe rouge
@@ -306,9 +306,9 @@ UNIT_CONFIGS = {
         "cost": 180,
         "max_speed": 65,
         "max_health": 35,
-        "range": 5,
-        "damage": 18,
-        "fire_rate": 0.0333,
+        "range": 0,
+        "damage": 12,
+        "fire_rate": 1,
         "unit_type": "sousmarin",
         "special_ability": "mines",  # Capacité spéciale
         "tile_index": {
