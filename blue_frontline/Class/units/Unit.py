@@ -380,7 +380,8 @@ class Unit(pygame.sprite.Sprite):
     
     def can_attack(self):
         """Vérifie si l'unité peut attaquer (cooldown respecté)."""
-        
+        if not hasattr(self, 'fire_rate') or self.fire_rate == 0:
+            return False
         current_time = time.time()
         time_since_last_shot = current_time - self.last_shot_time
         multiplica = self.game.hud.timer.get_speed_multiplier()

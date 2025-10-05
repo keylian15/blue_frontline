@@ -6,6 +6,13 @@ from math import *
 from Global import UNIT_CONFIGS
 
 class SousMarin(Unit):
+    def can_place_mine(self):
+        """Vérifie si le sous-marin peut poser une mine (cooldown respecté, mais fire_rate ignoré)."""
+        current_time = time.time()
+        time_since_last_shot = current_time - self.last_shot_time
+        multiplica = self.game.hud.timer.get_speed_multiplier() if hasattr(self.game, 'hud') and hasattr(self.game.hud, 'timer') else 1
+        # Cooldown d'une seconde par défaut
+        return time_since_last_shot >= (1.0 / multiplica)
     """Classe unifiée pour les unités Sous-marin (Rouge et Vert)."""
     
     def __init__(self, game: "Game", team: str):
@@ -29,9 +36,9 @@ class SousMarin(Unit):
         self.speed = self.max_speed # Par défaut speed = speed max
         self.max_health = config["max_health"]
         self.current_health = self.max_health
-        self.range = config["range"]
-        self.damage = config["damage"]
-        self.fire_rate = config["fire_rate"]
+        self.range = 0  # Les sous-marins ne tirent plus
+        self.damage = 0
+        self.fire_rate = 0
         
         # Type d'unité et capacité spéciale
         self.unit_type = config["unit_type"]

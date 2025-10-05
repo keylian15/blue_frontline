@@ -229,9 +229,8 @@ class EventHandler:
                 if not point_in_many_polygons(self.game.obstacles, (world_x, world_y)):
                     x, y = self.game.selected_unit.position
 
-                    if self.game.selected_unit.can_attack() : 
-                            
-                        # Poser la mine
+                    # Utiliser la méthode spéciale pour le sous-marin
+                    if hasattr(self.game.selected_unit, 'can_place_mine') and self.game.selected_unit.can_place_mine():
                         self.game.selected_unit.place_mine(x, y)
                                 
         # Molette haut
