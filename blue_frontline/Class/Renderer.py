@@ -1,4 +1,5 @@
 import pygame, pyscroll, time, math
+from Class.Game import Game
 
 from Global import get_pygame_key
 import Global
@@ -6,7 +7,7 @@ import Global
 class Renderer:
     """Gestionnaire de rendu pour le jeu."""
     
-    def __init__(self, game: "Game"):
+    def __init__(self, game: Game):
         """Initialise le gestionnaire de rendu avec une référence au jeu.
 
         Args:
@@ -170,10 +171,14 @@ class Renderer:
             # Affichage du message de tir si des ennemis sont dans la portée
             if hasattr(self.game.selected_unit, 'enemies_in_range') and self.game.selected_unit.enemies_in_range:
                 font = pygame.font.Font(None, 32)
-                shoot_key = Global.CONTROLS_KEYS["SHOOT"]["key"] # Touche pygame
-                num_key = get_pygame_key(shoot_key)
-                key_name = pygame.key.name(num_key).upper()  
-
+                controls_keys = Global.get_controls_keys()  # S'assurer que les contrôles sont chargés
+                shoot_key = controls_keys.get("SHOOT", {}).get("key") # Touche pygame
+                if shoot_key:
+                    num_key = get_pygame_key(shoot_key)
+                    key_name = pygame.key.name(num_key).upper()  
+                else:
+                    key_name = "T"  # Valeur par défaut
+                
                 message = f"Ennemis en vue: {len(self.game.selected_unit.enemies_in_range)} - Appuyez sur {key_name} pour tirer"
                 text_surface = font.render(message, True, (255, 255, 255))
                 

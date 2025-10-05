@@ -2,15 +2,15 @@
 
 
 a = Analysis(
-    ['C:/Users/keyli/Documents/IUT/blue_frontline/blue_frontline/main.py'],
+    ['blue_frontline\\main.py'],
     pathex=[],
     binaries=[],
-    datas=[('C:/Users/keyli/Documents/IUT/blue_frontline/blue_frontline/assets', 'assets/'), ('C:/Users/keyli/Documents/IUT/blue_frontline/blue_frontline/blue_frontline_sounds', 'blue_frontline_sounds/'), ('C:/Users/keyli/Documents/IUT/blue_frontline/blue_frontline/map.tmx', '.')],
-    hiddenimports=['pygame', 'pytmx', 'pyscroll', 'perlin_noise', 'shapely', 'shapely.geometry'],
+    datas=[('blue_frontline/assets', 'assets'), ('blue_frontline/blue_frontline_sounds', 'blue_frontline_sounds'), ('blue_frontline/data', 'data'), ('blue_frontline/map.tmx', '.')],
+    hiddenimports=[],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['mkdocs', 'mkdocs_material', 'mkdocstrings', 'pytest', 'numpy', 'matplotlib'],
+    excludes=[],
     noarchive=False,
     optimize=0,
 )

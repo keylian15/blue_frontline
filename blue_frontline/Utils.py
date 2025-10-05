@@ -39,24 +39,34 @@ def resource_path(relative_path: str):
     return os.path.join(os.path.dirname(os.path.abspath(__file__)), relative_path)  # script normal
 
 def user_data_path(filename: str):
-    """Retourne le chemin pour les sauvegardes (lecture/écriture).
+    """Retourne le chemin pour les données utilisateur (lecture/écriture).
+    
+    Pour les exécutables PyInstaller, vérifie d'abord si le fichier existe dans le package,
+    sinon crée un chemin à côté de l'exécutable.
     
     Args:
         filename (str): Chemin relatif vers la ressource.
 
     Returns:
-        path (str): Chemin absolu vers la ressource.
+        str: Chemin absolu vers la ressource.
     """
-    if hasattr(sys, '_MEIPASS'):  # si exe
-        base_path = os.path.dirname(sys.executable)  # dossier du .exe
+    if hasattr(sys, '_MEIPASS'):  # si exe PyInstaller
+        # D'abord, vérifier si le fichier existe dans le package
+        packaged_path = os.path.join(sys._MEIPASS, filename)
+        if os.path.exists(packaged_path):
+            return packaged_path
+        
+        # Sinon, utiliser le dossier à côté de l'exe pour l'écriture
+        base_path = os.path.dirname(sys.executable)
     else:  # si script normal
         base_path = os.path.dirname(__file__)
     
-    # Crée un sous-dossier "data" à côté de l'exe
-    data_dir = os.path.join(base_path, "data")
+    # Crée les dossiers nécessaires
+    full_path = os.path.join(base_path, filename)
+    data_dir = os.path.dirname(full_path)
     os.makedirs(data_dir, exist_ok=True)
 
-    return os.path.join(base_path, filename)
+    return full_path
 
 def random_point_in_polygon(points: tuple[int, int]):
     """Génère un point aléatoire à l'intérieur d'un polygone défini par ses sommets.

@@ -14,11 +14,9 @@ ENV/
 # --- PyInstaller ---
 # On ignore les dossiers générés par la compilation
 build/
-dist/*
-!dist/BlueFrontline.exe
+dist/
 *.egg-info/
 *.manifest
-*.spec
 
 # --- Logs / temp ---
 *.log
