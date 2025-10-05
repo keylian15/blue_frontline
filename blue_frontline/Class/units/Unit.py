@@ -165,6 +165,7 @@ class Unit(pygame.sprite.Sprite):
                 index = self.game.quantique_area.index(result[1])
                 if index == 0:  # L'ile quantique n°4 est l'index 0 car la plus haute sur Tiled.
                     index = 4
+                    print("ici")
                 
                 self.game.initializer.toggle_layer('fog' + str(index), False)  # On enléve le calque de brouillard
                 self.game.quantique_area_hidden.remove(result[1])  # On enlève l'ile de la liste des iles cachées
@@ -184,6 +185,9 @@ class Unit(pygame.sprite.Sprite):
         if result:
             # Récupérer l'index de self.game.quantique_area correspondant à l'île
             index = self.game.quantique_area.index(result[1])
+            # Correction par rapport au nom des iles quantiques
+            if index == 0: 
+                index = 4
 
             # On parcours les îles graphiques pour retrouver la bonne île
             for island in self.game.quantum_islands:
