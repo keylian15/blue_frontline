@@ -27,9 +27,9 @@ class Eclaireur(Unit):
         self.speed = self.max_speed # Par défaut speed = speed max
         self.max_health = config["max_health"]
         self.current_health = self.max_health
-        self.range = config["range"]
-        self.damage = config["damage"]
-        self.fire_rate = config["fire_rate"]
+        self.range = 0  # Les éclaireurs ne tirent pas
+        self.damage = 0
+        self.fire_rate = 0
         
         # Type d'unité
         self.unit_type = config["unit_type"]
