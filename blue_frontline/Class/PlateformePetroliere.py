@@ -50,9 +50,45 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         self.rect = pygame.Rect(rect_x, rect_y, self.width, self.height)
         
         # Pour compatibilité avec la logique d'unités
-        self.range = 0
-        self.damage = 0
+        self.range = 5
+        self.damage = 5
+        self.fire_rate = 1  # 1 tir/seconde
+        self.last_shot_time = 0
         self.is_platform = True
+
+    def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0,0), all_units=None):
+        """Met à jour la plateforme (tir automatique)."""
+        import time
+        if not self.is_alive:
+            return
+        if all_units is None or combat_system is None:
+            return
+        enemies_in_range = []
+        range_pixels = self.range * 32
+        for unit in all_units:
+            if unit is self:
+                continue  
+            if hasattr(unit, 'team') and unit.team != self.team and getattr(unit, 'is_alive', False):
+                if hasattr(unit, 'rect'):
+                    cx, cy = self.position[0], self.position[1]
+                    rx, ry, rw, rh = unit.rect.left, unit.rect.top, unit.rect.width, unit.rect.height
+                    closest_x = max(rx, min(cx, rx + rw))
+                    closest_y = max(ry, min(cy, ry + rh))
+                    distance = ((cx - closest_x)**2 + (cy - closest_y)**2) ** 0.5
+                else:
+                    distance = ((self.position[0] - unit.position[0])**2 + (self.position[1] - unit.position[1])**2) ** 0.5
+                if distance <= range_pixels:
+                    enemies_in_range.append(unit)
+        if enemies_in_range:
+            current_time = time.time()
+            if current_time - self.last_shot_time >= 1.0 / self.fire_rate:
+                target = enemies_in_range[0]
+                if combat_system:
+                    combat_system.fire_projectile(self, target)
+                else:
+                    if hasattr(target, 'take_damage'):
+                        target.take_damage(self.damage, killer=self)
+                self.last_shot_time = current_time
         
     def take_damage(self, damage: int , killer: str = None):
         """Inflige des dégâts à la plateforme.
