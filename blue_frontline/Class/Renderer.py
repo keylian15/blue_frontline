@@ -1,5 +1,4 @@
 import pygame, pyscroll, time, math
-from Class.Game import Game
 
 from Global import get_pygame_key
 import Global
@@ -7,7 +6,7 @@ import Global
 class Renderer:
     """Gestionnaire de rendu pour le jeu."""
     
-    def __init__(self, game: Game):
+    def __init__(self, game: "Game"):
         """Initialise le gestionnaire de rendu avec une référence au jeu.
 
         Args:
