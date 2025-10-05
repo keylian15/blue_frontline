@@ -331,18 +331,11 @@ class Unit(pygame.sprite.Sprite):
         if killer and hasattr(killer, 'team') and killer.team != self.team and hasattr(self, 'game') and hasattr(self.game, 'hud'):
             # Détermination du type d'unité pour la récompense
             unit_type = getattr(self, 'unit_type', None)
-            if unit_type in ['chaloupe', 'bateau', 'eclaireur']:
-                pieces = 1
-            elif unit_type in ['paquebot', 'sousmarin', 'pompe_petroliere']:
-                pieces = 3
-            else:
-                pieces = 0
-            # Ajout des pièces au HUD et synchronisation
-            if pieces > 0:
-                if self.team == "red" : 
-                    self.game.hud.piece_green.count += pieces
-                else :
-                    self.game.hud.piece_red.count += pieces
+
+            if self.team == "red" : 
+                self.game.hud.piece_green.count += 1
+            else :
+                self.game.hud.piece_red.count += 1
         self.kill()  # Retire l'unité du groupe pygame
         
     def get_health_percentage(self):

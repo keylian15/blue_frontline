@@ -81,7 +81,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                     enemies_in_range.append(unit)
         if enemies_in_range:
             current_time = time.time()
-            if current_time - self.last_shot_time >= 1.0 / self.fire_rate:
+            time_since_last_shot = current_time - self.last_shot_time
+            multiplica = self.game.hud.timer.get_speed_multiplier()
+            if time_since_last_shot >= (1.0 / (self.fire_rate * multiplica)):
                 target = enemies_in_range[0]
                 if combat_system:
                     combat_system.fire_projectile(self, target)
