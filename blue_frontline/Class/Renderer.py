@@ -1,5 +1,7 @@
 import pygame, pyscroll, time, math
 
+from Global import CONTROLS_KEYS, get_pygame_key
+
 class Renderer:
     """Gestionnaire de rendu pour le jeu."""
     
@@ -167,7 +169,11 @@ class Renderer:
             # Affichage du message de tir si des ennemis sont dans la portée
             if hasattr(self.game.selected_unit, 'enemies_in_range') and self.game.selected_unit.enemies_in_range:
                 font = pygame.font.Font(None, 32)
-                message = f"Ennemis en vue: {len(self.game.selected_unit.enemies_in_range)} - Appuyez sur 'T' pour tirer"
+                shoot_key = CONTROLS_KEYS["SHOOT"]["key"] # Touche pygame
+                num_key = get_pygame_key(shoot_key)
+                key_name = pygame.key.name(num_key).upper()  
+
+                message = f"Ennemis en vue: {len(self.game.selected_unit.enemies_in_range)} - Appuyez sur {key_name} pour tirer"
                 text_surface = font.render(message, True, (255, 255, 255))
                 
                 # Position du texte au-dessus du cercle de portée
