@@ -390,11 +390,16 @@ def load_keys(path):
         return json.load(f)
 
 def get_pygame_key(key_str):
-    """Convertit la chaîne en constante pygame (ex: "K_e" -> pygame.K_e)"""
-    if key_str.startswith("K_"):
-        return getattr(pygame, key_str)
-    if key_str.startswith("BUTTON_"):
-        return getattr(pygame, key_str)
+    """Convertit la chaîne en constante pygame (ex: "K_e" -> pygame.K_e) ou retourne directement si c'est déjà un entier"""
+    # Si c'est déjà un entier (constante pygame), le retourner directement
+    if isinstance(key_str, int):
+        return key_str
+    # Si c'est une chaîne, la convertir
+    if isinstance(key_str, str):
+        if key_str.startswith("K_"):
+            return getattr(pygame, key_str)
+        if key_str.startswith("BUTTON_"):
+            return getattr(pygame, key_str)
     return key_str  # Pour les boutons souris ou autres
 
 def load_controls_runtime():
