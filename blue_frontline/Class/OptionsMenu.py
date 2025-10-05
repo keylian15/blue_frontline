@@ -46,13 +46,35 @@ class OptionsMenu:
         }
 
         self.waiting_for_key = None
+        
+        # Recharger CONTROLS_KEYS depuis le fichier JSON
+        self.load_keys_from_file()
+        
+        # Charger les contrôles en gérant à la fois int et string
         try:
-            self.controls = {
-                action: get_pygame_key(data.get("key"))
-                for action, data in CONTROLS_KEYS.items()
-            }
-        except Exception:
-            self.controls = CONTROLS_KEYS.copy()
+            self.controls = {}
+            for action, data in CONTROLS_KEYS.items():
+                key = data.get("key")
+                # Si c'est déjà un int, on le garde, sinon on le convertit
+                if isinstance(key, int):
+                    self.controls[action] = key
+                else:
+                    self.controls[action] = get_pygame_key(key)
+        except Exception as e:
+            print(f"Erreur lors du chargement des contrôles: {e}")
+            self.controls = {action: get_pygame_key(data.get("key")) for action, data in CONTROLS_KEYS.items()}
+
+    def load_keys_from_file(self):
+        """Recharge CONTROLS_KEYS depuis le fichier JSON."""
+        try:
+            with open(KEYS_PATH, "r", encoding="utf-8") as f:
+                loaded_data = json.load(f)
+                # Mettre à jour CONTROLS_KEYS global avec les données chargées
+                for action, data in loaded_data.items():
+                    if action in CONTROLS_KEYS:
+                        CONTROLS_KEYS[action]["key"] = data["key"]
+        except Exception as e:
+            print(f"Erreur lors du chargement du fichier keys.json: {e}")
 
     def get_key_string(self, key_value):
         """Convertit une valeur de touche pygame en chaîne pour la sauvegarde JSON."""
@@ -73,7 +95,8 @@ class OptionsMenu:
             for action, data in CONTROLS_KEYS.items():
                 save_data[action] = {
                     "description": data["description"],
-                    "key": self.get_key_string(data["key"]),
+                    # Utiliser self.controls au lieu de data["key"]
+                    "key": self.get_key_string(self.controls[action]),
                 }
 
             with open(KEYS_PATH, "w", encoding="utf-8") as f:
@@ -161,14 +184,16 @@ class OptionsMenu:
     def handle_key_binding(self, event, control_name):
         """Gère l'attribution d'une nouvelle touche"""
         if event.type == pygame.KEYDOWN:
+            # Mettre à jour uniquement self.controls
             self.controls[control_name] = event.key
-            CONTROLS_KEYS[control_name]["key"] = event.key
+            # Sauvegarder dans le fichier JSON
             self.save_keys()
             self.waiting_for_key = None
             return True
         elif event.type == pygame.MOUSEBUTTONDOWN:
+            # Mettre à jour uniquement self.controls
             self.controls[control_name] = event.button
-            CONTROLS_KEYS[control_name]["key"] = event.button
+            # Sauvegarder dans le fichier JSON
             self.save_keys()
             self.waiting_for_key = None
             return True
