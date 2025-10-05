@@ -89,41 +89,50 @@ class Menu:
 
     def run(self):
         """Boucle principale du menu."""
-        
         menu = True
-        while menu:
-            mouse_pos = pygame.mouse.get_pos()
-            mouse_click = False
+        try:
+            while menu:
+                mouse_pos = pygame.mouse.get_pos()
+                mouse_click = False
 
-            for event in pygame.event.get():
-                if event.type == pygame.QUIT:
-                    pygame.quit()
-                    sys.exit()
-                if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                    mouse_click = True
-
-            self.screen.blit(self.background, (0, 0))
-
-            for idx, (text, x, y, w, h) in enumerate(self.buttons):
-                hovered = x <= mouse_pos[0] <= x + w and y <= mouse_pos[1] <= y + h
-                self.draw_button(text, x, y, w, h, hovered)
-                if hovered and mouse_click:
-                    if text == "Quitter":
+                for event in pygame.event.get():
+                    if event.type == pygame.QUIT:
                         pygame.quit()
                         sys.exit()
-                    elif text == "Jouer":
-                        game = Game(self.screen)
-                        # Passer le système de succès au jeu
-                        game.achievements_system = self.achievements_system
-                        game.run()
-                    elif text == "Succès":
-                        achievements_menu = AchievementsMenu(self.screen)
-                        achievements_menu.set_achievements_system(self.achievements_system)
-                        achievements_menu.run()
-                    elif text == "Options":
-                        options_menu = OptionsMenu(self.screen)
-                        options_menu.run()
+                    elif event.type == pygame.KEYDOWN and event.key == pygame.K_F4 and (pygame.key.get_mods() & pygame.KMOD_ALT):
+                        pygame.quit()
+                        sys.exit()
+                    elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                        mouse_click = True
 
-            pygame.display.flip()
+                self.screen.blit(self.background, (0, 0))
 
+                for idx, (text, x, y, w, h) in enumerate(self.buttons):
+                    hovered = x <= mouse_pos[0] <= x + w and y <= mouse_pos[1] <= y + h
+                    self.draw_button(text, x, y, w, h, hovered)
+
+                    if hovered and mouse_click:
+                        if text == "Quitter":
+                            pygame.quit()
+                            sys.exit()
+                        elif text == "Jouer":
+                            game = Game(self.screen)
+                            game.achievements_system = self.achievements_system
+                            game.run()
+                        elif text == "Succès":
+                            achievements_menu = AchievementsMenu(self.screen)
+                            achievements_menu.set_achievements_system(self.achievements_system)
+                            achievements_menu.run()
+                        elif text == "Options":
+                            options_menu = OptionsMenu(self.screen)
+                            options_menu.run()
+
+                pygame.display.flip()
+
+        except SystemExit:
+            # Empêche un traceback en console quand on quitte avec Alt+F4
+            pass
+        except pygame.error:
+            # Cas où la fenêtre est déjà fermée
+            pass
 
