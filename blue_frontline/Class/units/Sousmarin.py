@@ -36,7 +36,7 @@ class SousMarin(Unit):
         self.speed = self.max_speed # Par défaut speed = speed max
         self.max_health = config["max_health"]
         self.current_health = self.max_health
-        self.range = 0  # Les sous-marins ne tirent plus
+        self.range = 0  # Les sous-marins ne tirent pas
         self.damage = 0
         self.fire_rate = 0
         
