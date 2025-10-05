@@ -327,6 +327,31 @@ UNIT_CONFIGS = {
             "red": (255, 0, 0, 50),
             "green": (0, 255, 0, 50)
         }
+    }, 
+    "pompe_petroliere": {
+        "cost": 50,
+        "max_speed": 0,
+        "max_health": 100,
+        "range": 0,
+        "damage": 0,
+        "fire_rate": 1,
+        "unit_type": "pompe_petroliere",
+        "tile_index": {
+            "red": 6,    # Index de la tuile pour équipe rouge
+            "green": 6   # Index de la tuile pour équipe verte
+        },
+        "tileset_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "image_paths": {
+            "red": RED_TEAM_PATH,
+            "green": GREEN_TEAM_PATH
+        },
+        "range_color": {
+            "red": (255, 0, 0, 50),
+            "green": (0, 255, 0, 50)
+        }
     }
 }
 

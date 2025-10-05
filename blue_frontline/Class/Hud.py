@@ -42,7 +42,7 @@ class Hud:
         ]
         # Clés de config correspondant aux icônes (la plateforme n'a pas de config pour l'instant)
         self.unit_config_keys = [
-            'chaloupe', 'bateau', 'paquebot', 'eclaireur', 'sousmarin', None
+            'chaloupe', 'bateau', 'paquebot', 'eclaireur', 'sousmarin', 'pompe_petroliere'
         ]
                 
 

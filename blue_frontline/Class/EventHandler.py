@@ -7,6 +7,7 @@ from Class.units.Bateau import BateauRouge, BateauVert
 from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
 from Class.units.Paquebot import PaquebotRouge, PaquebotVert
 from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
+from Class.units.PompePetroliere import PompePetroliereRouge, PompePetroliereVert
 
 class EventHandler:
     """Gestionnaire d'événements pour le jeu."""
@@ -31,8 +32,8 @@ class EventHandler:
                 return False
 
             # Gestion des événements HUD
-            self.game.hud.petrole_green.handle_event(event)
-            self.game.hud.petrole_red.handle_event(event)
+            self.game.hud.petrole_green.handle_event(event, self.game.nbPompePetroliereVert)
+            self.game.hud.petrole_red.handle_event(event, self.game.nbPompePetroliereRouge)
             self.game.hud.timer.handle_event(event)
 
             # Gestion du changement de marée                   
@@ -129,11 +130,18 @@ class EventHandler:
                 'paquebot': {'red': PaquebotRouge, 'green': PaquebotVert},
                 'eclaireur': {'red': EclaireurRouge, 'green': EclaireurVert},
                 'sousmarin': {'red': SousMarinRouge, 'green': SousMarinVert},
+                'pompe_petroliere': {'red': PompePetroliereRouge, 'green': PompePetroliereVert},
             }
             unit_class = class_map.get(config_key)[team_key]
             
             # On instancie l'unité
             unit = unit_class(self.game)
+            
+            if config_key == "pompe_petroliere" :
+                if team_key == "red" : 
+                    self.game.nbPompePetroliereRouge += 1
+                else : 
+                    self.game.nbPompePetroliereVert += 1
             
             # Ajouter au système de combat et au groupe de sprites
             self.game.combat_system.add_unit(unit)

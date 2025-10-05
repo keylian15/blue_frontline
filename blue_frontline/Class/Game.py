@@ -246,8 +246,10 @@ class Game :
         
         # Sélectionner la nouvelle unité
         if unit and hasattr(unit, 'is_selected'):
-            unit.is_selected = True
-            self.selected_unit = unit
+            print(unit.unit_type)
+            if unit.unit_type != "pompe_petroliere" : # Ne pas séléctioner l'unité pour la pompe pétrolière 
+                unit.is_selected = True
+                self.selected_unit = unit
         else:
             self.selected_unit = None
 

@@ -62,6 +62,8 @@ class GameInitializer:
         # Système de combat et unités
         self.game.combat_system = CombatSystem(self.game)
         self.game.units = []
+        self.game.nbPompePetroliereRouge = 0
+        self.game.nbPompePetroliereVert = 0
         self.game.selected_unit = None
     
         # Variables pour stocker les objets des plateformes Tiled

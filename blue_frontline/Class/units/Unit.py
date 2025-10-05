@@ -54,31 +54,6 @@ class Unit(pygame.sprite.Sprite):
             self.range_color = config.get("range_color", {}).get(team, (255, 0, 0, 50))
         else:
             self.range_color = (255, 0, 0, 50) if team == "red" else (0, 255, 0, 50)
-                        
-        self.vitesse = {
-            "haute" : { 
-                "Collision" :{
-                    "Collision" : 0,
-                    "mh_ile" : 0,
-                    "mb_ile" : 1, 
-                    },
-                "eau_peu_profonde" : { 
-                    "mb_ile" : 2,
-                    },
-                "defaut" : 2 
-                }, 
-            "basse" : { 
-                "Collision" : { 
-                    "Collision" : 0, 
-                    "mh_ile" : 0, 
-                    "mb_ile" : 0, 
-                    }, 
-                "eau_peu_profonde" : { 
-                    "mb_ile" : 1, 
-                    }, 
-                "defaut" : 2 
-                }, 
-            }
 
     # Chaque unité peut avoir sa propre tuile, pour chaque équipe, et tout est configurable
     def load_sprite_from_tileset(self, team: str, unit_type: str):
@@ -351,7 +326,7 @@ class Unit(pygame.sprite.Sprite):
             unit_type = getattr(self, 'unit_type', None)
             if unit_type in ['chaloupe', 'bateau', 'eclaireur']:
                 pieces = 1
-            elif unit_type in ['paquebot', 'sousmarin']:
+            elif unit_type in ['paquebot', 'sousmarin', 'pompe_petroliere']:
                 pieces = 3
             else:
                 pieces = 0
