@@ -31,13 +31,13 @@ class InputManager:
         """
         
         dx, dy = 0, 0
-        if pressed[get_action_key("MOVE_UP")]:  # Haut
+        if pressed[get_action_key("CAMERA_UP")]:  # Haut
             dy -= self.game.camera.camera_move
-        if pressed[get_action_key("MOVE_DOWN")]:  # Bas
+        if pressed[get_action_key("CAMERA_DOWN")]:  # Bas
             dy += self.game.camera.camera_move
-        if pressed[get_action_key("MOVE_LEFT")]:  # Gauche
+        if pressed[get_action_key("CAMERA_LEFT")]:  # Gauche
             dx -= self.game.camera.camera_move
-        if pressed[get_action_key("MOVE_RIGHT")]:  # Droite
+        if pressed[get_action_key("CAMERA_RIGHT")]:  # Droite
             dx += self.game.camera.camera_move
         
         # Déplacer la caméra seulement s'il y a un déplacement
@@ -53,7 +53,7 @@ class InputManager:
         
         current_time = pygame.time.get_ticks()
 
-        if pressed[get_action_key("TOGGLE_HUD")]:
+        if pressed[get_action_key("HUD_TOGGLE")]:
             if current_time - self.last_hud_toggle_time > self.hud_toggle_cooldown:
                 self.game.hud.switch()
                 self.last_hud_toggle_time = current_time

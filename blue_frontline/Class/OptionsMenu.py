@@ -3,7 +3,6 @@ import math
 import json
 from Global import *
 
-
 class OptionsMenu:
     def __init__(self, screen):
         self.screen = screen
@@ -11,10 +10,7 @@ class OptionsMenu:
         self.font = pygame.font.SysFont(None, 40)
         self.title_font = pygame.font.SysFont(None, 60)
 
-        self.background = pygame.image.load(MENU_PATH).convert_alpha()
-        self.background = pygame.transform.scale(
-            self.background, (self.WIDTH, self.HEIGHT)
-        )
+        self.background = (20, 30, 50)
 
         self.anchor_img = pygame.image.load(ANCHOR_PATH).convert_alpha()
         self.anchor_img = pygame.transform.smoothscale(self.anchor_img, (30, 30))
@@ -30,39 +26,37 @@ class OptionsMenu:
         back_button_width = max(
             self.MIN_BUTTON_WIDTH, back_text_width + self.BUTTON_PADDING
         )
+        
+        # Scroll
+        self.scroll_y = 0
+        self.scroll_speed = 30
+        self.max_scroll = 0
+        
+        # Position initiale du bouton retour (sera mise à jour dans draw)
+        self.back_button_base_y = 0
 
         self.back_button = {
             "text": "Retour",
             "rect": pygame.Rect(
                 self.MARGIN_LEFT,
-                self.HEIGHT - 70,
+                0,
                 back_button_width,
                 self.BUTTON_HEIGHT,
             ),
         }
 
         self.waiting_for_key = None
-        # Ne stocker que les valeurs de touches (ints) pour l'affichage correct des noms
         try:
             self.controls = {
                 action: get_pygame_key(data.get("key"))
                 for action, data in CONTROLS_KEYS.items()
             }
         except Exception:
-            # Fallback simple en cas d'erreur: garder la copie, mais cela affichera mal les noms
             self.controls = CONTROLS_KEYS.copy()
 
     def get_key_string(self, key_value):
-        """Convertit une valeur de touche pygame en chaîne pour la sauvegarde JSON.
-
-        Args:
-            key_value: La valeur de la touche (int pour pygame.K_* ou pygame.BUTTON_*)
-
-        Returns:
-            str: La représentation en chaîne de la touche (ex: "K_e", "BUTTON_LEFT")
-        """
+        """Convertit une valeur de touche pygame en chaîne pour la sauvegarde JSON."""
         if isinstance(key_value, int):
-            # Chercher dans les constantes pygame.K_* et pygame.BUTTON_*
             for name in dir(pygame):
                 if name.startswith("K_") or name.startswith("BUTTON_"):
                     try:
@@ -75,7 +69,6 @@ class OptionsMenu:
     def save_keys(self):
         """Sauvegarde les touches de contrôle dans le fichier keys.json."""
         try:
-            # Convertir les valeurs pygame en chaînes
             save_data = {}
             for action, data in CONTROLS_KEYS.items():
                 save_data[action] = {
@@ -83,7 +76,6 @@ class OptionsMenu:
                     "key": self.get_key_string(data["key"]),
                 }
 
-            # Sauvegarder dans le fichier JSON
             with open(KEYS_PATH, "w", encoding="utf-8") as f:
                 json.dump(save_data, f, indent=4, ensure_ascii=False)
 
@@ -132,7 +124,6 @@ class OptionsMenu:
 
         adapted_rect = pygame.Rect(rect.x, rect.y, button_width, rect.height)
 
-        # Change la couleur si en attente d'une touche
         is_selected = self.waiting_for_key and action == self.waiting_for_key
         button_surf = self.draw_gradient_button(adapted_rect, is_selected)
 
@@ -156,7 +147,7 @@ class OptionsMenu:
         )
         self.screen.blit(key_surf, key_rect)
 
-        action_surf = self.font.render(action, True, (0, 0, 0))
+        action_surf = self.font.render(action, True, WHITE)
         action_rect = action_surf.get_rect(
             midleft=(
                 max(self.ACTION_MARGIN, adapted_rect.right + 40),
@@ -165,23 +156,19 @@ class OptionsMenu:
         )
         self.screen.blit(action_surf, action_rect)
 
-        return adapted_rect  # Retourne le rectangle pour la détection des clics
+        return adapted_rect
 
     def handle_key_binding(self, event, control_name):
         """Gère l'attribution d'une nouvelle touche"""
         if event.type == pygame.KEYDOWN:
             self.controls[control_name] = event.key
-            # Mettre à jour immédiatement la touche dans CONTROLS_KEYS
             CONTROLS_KEYS[control_name]["key"] = event.key
-            # Sauvegarder les modifications dans keys.json
             self.save_keys()
             self.waiting_for_key = None
             return True
         elif event.type == pygame.MOUSEBUTTONDOWN:
             self.controls[control_name] = event.button
-            # Mettre à jour immédiatement la touche dans CONTROLS_KEYS
             CONTROLS_KEYS[control_name]["key"] = event.button
-            # Sauvegarder les modifications dans keys.json
             self.save_keys()
             self.waiting_for_key = None
             return True
@@ -203,36 +190,58 @@ class OptionsMenu:
 
     def draw(self):
         """Dessine le menu des options"""
-        # Afficher le fond
-        self.screen.blit(self.background, (0, 0))
+        self.screen.fill(self.background)
 
-        # Titre centré
+        # Titre centré (fixe, ne scroll pas)
         title = "OPTIONS"
         title_surf = self.title_font.render(title, True, WHITE)
         title_rect = title_surf.get_rect(midtop=(self.WIDTH // 2, 50))
         self.screen.blit(title_surf, title_rect)
 
-        # Sous-titre aligné avec les contrôles
+        # Sous-titre (scrollable)
+        subtitle_y = 120 - self.scroll_y
         subtitle = "Contrôles"
         subtitle_surf = self.font.render(subtitle, True, LIGHT_BLUE)
-        subtitle_rect = subtitle_surf.get_rect(topleft=(self.MARGIN_LEFT, 120))
+        subtitle_rect = subtitle_surf.get_rect(topleft=(self.MARGIN_LEFT, subtitle_y))
         self.screen.blit(subtitle_surf, subtitle_rect)
 
-        # Récupération et affichage des contrôles depuis Global
+        # Affichage des contrôles avec scroll
         y_pos = 180
-        control_rects = {}  # Pour stocker les rectangles des contrôles
+        control_rects = {}
 
+        # Zone limite avant le bouton retour (avec marge de sécurité)
+        scrollable_bottom = self.HEIGHT - self.BUTTON_HEIGHT - 40
+        
         for control_name, control_info in CONTROLS_KEYS.items():
-            key_name = self.get_key_name(self.controls[control_name])
-            base_rect = pygame.Rect(
-                self.MARGIN_LEFT, y_pos - 5, self.MIN_BUTTON_WIDTH, self.BUTTON_HEIGHT
-            )
-            control_rect = self.draw_control_button(
-                key_name, base_rect, control_info["description"]
-            )
-            control_rects[control_name] = control_rect
+            # Appliquer le scroll à la position Y
+            scrolled_y = y_pos - self.scroll_y
+            
+            # N'afficher que si visible dans la zone scrollable
+            if -self.BUTTON_HEIGHT <= scrolled_y <= scrollable_bottom:
+                key_name = self.get_key_name(self.controls[control_name])
+                base_rect = pygame.Rect(
+                    self.MARGIN_LEFT, scrolled_y, self.MIN_BUTTON_WIDTH, self.BUTTON_HEIGHT
+                )
+                control_rect = self.draw_control_button(
+                    key_name, base_rect, control_info["description"]
+                )
+                control_rects[control_name] = control_rect
+            
             y_pos += self.VERTICAL_SPACING
 
+        # Calculer le scroll maximum
+        total_content_height = y_pos
+        self.max_scroll = max(0, total_content_height - scrollable_bottom + 20)
+        
+        # Ligne de séparation (optionnelle)
+        separator_y = self.HEIGHT - self.BUTTON_HEIGHT - 30
+        pygame.draw.line(self.screen, LIGHT_BLUE, 
+                        (self.MARGIN_LEFT, separator_y), 
+                        (self.WIDTH - self.MARGIN_LEFT, separator_y), 2)
+        
+        # Positionner le bouton retour en bas de l'écran (fixe, ne scroll pas)
+        self.back_button["rect"].y = self.HEIGHT - self.BUTTON_HEIGHT - 20
+        
         self._draw_back_button()
 
         return control_rects
@@ -251,7 +260,6 @@ class OptionsMenu:
             border_radius=BUTTON_BORDER_RADIUS,
         )
 
-        # Ajout de l'ancre avec l'image
         anchor_rect = self.anchor_img.get_rect(
             midleft=(
                 self.back_button["rect"].left + 20,
@@ -260,19 +268,30 @@ class OptionsMenu:
         )
         self.screen.blit(self.anchor_img, anchor_rect)
 
-        # Texte du bouton retour
         back_text = self.font.render(self.back_button["text"], True, WHITE)
         back_rect = back_text.get_rect(
             midleft=(anchor_rect.right + 10, self.back_button["rect"].centery)
         )
         self.screen.blit(back_text, back_rect)
+        
+    def handle_scroll(self, scroll_direction):
+        """Gère le défilement du menu.
+        
+        Args:
+            scroll_direction (int): 1 pour vers le haut, -1 pour vers le bas
+        """
+        self.scroll_y += scroll_direction * self.scroll_speed
+        self.scroll_y = max(0, min(self.scroll_y, self.max_scroll))
 
     def run(self):
         """Exécute la boucle du menu options"""
         running = True
+        clock = pygame.time.Clock()
+        
         while running:
             control_rects = self.draw()
             pygame.display.flip()
+            clock.tick(60)
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -293,8 +312,11 @@ class OptionsMenu:
                         if self.back_button["rect"].collidepoint(mouse_pos):
                             return True
 
-                        # Vérification des clics sur les contrôles
                         for control_name, rect in control_rects.items():
                             if rect.collidepoint(mouse_pos):
                                 self.waiting_for_key = control_name
                                 break
+                    elif event.button == 4:  # Molette haut
+                        self.handle_scroll(-1)  # Scroll vers le haut
+                    elif event.button == 5:  # Molette bas
+                        self.handle_scroll(1)   # Scroll vers le bas

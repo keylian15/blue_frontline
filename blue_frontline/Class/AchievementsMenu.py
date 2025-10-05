@@ -160,7 +160,7 @@ class AchievementsMenu:
         else:
             # Succès verrouillé : afficher la description mystère
             description_text = achievement.get('hidden_description', '???')
-            desc_color = (120, 120, 120)
+            desc_color = (180, 120, 120)
         
         desc_surface = self.description_font.render(description_text, True, desc_color)
         surface.blit(desc_surface, (x + 15, y + 35))

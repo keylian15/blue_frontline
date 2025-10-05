@@ -48,7 +48,7 @@
         "key": "K_t"
     },
     "CREATE_UNIT": {
-        "description": "création d'unités",
+        "description": "Création d'unités",
         "key": "K_RETURN"
     },
     "HUD_LEFT": {

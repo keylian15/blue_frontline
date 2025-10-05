@@ -55,12 +55,12 @@ class EventHandler:
                 
             # Gestion des touches
             elif event.type == pygame.KEYDOWN:
-                if not self._handle_keydown_events(event):
+                if not self.handle_keydown_events(event):
                     continue
 
             # Gestion des clics souris
             elif event.type == pygame.MOUSEBUTTONDOWN:
-                self._handle_mouse_events(event)
+                self.handle_mouse_events(event)
         
         return True
     
@@ -157,7 +157,7 @@ class EventHandler:
             self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
             return True
 
-        if event.key == get_action_key("SPEED_UP"):
+        if event.key == get_action_key("TIME_SPEED"):
             # Cycler la vitesse du temps
             new_speed = self.game.hud.timer.cycle_speed()
             # Synchroniser la vitesse du pétrole avec le timer

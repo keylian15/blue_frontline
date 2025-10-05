@@ -1,4 +1,5 @@
 # Fichier des variables globales (Chemin, variables, etc.)
+import json
 import os, pygame
 from Utils import resource_path, user_data_path  
 
@@ -356,16 +357,13 @@ MENU_PATH = resource_path('assets/menu/menu.png')
 ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
 
 # === Contrôles du jeu ===
-KEYS_PATH = resource_path("./data/keys.json")
-
+KEYS_PATH = resource_path("data/keys.json")
 
 def load_keys(path):
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-
 CONTROLS_KEYS = load_keys(KEYS_PATH)
-
 
 def get_pygame_key(key_str):
     # Convertit la chaîne en constante pygame (ex: "K_e" -> pygame.K_e)
@@ -374,7 +372,6 @@ def get_pygame_key(key_str):
     if key_str.startswith("BUTTON_"):
         return getattr(pygame, key_str)
     return key_str  # Pour les boutons souris ou autres
-
 
 def load_controls_runtime():
     """Charge les contrôles depuis keys.json à chaque appel et retourne un dict
@@ -387,7 +384,6 @@ def load_controls_runtime():
         }
         for action, data in raw.items()
     }
-
 
 def get_action_key(action):
     """Retourne la valeur pygame de la touche pour une action en lisant keys.json.
