@@ -15,12 +15,12 @@ Dans un monde moderne bouleversé par la chute d’une météorite, l’environn
 - [Le jeu](#le-jeu)
 - [Les contrôles](#les-contrôles)
 - [HUD](#hud)
-- [Les unités](#les-unités)
+- [Les unitées](#les-unitées)
 - [Les marées et les iles quantiques](#les-marées-et-les-iles-quantiques)
 
 ## L'histoire
 
-La chute d’une météorite a altéré le monde et créé des **îles quantiques** changeantes. Deux puissances rivales se disputent la zone de l’impact pour y conduire des recherches. Dans ce théâtre mouvant, chaque bataille a un but clair: **détruire la base ennemie**.
+La chute d’une météorite a altérée le monde et créée des **îles quantiques** changeantes. Deux puissances rivales se disputent la zone de l’impact pour y conduire des recherches. Dans ce théâtre mouvant, chaque bataille a un but clair: **détruire la base ennemie**.
 
 ## L'installation
 
@@ -71,19 +71,19 @@ python blue_frontline/main.py
 
 **Ressources**  
 ![Compteurs de ressources](images/compteur_resources.png)  
-- **Pétrole**: achat d’unités. Généré passivement, accélérable grace aux **pompes**.
-- **Argent**: obtenu en détruisant des unités ennemies. Sert aux **améliorations**.
+- **Pétrole**: achat d’unitées. Généré passivement, accélérable grace aux **pompes**.
+- **Argent**: obtenu en détruisant des unitées ennemies. Sert aux **améliorations**.
 
 
 
 ## Les contrôles
 
-- **ZQSD**: D&plcaer la caméra sur la carte.
-- **Flèches directionnelles Gauche Droite**: Choisir l’unité à poser.
-- **Entrée**: Poser l’unité sélectionnée.
-- **Clic gauche**: Sélectionner une unité, puis cliquer sur une destination pour la déplacer.
-- **Clic droit**: ultiliser la capacité spécial de l'unité.
-- **T**: Tirer lorsqu’une unité ennemie est à portée.
+- **ZQSD**: Déplacer la caméra sur la carte.
+- **Flèches directionnelles Gauche Droite**: Choisir l’unitée à poser.
+- **Entrée**: Poser l’unitée sélectionnée.
+- **Clic gauche**: Sélectionner une unitée, puis cliquer sur une destination pour la déplacer.
+- **Clic droit**: ultiliser la capacité spéciale de l'unitée.
+- **T**: Tirer lorsqu’une unitée ennemie est à portée.
 - **V**: Changer la vitesse du jeu.
 - **H**: Afficher/masquer l’interface.
 - **J**: Changer d’équipe.
@@ -96,22 +96,22 @@ Remapping: possible dans le **menu Options**.
 
 1 - **Timer**: Temps passé depuis le debut de la partie.  
 2 - **Icône de marée**: Etat actuel (haute/basse).  
-3 - **menu d'unité**: Permet de deployer des unités.    
+3 - **menu d'unitée**: Permet de deployer des unitées.    
 4 - **Compteurs de ressources**: **Pétrole** et **argent** disponibles.  
 
-## Les unités
-- Sélectionner une unité dans le menu des unité a l'aide des fleches directionnelles puis appuyer sur entré pour la faire apparaitre près de votre base 
-![Menu unités](images/menu_unite.png)
-- Cliquez sur une unité pour la **sélectionner**, puis sur une **destination** pour la déplacer.
+## Les unitées
+- Sélectionner une unitée dans le menu des unitée a l'aide des fleches directionnelles puis appuyer sur entré pour la faire apparaitre près de votre base 
+![Menu unitées](images/menu_unite.png)
+- Cliquez sur une unitée pour la **sélectionner**, puis sur une **destination** pour la déplacer.
 - Appuyez sur **T** pour tirer lorsqu’une cible est à portée.
-![Menu unités](images/tir.png)
+![Menu unitées](images/tir.png)
 
-il ya plusieurs unités disponibles:
+il ya plusieurs unitées disponibles:
 
 ### Les chaloupes
 ![unite](images/chaloupe.png)  
 **Description**  
-Les chaloupes sont des unités de base : elles sont rapides et peu chères, mais fragiles.
+Les chaloupes sont des unitées de base : elles sont rapides et peu chères, mais fragiles.
 
 **Stats**  
 **Coût**:20  
@@ -124,7 +124,7 @@ __________________________________
 ### Les bateaux
 ![unite](images/bateaux.png)  
 **Description**  
-Les bateaux sont des unités de taille moyenne : ils sont plus résistants que les chaloupes, tirent davantage, mais sont légèrement plus lents et plus chers.
+Les bateaux sont des unitées de taille moyenne : ils sont plus résistants que les chaloupes, tirent davantage, mais sont légèrement plus lents et plus chers.
 
 **Stats**  
 **Coût**:60  
@@ -137,7 +137,7 @@ __________________________________
 ### Les paquebots
 ![unite](images/paquebot.png)  
 **Description**  
-La meilleure unité disponible : elle est très lente, mais compense sa lenteur grâce à sa robustesse et à sa puissance de tir accrue.  
+La meilleure unitée disponible : elle est très lente, mais compense sa lenteur grâce à sa robustesse et à sa puissance de tir accrue.  
 
 **Stats**  
 **Coût**:120  
@@ -150,7 +150,7 @@ __________________________________
 ### Les éclaireurs
 ![unite](images/eclaireurs.png)  
 **Description**  
-Les éclaireurs ne sont pas des unités de combat : ils servent principalement à découvrir les zones de brouillard sur la carte et permettent ainsi de traverser les zones d’îles quantiques.
+Les éclaireurs ne sont pas des unitées de combat : ils servent principalement à découvrir les zones de brouillard sur la carte et permettent ainsi de traverser les zones d’îles quantiques.
 
 **Stats**  
 **Coût**:40    
@@ -163,7 +163,7 @@ __________________________________
 ### Les sous marin
 ![unite](images/sous_marin.png)  
 **Description**    
-Les sous-marins sont des unités classiques, mais ont la particularité de pouvoir déposer des mines.  
+Les sous-marins sont des unitées classiques, mais ont la particularitée de pouvoir déposer des mines.  
 
 **Stats**  
 **Coût**:180    
@@ -179,7 +179,7 @@ __________________________________
 Les pompes permettent d’améliorer votre rendement en pétrole.
 
 ## Améliorations  
-Lorsque vous détruisez des troupes adverse vous recuperé des pieces qui peuvent etre utiliser pour des améliorations:  
+Lorsque vous détruisez des troupes adverse vous recuperer des pieces qui peuvent être utilisées pour des améliorations:  
 ### Destruction :  
 • 1 : 1 pièce – Coût : Gratuit (défaut)  
 • 2 : 2 pièces – Coût : 100 pièces  
