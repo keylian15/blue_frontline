@@ -201,35 +201,38 @@ class Game :
                     # On joue le son 
                     self.notify_quantum_audio()
 
-    def find_unit_at_position(self, world_x: float, world_y: float):
-        """Trouve l'unité (ou plateforme) la plus proche de la position donnée dans le monde.
+    def find_unit_at_position(self, world_x: float, world_y: float, exclude_unit=None):
+        """Trouve l'unité (ou plateforme) la plus proche de la position donnée dans le monde,
+        en ignorant une unité spécifique si elle est fournie.
 
         Args:
             world_x (float): Coordonnée x de la position dans le monde.
             world_y (float): Coordonnée y de la position dans le monde.
+            exclude_unit (Unit, optional): Unité à ignorer lors de la recherche.
 
         Returns:
-            Unit : L'unité la plus proche de la position donnée. None sinon.
+            Unit | None: L'unité la plus proche de la position donnée, ou None si aucune n'est trouvée.
         """
 
         closest_unit = None
         min_distance = float('inf')
         
         for unit in self.units:
-            if not unit.is_alive:
+            # Ignorer l'unité exclue ou les unités mortes
+            if unit == exclude_unit or not unit.is_alive:
                 continue
-                
-            # Distance entre le clic et le centre de l'unité
+
+            # Distance entre le point et le centre de l'unité
             distance = math.sqrt((unit.position[0] - world_x) ** 2 + (unit.position[1] - world_y) ** 2)
-            
-            # Ajuster la tolérance selon le type d'unité
-            tolerance = 60 if hasattr(unit, 'is_platform') and unit.is_platform else 40
-            
-            # Si l'unité est dans la zone de tolérance et plus proche que les autres
+
+            # Tolérance différente si c’est une plateforme
+            tolerance = 60 if getattr(unit, 'is_platform', False) else 40
+
+            # Vérifie si l'unité est dans la zone de tolérance et plus proche
             if distance <= tolerance and distance < min_distance:
                 closest_unit = unit
                 min_distance = distance
-        
+
         return closest_unit
 
     def select_unit(self, unit: Unit):
@@ -246,7 +249,6 @@ class Game :
         
         # Sélectionner la nouvelle unité
         if unit and hasattr(unit, 'is_selected'):
-            print(unit.unit_type)
             if unit.unit_type != "pompe_petroliere" : # Ne pas séléctioner l'unité pour la pompe pétrolière 
                 unit.is_selected = True
                 self.selected_unit = unit

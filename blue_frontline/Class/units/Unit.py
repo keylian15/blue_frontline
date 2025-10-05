@@ -143,6 +143,13 @@ class Unit(pygame.sprite.Sprite):
             self.position[1] + self.speed_y * dt
         )
         
+        # Si la prochaine position est la position d'une entité autre que la notre, on arrête le mouvement
+        if self.game.find_unit_at_position(next_position[0], next_position[1], self):
+            self.stop()
+            self.is_moving = False
+            self.target_position = None
+            return
+        
         # Si la prochaine position est dans une ile, on arrête le mouvement
         if point_in_many_polygons(self.game.obstacles, next_position):
             self.stop()
