@@ -381,16 +381,16 @@ MENU_PATH = resource_path('assets/menu/menu.png')
 ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
 
 # === Contrôles du jeu ===
-KEYS_PATH = resource_path("data/keys.json")
+# Utilisation de user_data_path comme pour les achievements
+KEYS_PATH = user_data_path("data/keys.json")
 
 def load_keys(path):
+    """Charge le fichier keys.json depuis le chemin donné."""
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
 
-CONTROLS_KEYS = load_keys(KEYS_PATH)
-
 def get_pygame_key(key_str):
-    # Convertit la chaîne en constante pygame (ex: "K_e" -> pygame.K_e)
+    """Convertit la chaîne en constante pygame (ex: "K_e" -> pygame.K_e)"""
     if key_str.startswith("K_"):
         return getattr(pygame, key_str)
     if key_str.startswith("BUTTON_"):
@@ -411,17 +411,26 @@ def load_controls_runtime():
 
 def get_action_key(action):
     """Retourne la valeur pygame de la touche pour une action en lisant keys.json.
-    En cas d'erreur, se replie sur CONTROLS_KEYS."""
+    En cas d'erreur, retourne None."""
     try:
         raw = load_keys(KEYS_PATH)
         data = raw.get(action)
         if data and "key" in data:
             return get_pygame_key(data["key"])
-    except Exception:
-        pass
-    # Fallback: recharger dynamiquement depuis le fichier
-    try:
-        controls = load_controls_runtime()
-        return controls.get(action, {}).get("key")
-    except Exception:
+    except Exception as e:
+        print(f"Erreur lors du chargement de la touche pour '{action}': {e}")
         return None
+
+# Variable CONTROLS_KEYS - initialisée à None, sera chargée au premier appel
+CONTROLS_KEYS = None
+
+def get_controls_keys():
+    """Retourne le dictionnaire CONTROLS_KEYS, en le chargeant si nécessaire."""
+    global CONTROLS_KEYS
+    if CONTROLS_KEYS is None:
+        try:
+            CONTROLS_KEYS = load_controls_runtime()
+        except Exception as e:
+            print(f"Erreur lors du chargement des contrôles: {e}")
+            CONTROLS_KEYS = {}
+    return CONTROLS_KEYS

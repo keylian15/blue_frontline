@@ -10,7 +10,6 @@ class Menu:
     
     def __init__(self):
         """Fonction d'initialisation du menu principal."""
-
         self.screen = pygame.display.set_mode((0, 0), pygame.NOFRAME)
         pygame.display.set_caption("Blue Frontline")
         self.WIDTH, self.HEIGHT = self.screen.get_size()

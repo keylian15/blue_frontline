@@ -2,6 +2,7 @@ import pygame
 import math
 import json
 from Global import *
+import Global
 
 class OptionsMenu:
     def __init__(self, screen):
@@ -53,7 +54,7 @@ class OptionsMenu:
         # Charger les contrôles en gérant à la fois int et string
         try:
             self.controls = {}
-            for action, data in CONTROLS_KEYS.items():
+            for action, data in Global.CONTROLS_KEYS.items():
                 key = data.get("key")
                 # Si c'est déjà un int, on le garde, sinon on le convertit
                 if isinstance(key, int):
@@ -62,7 +63,7 @@ class OptionsMenu:
                     self.controls[action] = get_pygame_key(key)
         except Exception as e:
             print(f"Erreur lors du chargement des contrôles: {e}")
-            self.controls = {action: get_pygame_key(data.get("key")) for action, data in CONTROLS_KEYS.items()}
+            self.controls = {action: get_pygame_key(data.get("key")) for action, data in Global.CONTROLS_KEYS.items()}
 
     def load_keys_from_file(self):
         """Recharge CONTROLS_KEYS depuis le fichier JSON."""
@@ -71,8 +72,8 @@ class OptionsMenu:
                 loaded_data = json.load(f)
                 # Mettre à jour CONTROLS_KEYS global avec les données chargées
                 for action, data in loaded_data.items():
-                    if action in CONTROLS_KEYS:
-                        CONTROLS_KEYS[action]["key"] = data["key"]
+                    if action in Global.CONTROLS_KEYS:
+                        Global.CONTROLS_KEYS[action]["key"] = data["key"]
         except Exception as e:
             print(f"Erreur lors du chargement du fichier keys.json: {e}")
 
@@ -92,7 +93,7 @@ class OptionsMenu:
         """Sauvegarde les touches de contrôle dans le fichier keys.json."""
         try:
             save_data = {}
-            for action, data in CONTROLS_KEYS.items():
+            for action, data in Global.CONTROLS_KEYS.items():
                 save_data[action] = {
                     "description": data["description"],
                     # Utiliser self.controls au lieu de data["key"]
@@ -237,7 +238,7 @@ class OptionsMenu:
         # Zone limite avant le bouton retour (avec marge de sécurité)
         scrollable_bottom = self.HEIGHT - self.BUTTON_HEIGHT - 40
         
-        for control_name, control_info in CONTROLS_KEYS.items():
+        for control_name, control_info in Global.CONTROLS_KEYS.items():
             # Appliquer le scroll à la position Y
             scrolled_y = y_pos - self.scroll_y
             
