@@ -14,6 +14,7 @@ from Class.Timer import Timer
 from Class.units import Unit
 from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
+from Class import IAInitializer
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
@@ -63,7 +64,13 @@ class Game :
         self.initializer.init_game_systems()
         self.initializer.init_ui()
         self.initializer.init_sound()
+        
+        # Initialisier le gestionnaire IAs
+        self.iaInitializer = IAInitializer(self)
 
+        # Appeler les fonctions d'ia
+        self.iaInitializer.init_ia_bateau()
+        
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
         
