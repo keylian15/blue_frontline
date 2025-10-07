@@ -65,12 +65,6 @@ class Game :
         self.initializer.init_ui()
         self.initializer.init_sound()
         
-        # Initialisier le gestionnaire IAs
-        self.iaInitializer = IAInitializer(self)
-
-        # Appeler les fonctions d'ia
-        self.iaInitializer.init_ia_bateau()
-        
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
         
@@ -393,7 +387,7 @@ class Game :
         # S'assurer que la caméra est dans le nouveau groupe
         if hasattr(self, 'camera') and self.camera not in self.group.sprites():
             self.group.add(self.camera)
-    
+
     def restart_game(self):
         """Redémarre le jeu."""
         
