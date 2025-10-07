@@ -14,7 +14,7 @@ from Class.Timer import Timer
 from Class.units import Unit
 from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
-from Class import IAInitializer
+from Class.IAInitializer import IAInitializer
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
