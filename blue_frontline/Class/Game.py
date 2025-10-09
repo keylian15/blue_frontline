@@ -14,6 +14,7 @@ from Class.Timer import Timer
 from Class.units import Unit
 from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
+from Class.IAInitializer import IAInitializer
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
@@ -63,7 +64,7 @@ class Game :
         self.initializer.init_game_systems()
         self.initializer.init_ui()
         self.initializer.init_sound()
-
+        
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
         
@@ -386,7 +387,7 @@ class Game :
         # S'assurer que la caméra est dans le nouveau groupe
         if hasattr(self, 'camera') and self.camera not in self.group.sprites():
             self.group.add(self.camera)
-    
+
     def restart_game(self):
         """Redémarre le jeu."""
         

@@ -1,9 +1,7 @@
 site_name: Blue Frontline Docs
 
 nav:
-  - Ustilisateur: index.md
-  - Admin: MANUEL_ADMINISTRATEUR.md
-  - API: api.md
+  - Utilisateur: doc_user.md
 
 theme:
   name: material
@@ -13,5 +11,19 @@ plugins:
   - mkdocstrings:
       handlers:
         python:
-          paths : 
+          paths:
             - ../blue_frontline
+  - redirects:
+      redirect_maps:
+        'index.md': 'doc_user.md'
+
+# Ces fichiers ne sont pas dans la navigation,
+# mais restent construits et accessibles via leur URL directe.
+extra:
+  include_hidden: true
+
+markdown_extensions:
+  - toc:
+      permalink: true
+
+docs_dir: docs
