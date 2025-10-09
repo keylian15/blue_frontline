@@ -51,6 +51,7 @@ class SousMarin(Unit):
         # État de mouvement
         self.is_moving = False
         self.target_position = None
+        
             
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list[Unit] = None):
         """Met à jour l'unité en fonction de son état actuel.
@@ -69,6 +70,9 @@ class SousMarin(Unit):
         # Dessiner la portée en permanence
         if screen:
             self.draw_range(screen, camera_offset)
+
+        self.ia_action(all_units)
+
     
     def place_mine(self, x: int, y: int):
         """Place une mine à la position spécifiée (capacité spéciale du sous-marin).
@@ -95,6 +99,18 @@ class SousMarin(Unit):
                 pass
             return True
         return False
+    
+    
+    def ia_action(self, all_units):
+        """Exemple d’IA : déplacer le sous-marin vers la droite et poser une mine si possible."""
+        # Exemple de déplacement automatique
+        if not self.target_position or not self.is_moving:
+            self.target_position = (self.position[0] + 100, self.position[1])
+            self.is_moving = True
+
+        # Exemple de pose de mine automatique (place une mine toutes les secondes)
+        if self.can_place_mine():
+            self.place_mine(int(self.position[0]), int(self.position[1]))
 
 
 # Classes d'alias pour la compatibilité avec l'ancien code

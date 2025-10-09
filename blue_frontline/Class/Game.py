@@ -12,6 +12,7 @@ from Class.Petrole import Petrole
 from Class.Piece import Piece
 from Class.Timer import Timer
 from Class.units import Unit
+from Class.units.Sousmarin import SousMarinRouge
 from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
 from Class import IAInitializer
@@ -64,12 +65,6 @@ class Game :
         self.initializer.init_game_systems()
         self.initializer.init_ui()
         self.initializer.init_sound()
-        
-        # Initialisier le gestionnaire IAs
-        self.iaInitializer = IAInitializer(self)
-
-        # Appeler les fonctions d'ia
-        self.iaInitializer.init_ia_bateau()
         
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
