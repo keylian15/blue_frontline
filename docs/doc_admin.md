@@ -1,4 +1,4 @@
-# MANUEL ADMINISTRATEUR
+# Manuel Administrateur
 ## Blue Frontline - Jeu Naval Stratégique
 
 ---
@@ -8,7 +8,9 @@
 **Auteur :** CHAMPY Thomas  
 **Destinataires :** Professeurs, Administrateurs système, DevOps, Développeurs
 
+ [🧩 **Documentation Technique (Fonctions)** ](https://blue-frontline.readthedocs.io/fr/latest/doc_technique)
 ---
+
 
 ## TABLE DES MATIÈRES
 
