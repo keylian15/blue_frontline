@@ -12,7 +12,6 @@ from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
 from Class.Hud import Hud
 from Global import *
 from Utils import *
-from Class.PlateformePetroliere import PlateformePetroliere
 
 class GameInitializer:
     """Gestionnaire d'initialisation des composants du jeu."""
@@ -83,20 +82,11 @@ class GameInitializer:
             elif obj.name == "Spawn_base_rouge":
                 self.game.red_platform_zone = obj.points  # Récupérer les points du polygone
         
-
-        
         # Créer les plateformes à partir des positions Tiled
-        plateforme_rouge = PlateformePetroliere(
-            red_platform_obj.x, red_platform_obj.y,
-            "red", 1000, red_platform_obj)
-        plateforme_verte = PlateformePetroliere(
-            green_platform_obj.x, green_platform_obj.y,
-            "green", 1000, green_platform_obj)
-                
-        # Ajouter les références au jeu
-        plateforme_rouge.game = self.game
-        plateforme_verte.game = self.game
-        
+        from Class.units.PlateformePetroliere import PlateformePetroliereRouge, PlateformePetroliereVerte
+        plateforme_rouge = PlateformePetroliereRouge(self.game, red_platform_obj)
+        plateforme_verte = PlateformePetroliereVerte(self.game, green_platform_obj)
+
         # Stocker les plateformes
         self.game.plateformes = {"red": plateforme_rouge, "green": plateforme_verte}
         

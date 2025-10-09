@@ -165,7 +165,6 @@ class Unit(pygame.sprite.Sprite):
                 index = self.game.quantique_area.index(result[1])
                 if index == 0:  # L'ile quantique n°4 est l'index 0 car la plus haute sur Tiled.
                     index = 4
-                    print("ici")
                 
                 self.game.initializer.toggle_layer('fog' + str(index), False)  # On enléve le calque de brouillard
                 self.game.quantique_area_hidden.remove(result[1])  # On enlève l'ile de la liste des iles cachées
@@ -341,6 +340,7 @@ class Unit(pygame.sprite.Sprite):
             else :
                 self.game.hud.piece_red.count += 1
         self.kill()  # Retire l'unité du groupe pygame
+        self.game.units.remove(self)  # Retire l'unité de la liste des unités
         
     def get_health_percentage(self):
         """Retourne le pourcentage de vie restante."""

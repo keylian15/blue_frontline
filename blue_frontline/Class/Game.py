@@ -12,8 +12,8 @@ from Class.Petrole import Petrole
 from Class.Piece import Piece
 from Class.Timer import Timer
 from Class.units import Unit
-from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
+from Class.units import PlateformePetroliere
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
