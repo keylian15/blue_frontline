@@ -49,6 +49,9 @@ class Bateau(Unit):
         self.current_goal = None
         self.path = []
         self._pi = 0
+        self.enemie_base = self.get_base()
+        # Etat de contournement pour éviter les oscillations gauche/droite
+        self._detour_side = None  # +1 ou -1, None = non défini
 
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list[Unit] = None):
         """Met à jour l'unité en fonction de son état actuel.
@@ -68,26 +71,49 @@ class Bateau(Unit):
         if screen:
             self.draw_range(screen, camera_offset)
         
-        if self.ia :
-            if self.get_closest_enemy_in_range():
-                self.attack(self.get_closest_enemy_in_range(), combat_system)
+        if self.ia:
+            #trouver un but
+            enemy = self.get_closest_enemy_in_range()
+            if enemy:
+                #print le type de l'enemie attaquer
+                print(f"ATTACK: {self.type} -> {getattr(enemy, 'type', 'unknown')}")
+                self.attack(enemy, combat_system)
 
-            if self.current_goal is None:
+            if self.current_goal is None and not enemy:
                 self.find_goal()
+
             else:
                 self.move_towards_goal()
+                
+                
         
-   
+        # if self.ia :
+        #     if self.get_closest_enemy_in_range():
+        #         self.attack(self.get_closest_enemy_in_range(), combat_system)
+
+        #     if self.current_goal is None:
+        #         self.find_goal()
+        #     else:
+        #         self.move_towards_goal()
+        
         
 
     def find_goal(self):
-        base_enemie = self.get_base()
-        if base_enemie:
-            self.current_goal = tuple(base_enemie.position)
-            self.path = self.cree_chemin(self.position, self.current_goal)
-            self._pi = 0
+        enemy = self.get_closest_enemy_in_range()
+        if enemy:
+            self.current_goal = enemy
         else:
-            self.current_goal = None
+                self.current_goal = tuple(self.enemie_base.position)
+        self.path = self.create_path(self.position,self.current_goal)
+        self._pi = 0
+        
+        # base_enemie = self.get_base()
+        # if base_enemie:
+        #     self.current_goal = tuple(base_enemie.position)
+        #     self.path = self.cree_chemin(self.position, self.current_goal)
+        #     self._pi = 0
+        # else:
+        #     self.current_goal = None
 
     def move_towards_goal(self):
         if not self.current_goal:
@@ -117,11 +143,9 @@ class Bateau(Unit):
                 self._pi = 0
             return
 
-        
         # Continuer vers le waypoint courant
         self.move_to_position(target)
                 
-     
     def get_base(self):
         # Renvoie la base ennemie
         for p in self.game.plateformes.values():
@@ -129,8 +153,7 @@ class Bateau(Unit):
                 return p
         return None
     
-    
-    def cree_chemin(self, depart, goal, depth: int = 0, max_depth: int = 3):
+    def create_path(self, depart, goal, depth: int = 0, max_depth: int = 3):
         # Chemin direct avec contournement simple en cas d'obstacle
         if not depart or not goal or depart == goal:
             return []
@@ -144,10 +167,10 @@ class Bateau(Unit):
             return []
 
         # Paramètres
-        step = 32            # pas d'échantillonnage (pixels)
-        back_margin = 16     # reculer avant l'obstacle
-        detour_distance = 192  # distance latérale de contournement
-
+        step = 16          
+        back_margin = 32
+        detour_distance = 64
+        max_detour_distance = 512        
         dir_x = dx / dist
         dir_y = dy / dist
         perp_x = -dir_y
@@ -179,31 +202,59 @@ class Bateau(Unit):
         pivot_x = hit_obstacle[0] - dir_x * back_margin
         pivot_y = hit_obstacle[1] - dir_y * back_margin
 
-        # Essayer gauche puis droite
-        for sign in (+1, -1):
-            detour_x = pivot_x + perp_x * detour_distance * sign
-            detour_y = pivot_y + perp_y * detour_distance * sign
+        # Déterminer l'ordre de préférence des côtés (pour éviter l'oscillation)
+        preferred_sides = (+1, -1) if self._detour_side is None else (self._detour_side, -self._detour_side)
 
-            # Le détour ne doit pas tomber dans un obstacle
-            if point_in_many_polygons(self.game.obstacles, (detour_x, detour_y)) or point_in_many_polygons(self.game.quantique_area_hidden, (detour_x, detour_y)):
-                continue
+        # Essayer le côté préféré en augmentant progressivement la distance de contournement
+        for sign in preferred_sides:
+            current_detour = detour_distance
+            while current_detour <= max_detour_distance:
+                detour_x = pivot_x + perp_x * current_detour * sign
+                detour_y = pivot_y + perp_y * current_detour * sign
 
-            # Construire depart->detour et detour->goal
-            segment1 = self.cree_chemin(depart, (detour_x, detour_y), depth + 1, max_depth)
-            if not segment1:
-                continue
-            segment2 = self.cree_chemin((detour_x, detour_y), goal, depth + 1, max_depth)
-            if not segment2:
-                continue
+                # Le détour ne doit pas tomber dans un obstacle
+                if point_in_many_polygons(self.game.obstacles, (detour_x, detour_y)) or point_in_many_polygons(self.game.quantique_area_hidden, (detour_x, detour_y)):
+                    current_detour *= 1.5
+                    continue
 
-            return segment1 + segment2
+                # Vérifier que le segment depart -> détour est "suffisamment" dégagé
+                seg_dx = detour_x - depart[0]
+                seg_dy = detour_y - depart[1]
+                seg_dist = (seg_dx*seg_dx + seg_dy*seg_dy) ** 0.5
+                seg_steps = max(1, int(seg_dist // step))
+                blocked = False
+                for j in range(1, seg_steps + 1):
+                    tj = j / seg_steps
+                    sx = depart[0] + seg_dx * tj
+                    sy = depart[1] + seg_dy * tj
+                    if point_in_many_polygons(self.game.obstacles, (sx, sy)) or point_in_many_polygons(self.game.quantique_area_hidden, (sx, sy)):
+                        blocked = True
+                        break
+                if blocked:
+                    current_detour *= 1.5
+                    continue
+
+                # Construire depart->detour et detour->goal avec préférence du même côté
+                self._detour_side = sign
+                segment1 = self.create_path(depart, (detour_x, detour_y), depth + 1, max_depth)
+                if not segment1:
+                    current_detour *= 1.5
+                    continue
+                segment2 = self.create_path((detour_x, detour_y), goal, depth + 1, max_depth)
+                if not segment2:
+                    current_detour *= 1.5
+                    continue
+
+                return segment1 + segment2
+
+        # Aucun détour viable: réinitialiser l'état de contournement pour réessayer plus tard
+        self._detour_side = None
 
         # Aucun détour trouvé: retourner la portion valide
         return path
         
         
-            
-       
+        
 
 # Classes d'alias pour la compatibilité avec l'ancien code
 class BateauRouge(Bateau):
