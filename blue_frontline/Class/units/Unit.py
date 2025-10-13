@@ -24,7 +24,9 @@ class Unit(pygame.sprite.Sprite):
         
         # Position et mouvement
         base_spawn = self.game.red_platform_zone if team == "red" else self.game.green_platform_zone
-            
+        if self.type == "pompe_petroliere" : 
+            base_spawn = self.game.red_pompe_zone if team == "red" else self.game.green_pompe_zone
+        
         self.position = random_point_in_polygon(base_spawn)
         self.speed_x = 0  # Vitesse en pixels par seconde sur l'axe X
         self.speed_y = 0  # Vitesse en pixels par seconde sur l'axe Y

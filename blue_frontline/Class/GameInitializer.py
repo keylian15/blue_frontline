@@ -81,6 +81,10 @@ class GameInitializer:
                 self.game.green_platform_zone = obj.points  
             elif obj.name == "Spawn_base_rouge":
                 self.game.red_platform_zone = obj.points  # Récupérer les points du polygone
+            elif obj.name == "Spawn_base_verte_pompe" : 
+                self.game.green_pompe_zone = obj.as_points
+            elif obj.name == "Spawn_base_rouge_pompe" : 
+                self.game.red_pompe_zone = obj.as_points
         
         # Créer les plateformes à partir des positions Tiled
         from Class.units.PlateformePetroliere import PlateformePetroliereRouge, PlateformePetroliereVerte
