@@ -226,7 +226,7 @@ class Game :
             distance = math.sqrt((unit.position[0] - world_x) ** 2 + (unit.position[1] - world_y) ** 2)
 
             # Tolérance différente si c’est une plateforme
-            tolerance = 60 if getattr(unit, 'is_platform', False) else 40
+            tolerance = 40 if getattr(unit, 'is_platform', False) else 20
 
             # Vérifie si l'unité est dans la zone de tolérance et plus proche
             if distance <= tolerance and distance < min_distance:
