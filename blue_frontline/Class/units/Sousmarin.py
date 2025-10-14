@@ -1,10 +1,11 @@
 import time
+import math
 import pygame
 from Class.units.Unit import Unit
 from Class.Combat import CombatSystem, Mine
 from math import * 
 from Global import UNIT_CONFIGS
-from Utils import point_in_many_polygons, random_point_in_polygon
+from Utils import point_in_many_polygons
 
 class SousMarin(Unit):
 
@@ -46,16 +47,16 @@ class SousMarin(Unit):
         # État de mouvement
         self.is_moving = False
         self.target_position = None
-        
-        # Variables pour l'IA en arc de cercle
-        self.own_base_position = None
-        self.circle_radius = 200  # Rayon du cercle autour de la base
-        self.current_angle = 0  # Angle actuel sur le cercle
-        self.angle_step = 30  # Pas d'angle en degrés entre chaque mine
-        self.circle_center = None
-        self.target_position_on_circle = None
+
+        # Variables opérationnelles (minage/manual control)
+        # Pas d'IA automatique dans cette classe ; le minage peut être déclenché manuellement
         self.mines_placed = 0
-        self.max_mines = 12  # Nombre maximum de mines à placer en cercle
+        self.max_mines = None  # None = pas de limite par défaut
+        
+        # Variables pour la stratégie d'encerclement
+        self.current_target_scout = None  # L'éclaireur actuellement ciblé
+        self.mine_positions_around_target = []  # Positions où poser des mines autour de la cible
+        self.current_mine_index = 0  # Index de la prochaine position de mine
         
             
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list[Unit] = None):
@@ -69,6 +70,10 @@ class SousMarin(Unit):
             all_units (list[Unit], optional): Liste des unités. Defaults to None.
         """
 
+        # Appeler l'IA de déplacement automatique
+        if all_units:
+            self.ia_mouvement(all_units)
+        
         # Appeler la mise à jour de la classe parent
         super().update(dt, combat_system, screen, camera_offset, all_units)
 
@@ -76,7 +81,6 @@ class SousMarin(Unit):
         if screen:
             self.draw_range(screen, camera_offset)
 
-        self.ia_action(all_units)
 
     def can_place_mine(self):
         """Vérifie si le sous-marin peut poser une mine (cooldown respecté, mais fire_rate ignoré)."""
@@ -102,6 +106,8 @@ class SousMarin(Unit):
             if hasattr(self.game, 'combat_system') and self.game.combat_system:
                 self.game.combat_system.add_mine(mine)
                 self.last_shot_time = time.time()
+                self.mines_placed += 1
+                print(f"✓ Mine #{self.mines_placed} posée par {self.team} sous-marin à ({x}, {y})")
             # -- AUDIO : drop mine --
             try:
                 if hasattr(self.game, "sound") and self.game.sound:
@@ -110,117 +116,11 @@ class SousMarin(Unit):
                 # ne jamais crasher pour du son
                 pass
             return True
+        else:
+            print(f"⚠ Sous-marin {self.team} n'a pas la capacité 'mines' (actual: {self.special_ability})")
         return False
     
-    def get_own_base_position(self):
-        """Récupère la position de sa propre base."""
-        if self.own_base_position is None:
-            print(f"Sous-marin {self.team}: Recherche de sa propre base...")
-            
-            if self.team == "red":
-                # Notre base = base rouge
-                base_zone = getattr(self.game, 'red_platform_zone', None)
-                print(f"Base zone rouge trouvée: {base_zone is not None}")
-            else:
-                # Notre base = base verte  
-                base_zone = getattr(self.game, 'green_platform_zone', None)
-                print(f"Base zone verte trouvée: {base_zone is not None}")
-                
-            if base_zone:
-                # Prendre le centre approximatif de la zone de la base
-                self.own_base_position = random_point_in_polygon(base_zone)
-                print(f"Position de notre base: {self.own_base_position}")
-            else:
-                # Fallback: utiliser des positions fixes approximatives
-                print(f"Zones de base non trouvées, utilisation de positions par défaut")
-                # Rechercher les unités de notre base comme alternative
-                own_units = [unit for unit in getattr(self.game, 'all_units', []) 
-                              if hasattr(unit, 'team') and unit.team == self.team and 
-                              hasattr(unit, 'unit_type') and 'base' in str(unit.unit_type).lower()]
-                
-                if own_units:
-                    # Utiliser la position de la première unité de base trouvée
-                    self.own_base_position = own_units[0].position
-                    print(f"Notre base trouvée via unités: {self.own_base_position}")
-                else:
-                    # Dernière option: centre de la carte
-                    map_center_x = getattr(self.game, 'map_width', 1600) // 2
-                    map_center_y = getattr(self.game, 'map_height', 1200) // 2
-                    if self.team == "red":
-                        # Base rouge : côté gauche-bas  
-                        self.own_base_position = (map_center_x - 300, map_center_y + 300)
-                    else:
-                        # Base verte : côté droit-haut
-                        self.own_base_position = (map_center_x + 300, map_center_y - 300)
-                    print(f"Position de fallback (centre carte): {self.own_base_position}")
-        
-        return self.own_base_position
     
-    def get_circle_position(self, angle_degrees):
-        """Calcule la position sur le cercle autour de notre base."""
-        if not self.circle_center:
-            return None
-            
-        angle_rad = radians(angle_degrees)
-        x = self.circle_center[0] + self.circle_radius * cos(angle_rad)
-        y = self.circle_center[1] + self.circle_radius * sin(angle_rad)
-        return (x, y)
-    
-    def find_safe_circle_position(self, target_angle):
-        """Trouve une position sûre sur le cercle, en évitant les obstacles."""
-        # Essayer l'angle cible d'abord
-        pos = self.get_circle_position(target_angle)
-        if pos and self.is_position_valid(pos[0], pos[1]):
-            return pos, target_angle
-        
-        # Si la position n'est pas valide, essayer des angles proches
-        for offset in range(5, 46, 5):  # Essayer par pas de 5 degrés jusqu'à 45°
-            for sign in [1, -1]:
-                test_angle = target_angle + (offset * sign)
-                pos = self.get_circle_position(test_angle)
-                if pos and self.is_position_valid(pos[0], pos[1]):
-                    return pos, test_angle
-        
-        return None, target_angle
-    
-    def move_to_circle_position(self):
-        """Déplace le sous-marin vers la prochaine position sur le cercle."""
-        if not self.circle_center:
-            print(f"Sous-marin {self.team}: Pas de centre de cercle défini")
-            return False
-        
-        # Calculer la position cible sur le cercle
-        target_pos, actual_angle = self.find_safe_circle_position(self.current_angle)
-        if not target_pos:
-            # Si aucune position valide, passer au suivant
-            print(f"Sous-marin {self.team}: Aucune position valide trouvée à l'angle {self.current_angle}°, passage au suivant")
-            self.current_angle = (self.current_angle + self.angle_step) % 360
-            return False
-        
-        self.target_position_on_circle = target_pos
-        
-        # Se déplacer vers cette position
-        distance = sqrt((self.position[0] - target_pos[0])**2 + (self.position[1] - target_pos[1])**2)
-        
-        if distance < 30:  # Arrivé à la position
-            # Placer une mine
-            if self.can_place_mine() and self.mines_placed < self.max_mines:
-                self.place_mine(int(self.position[0]), int(self.position[1]))
-                self.mines_placed += 1
-                print(f"Sous-marin {self.team}: Mine défensive {self.mines_placed} placée à l'angle {actual_angle}° (position {self.position})")
-            
-            # Passer à la position suivante sur le cercle
-            self.current_angle = (self.current_angle + self.angle_step) % 360
-            print(f"Sous-marin {self.team}: Passage à l'angle suivant: {self.current_angle}°")
-            return True
-        else:
-            # Se déplacer vers la position cible
-            if not hasattr(self, 'last_move_debug') or time.time() - self.last_move_debug > 5.0:
-                print(f"Sous-marin {self.team}: Mouvement vers {target_pos}, distance: {distance:.1f}")
-                self.last_move_debug = time.time()
-            self.move_to(target_pos[0], target_pos[1])
-            self.is_moving = True
-            return False
     
     def is_position_valid(self, x, y):
         """Vérifie si une position est valide (pas dans un obstacle)."""
@@ -241,50 +141,258 @@ class SousMarin(Unit):
             if point_in_many_polygons(self.game.quantique_area_hidden, world_pos):
                 return False
         
-        # Vérifier s'il y a une autre unité à cette position
-        if self.game.find_unit_at_position(x, y, self):
-            return False
+        # Vérifier s'il y a une autre unité mobile à cette position (ignorer les plateformes)
+        unit_at_pos = self.game.find_unit_at_position(x, y, self)
+        if unit_at_pos:
+            # Ignorer les plateformes pétrolières (is_platform) et les bases
+            if not hasattr(unit_at_pos, 'is_platform') or not unit_at_pos.is_platform:
+                return False
             
         return True
-
     
-    def ia_action(self, all_units):
-        """IA du sous-marin pour créer un arc de cercle de mines autour de sa propre base."""
-        # Obtenir la position de notre base
-        own_base = self.get_own_base_position()
-        if not own_base:
-            print(f"Sous-marin {self.team}: Impossible de trouver sa propre base")
-            return
+    def is_path_clear(self, target_x, target_y, num_checks=10):
+        """Vérifie si le chemin vers la position cible est dégagé (pas d'obstacles sur la trajectoire).
         
-        # Initialiser le centre du cercle si ce n'est pas fait
-        if not self.circle_center:
-            self.circle_center = own_base
-            print(f"Sous-marin {self.team}: Initialisation du cercle défensif autour de sa base à {own_base}")
-            print(f"Position actuelle du sous-marin: {self.position}")
-        
-        # Si toutes les mines ont été placées, rester en position
-        if self.mines_placed >= self.max_mines:
-            if not hasattr(self, 'completed_message_shown'):
-                print(f"Sous-marin {self.team}: Toutes les mines défensives ont été placées ({self.mines_placed}/{self.max_mines})")
-                self.completed_message_shown = True
-            return
-        
-        # Se déplacer en arc de cercle autour de la base
-        moved = self.move_to_circle_position()
-        
-        # Debug: afficher la progression
-        if not hasattr(self, 'last_debug_time'):
-            self.last_debug_time = time.time()
+        Args:
+            target_x (float): Position x de la cible
+            target_y (float): Position y de la cible
+            num_checks (int): Nombre de points à vérifier le long du trajet
             
-        if time.time() - self.last_debug_time > 3.0:  # Debug toutes les 3 secondes
-            distance_to_target = 0
-            if self.target_position_on_circle:
-                distance_to_target = sqrt(
-                    (self.position[0] - self.target_position_on_circle[0])**2 + 
-                    (self.position[1] - self.target_position_on_circle[1])**2
-                )
-            print(f"Sous-marin {self.team}: Position {self.position}, Angle {self.current_angle}°, Mines défensives {self.mines_placed}/{self.max_mines}, Distance cible: {distance_to_target:.1f}, Moving: {self.is_moving}")
-            self.last_debug_time = time.time()
+        Returns:
+            bool: True si le chemin est dégagé, False sinon
+        """
+        # Vérifier plusieurs points le long de la trajectoire
+        for i in range(1, num_checks + 1):
+            # Interpolation linéaire entre la position actuelle et la cible
+            ratio = i / num_checks
+            check_x = self.position[0] + (target_x - self.position[0]) * ratio
+            check_y = self.position[1] + (target_y - self.position[1]) * ratio
+            
+            # Si un point du trajet n'est pas valide, le chemin est bloqué
+            if not self.is_position_valid(check_x, check_y):
+                return False
+        
+        return True
+    
+    def find_nearby_scouts(self, all_units, detection_range=320):
+        """Trouve les éclaireurs ennemis à proximité.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
+            detection_range (int): Rayon de détection en pixels (10 cases * 32 pixels = 320)
+            
+        Returns:
+            list[Unit]: Liste des éclaireurs ennemis détectés
+        """
+        nearby_scouts = []
+        
+        for unit in all_units:
+            # Vérifier si c'est un ennemi vivant
+            if not unit.is_alive or unit.team == self.team:
+                continue
+            
+            # Vérifier si c'est un éclaireur
+            if hasattr(unit, 'unit_type') and unit.unit_type == "eclaireur":
+                # Calculer la distance
+                dx = unit.position[0] - self.position[0]
+                dy = unit.position[1] - self.position[1]
+                distance = math.sqrt(dx**2 + dy**2)
+                
+                # Si dans le rayon de détection
+                if distance <= detection_range:
+                    nearby_scouts.append(unit)
+        
+        return nearby_scouts
+    
+    def get_closest_scout(self, scouts):
+        """Trouve l'éclaireur le plus proche parmi une liste.
+        
+        Args:
+            scouts (list[Unit]): Liste des éclaireurs
+            
+        Returns:
+            Unit: L'éclaireur le plus proche, ou None si la liste est vide
+        """
+        if not scouts:
+            return None
+        
+        closest_scout = None
+        min_distance = float('inf')
+        
+        for scout in scouts:
+            dx = scout.position[0] - self.position[0]
+            dy = scout.position[1] - self.position[1]
+            distance = math.sqrt(dx**2 + dy**2)
+            
+            if distance < min_distance:
+                min_distance = distance
+                closest_scout = scout
+        
+        return closest_scout
+
+    def ia_mouvement(self, all_units):
+        """IA du sous-marin pour se déplacer en ligne droite vers l'avant jusqu'à un obstacle."""
+        
+        # PRIORITÉ 1 : Chercher des éclaireurs ennemis à proximité (10 cases = 320 pixels)
+        nearby_scouts = self.find_nearby_scouts(all_units, detection_range=320)
+        
+        if nearby_scouts:
+            # Si un éclaireur est détecté, le poursuivre
+            target_scout = self.get_closest_scout(nearby_scouts)
+            
+            if target_scout:
+                # Calculer la distance avec l'éclaireur
+                dx = target_scout.position[0] - self.position[0]
+                dy = target_scout.position[1] - self.position[1]
+                distance_to_scout = math.sqrt(dx**2 + dy**2)
+                
+                # Si on est très proche (moins de 60 pixels), arrêter et poser une mine
+                if distance_to_scout < 60:
+                    # Arrêter le mouvement en cours
+                    self.stop()
+                    self.is_moving = False
+                    self.target_position = None
+                    
+                    # Poser une mine si le cooldown est passé
+                    if self.can_place_mine():
+                        mine_placed = self.place_mine(int(self.position[0]), int(self.position[1]))
+                        if mine_placed:
+                            print(f"💣 {self.team} sous-marin a posé une mine à ({int(self.position[0])}, {int(self.position[1])}) - Distance éclaireur: {int(distance_to_scout)}px")
+                    return
+                
+                # Si l'éclaireur est plus loin, arrêter le mouvement actuel et se diriger vers lui
+                if self.is_moving and self.target_position:
+                    # Vérifier si on se dirige déjà vers l'éclaireur (tolérance de 30 degrés)
+                    current_target_dx = self.target_position[0] - self.position[0]
+                    current_target_dy = self.target_position[1] - self.position[1]
+                    current_angle = math.degrees(math.atan2(-current_target_dy, current_target_dx)) - 90
+                    scout_angle = math.degrees(math.atan2(-dy, dx)) - 90
+                    angle_diff = abs((scout_angle - current_angle + 180) % 360 - 180)
+                    
+                    # Si on ne se dirige pas vers l'éclaireur, changer de direction
+                    if angle_diff > 30:
+                        self.stop()
+                        self.is_moving = False
+                        self.target_position = None
+                
+                # Se déplacer vers l'éclaireur
+                if not self.is_moving:
+                    # Calculer l'angle vers l'éclaireur
+                    angle_to_scout = math.degrees(math.atan2(-dy, dx)) - 90
+                    self.angle = angle_to_scout % 360
+                    self.image = pygame.transform.rotate(self.image_original, self.angle)
+                    self.rect = self.image.get_rect(center=self.rect.center)
+                    
+                    # Se déplacer vers l'éclaireur si le chemin est dégagé
+                    if self.is_path_clear(target_scout.position[0], target_scout.position[1]):
+                        self.move_to_position(target_scout.position)
+                    else:
+                        # Si le chemin direct est bloqué, chercher une route alternative
+                        self._find_alternative_path_to_target(target_scout.position[0], target_scout.position[1])
+                return
+        
+        # PRIORITÉ 2 : Comportement normal (patrouille)
+        # Si le sous-marin est déjà en mouvement, ne rien faire
+        if self.is_moving:
+            return
+        
+        # Calculer la prochaine position en avançant tout droit
+        # On utilise l'angle actuel du sous-marin pour déterminer la direction
+        distance_check = 150  # Distance à vérifier devant le sous-marin
+        
+        # Convertir l'angle en radians et calculer la direction
+        angle_rad = math.radians(self.angle + 90)  # +90 car l'angle 0 pointe vers le haut
+        
+        # Calculer la position cible en avançant tout droit
+        target_x = self.position[0] + math.cos(angle_rad) * distance_check
+        target_y = self.position[1] - math.sin(angle_rad) * distance_check
+        
+        # Vérifier si le chemin vers la position cible est dégagé (pas seulement le point final)
+        if self.is_path_clear(target_x, target_y):
+            # Si le chemin est dégagé, se déplacer vers cette position
+            self.move_to_position((target_x, target_y))
+        else:
+            # Si le chemin n'est pas dégagé, chercher une direction alternative
+            self._find_alternative_direction(distance_check)
+    
+    def _find_alternative_direction(self, distance_check):
+        """Cherche une direction alternative quand le chemin est bloqué.
+        
+        Args:
+            distance_check (int): Distance à vérifier pour chaque direction
+        """
+        direction_found = False
+        
+        # Liste d'angles à tester (de plus en plus grand)
+        angles_to_test = [20, -20, 40, -40, 60, -60, 80, -80, 100, -100, 120, -120, 140, -140, 160, -160, 180]
+        
+        # D'abord essayer avec la distance normale
+        for angle_offset in angles_to_test:
+            test_angle = math.radians(self.angle + 90 + angle_offset)
+            test_x = self.position[0] + math.cos(test_angle) * distance_check
+            test_y = self.position[1] - math.sin(test_angle) * distance_check
+            
+            # Vérifier tout le chemin, pas seulement la destination
+            if self.is_path_clear(test_x, test_y):
+                # Mettre à jour l'angle du sous-marin
+                self.angle = (self.angle + angle_offset) % 360
+                self.image = pygame.transform.rotate(self.image_original, self.angle)
+                self.rect = self.image.get_rect(center=self.rect.center)
+                # Se déplacer vers cette nouvelle position
+                self.move_to_position((test_x, test_y))
+                direction_found = True
+                break
+        
+        # Si aucune direction n'a été trouvée, essayer avec une distance plus courte
+        if not direction_found:
+            shorter_distance = distance_check // 2  # 75 pixels
+            for angle_offset in angles_to_test:
+                test_angle = math.radians(self.angle + 90 + angle_offset)
+                test_x = self.position[0] + math.cos(test_angle) * shorter_distance
+                test_y = self.position[1] - math.sin(test_angle) * shorter_distance
+                
+                # Vérifier tout le chemin, pas seulement la destination
+                if self.is_path_clear(test_x, test_y):
+                    # Mettre à jour l'angle du sous-marin
+                    self.angle = (self.angle + angle_offset) % 360
+                    self.image = pygame.transform.rotate(self.image_original, self.angle)
+                    self.rect = self.image.get_rect(center=self.rect.center)
+                    # Se déplacer vers cette nouvelle position
+                    self.move_to_position((test_x, test_y))
+                    direction_found = True
+                    break
+    
+    def _find_alternative_path_to_target(self, target_x, target_y):
+        """Cherche un chemin alternatif vers une cible spécifique.
+        
+        Args:
+            target_x (float): Position x de la cible
+            target_y (float): Position y de la cible
+        """
+        # Calculer l'angle vers la cible
+        dx = target_x - self.position[0]
+        dy = target_y - self.position[1]
+        base_angle = math.degrees(math.atan2(-dy, dx)) - 90
+        
+        # Tester des angles autour de la direction de la cible
+        angles_to_test = [0, 15, -15, 30, -30, 45, -45, 60, -60, 90, -90]
+        distance_check = 100
+        
+        for angle_offset in angles_to_test:
+            test_angle_deg = (base_angle + angle_offset) % 360
+            test_angle_rad = math.radians(test_angle_deg + 90)
+            
+            test_x = self.position[0] + math.cos(test_angle_rad) * distance_check
+            test_y = self.position[1] - math.sin(test_angle_rad) * distance_check
+            
+            if self.is_path_clear(test_x, test_y):
+                self.angle = test_angle_deg
+                self.image = pygame.transform.rotate(self.image_original, self.angle)
+                self.rect = self.image.get_rect(center=self.rect.center)
+                self.move_to_position((test_x, test_y))
+                break
+    
+
 
 
 # Classes d'alias pour la compatibilité avec l'ancien code
@@ -305,3 +413,4 @@ class SousMarinVert(SousMarin):
             game: L'instance de la classe Game.
         """
         super().__init__(game, team="green")
+
