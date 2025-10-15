@@ -95,6 +95,7 @@ class EventHandler:
             if not cost:
                 return
             if self.check_cost(config_key, team_key, cost):
+                self.apply_cost(config_key, team_key, cost)
                 self.spawn_unit(config_key, team_key)
                 return True
 
@@ -226,6 +227,31 @@ class EventHandler:
             bool: True si le coût est valide, False sinon.
         """
         
+        # S'il n'y a pas assez de pétrole.
+        if team_key == "red"  :
+            if self.game.hud.petrole_red.count < cost:
+                return False
+            else : 
+                # self.game.hud.petrole_red.count -= cost
+                # succes()
+                return True
+        else : 
+            if self.game.hud.petrole_green.count < cost: 
+                return False
+            else :
+                # self.game.hud.petrole_green.count -= cost
+                # succes()
+                return True
+        
+    def apply_cost(self, config_key: str, team_key: str, cost:int):
+        """Applique le coût de l'unité.
+
+        Args:
+            config_key (str): Clé de configuration de l'unité.
+            team_key (str): Clé de l'équipe.
+            cost (int): Coût de l'unité.
+        """
+        
         def succes():
             """Fonction interne pour gérer les succès liés aux unités créées."""
 
@@ -239,23 +265,12 @@ class EventHandler:
             # Marquer le type d'unité comme créé dans cette partie
             self.game.units_created_this_game.add(config_key)
 
-        # S'il n'y a pas assez de pétrole.
         if team_key == "red"  :
-            if self.game.hud.petrole_red.count < cost:
-                return False
-            else : 
-                self.game.hud.petrole_red.count -= cost
-                succes()
-                return True
+            self.game.hud.petrole_red.count -= cost
         else : 
-            if self.game.hud.petrole_green.count < cost: 
-                return False
-            else :
-                self.game.hud.petrole_green.count -= cost
-                succes()
-                return True
-        
-    
+            self.game.hud.petrole_green.count -= cost
+        succes()
+
     def spawn_unit(self, config_key: str, team_key: str, ):
         """Génère une unité.
 
@@ -292,5 +307,4 @@ class EventHandler:
         
         # On envoi la map a toutes les instances
         self.game.refresh_all_references(self.game)
-        print(f"Spawn de l'unité {config_key} de l'équipe {team_key}")
         return True
