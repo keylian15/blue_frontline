@@ -94,7 +94,7 @@ class EventHandler:
             cost = UNIT_CONFIGS.get(config_key, {}).get('cost')
             if not cost:
                 return
-            if self.check_cost(config_key, team_key, cost):
+            if self.check_cost(team_key, cost):
                 self.apply_cost(config_key, team_key, cost)
                 self.spawn_unit(config_key, team_key)
                 return True
@@ -215,11 +215,10 @@ class EventHandler:
         
         return world_x, world_y
     
-    def check_cost(self, config_key: str, team_key: str, cost: int ):
+    def check_cost(self, team_key: str, cost: int ):
         """Fonction permettant de vérifier le coût d'une unité.
         
         Args:
-            config_key (str): Clé de configuration de l'unité.
             team_key (str): Clé de l'équipe.
             cost (int): Coût de l'unité.
         
@@ -307,4 +306,5 @@ class EventHandler:
         
         # On envoi la map a toutes les instances
         self.game.refresh_all_references(self.game)
+        print(f"Spawn de l'unité {config_key} de l'équipe {team_key}")
         return True

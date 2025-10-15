@@ -1,9 +1,10 @@
 import pygame
 
+
 class PlateformePetroliere(pygame.sprite.Sprite):
     """Classe pour gérer les plateformes pétrolières."""
 
-    def __init__(self, game:"Game", team: str, objTiled: "TiledObject", is_ia : bool = True): # type: ignore
+    def __init__(self, game: "Game", team: str, objTiled: "TiledObject", is_ia: bool = True):  # type: ignore
         """Initialise une nouvelle instance de PlateformePetroliere.
 
         Args:
@@ -17,11 +18,11 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         self.team = team
         self.objTiled = objTiled
         self.hitbox_polygon = objTiled.points
-        
+
         self.max_health = 1000
         self.current_health = 1000
         self.is_alive = True
-        
+
         # Verifier l'utilité d'ici ===>
         # Calculer les limites du polygone pour le rect
         min_x = min(point[0] for point in self.hitbox_polygon)
@@ -38,30 +39,30 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         rect_y = int(min_y)
         # <===
 
-        self.unit_type = "plateforme"
+        self.unit_type = "plateformePertroliere"
         self.is_selected = False
-        
+
         # Image invisible (rectangle transparent) - garde les hitboxes mais invisible
         self.image = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
         color = (0, 0, 0, 0)  # Complètement transparent (invisible)
         self.image.fill(color)
-        
+
         # Le rect englobe la zone de la hitbox
         self.rect = pygame.Rect(rect_x, rect_y, self.width, self.height)
-        
+
         # Pour compatibilité avec la logique d'unités
         self.range = 30
         self.damage = 5
         self.fire_rate = 1  # 1 tir/seconde
         self.last_shot_time = 0
         self.is_platform = True
-        
-        # On appelle l'initialisation de l'IA si c'est une IA
-        self.is_ia = is_ia 
-        if self.is_ia : 
-            self.init_ia()
 
-    def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0,0), all_units=None):
+        # On appelle l'initialisation de l'IA si c'est une IA
+        self.is_ia = is_ia
+        if self.is_ia:
+            self.ia_init()
+
+    def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
         """Met à jour la plateforme (tir automatique)."""
         import time
         if not self.is_alive:
@@ -72,16 +73,18 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         range_pixels = self.range * 32
         for unit in all_units:
             if unit is self:
-                continue  
+                continue
             if hasattr(unit, 'team') and unit.team != self.team and getattr(unit, 'is_alive', False):
                 if hasattr(unit, 'rect'):
                     cx, cy = self.position[0], self.position[1]
                     rx, ry, rw, rh = unit.rect.left, unit.rect.top, unit.rect.width, unit.rect.height
                     closest_x = max(rx, min(cx, rx + rw))
                     closest_y = max(ry, min(cy, ry + rh))
-                    distance = ((cx - closest_x)**2 + (cy - closest_y)**2) ** 0.5
+                    distance = ((cx - closest_x)**2 +
+                                (cy - closest_y)**2) ** 0.5
                 else:
-                    distance = ((self.position[0] - unit.position[0])**2 + (self.position[1] - unit.position[1])**2) ** 0.5
+                    distance = ((self.position[0] - unit.position[0]) **
+                                2 + (self.position[1] - unit.position[1])**2) ** 0.5
                 if distance <= range_pixels:
                     enemies_in_range.append(unit)
         if enemies_in_range:
@@ -97,17 +100,35 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                         target.take_damage(self.damage, killer=self)
                 self.last_shot_time = current_time
         # === Partie IA ===
-        if self.is_ia: 
-            self.take_choice()
-        
-    def take_damage(self, damage: int , killer: str = None):
+        if self.is_ia:
+            self.ia_update()                    # On met a jour les données de l'IA
+            if self.ia_check_wait():            # Si on doit attendre
+                return
+            # On note le scénario courant s'il existe.
+            if self.current_scenario:
+                scenario = self.current_scenario
+            else:
+                self.ia_scenarios()                 # On applique les scenarios de l'IA
+                scenario = self.ia_get_scenario()   # On récupére le scénario de l'IA
+                self.current_scenario = scenario    # On note le scénario courant
+                if self.team == "red":
+                    print(f"Les scénarios {self.scenarios}")
+
+            # On fait le scénario de l'IA
+            self.ia_do_scenario(scenario)
+
+            # Si le scénario est terminé ou a échoué, on le remet à None
+            if self.wait is False:
+                self.current_scenario = None
+
+    def take_damage(self, damage: int, killer: str = None):
         """Inflige des dégâts à la plateforme.
 
         Args:
             damage (int): Nombre de dégâts à infliger.
             killer (str, optional): L'équipe attaquante. Defaults to None.
         """
-        
+
         if not self.is_alive:
             return
         self.current_health -= damage
@@ -118,7 +139,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
     def on_destroyed(self):
         """Appelé quand la plateforme est détruite."""
-        
+
         # Déclencher la victoire si la plateforme a une référence vers le Game
         if hasattr(self, 'game') and self.game:
             self.game.on_platform_destroyed(self)
@@ -131,36 +152,36 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             camera_offset (tuple[float, float]): La position de la caméra.
             zoom (float): Le zoom de la caméra.
         """
-        
+
         if not self.is_alive:
             return
-        
+
         # Pour les plateformes, utiliser la position de l'image Tiled plutôt que le centre de la hitbox
         xs = [p.x for p in self.hitbox_polygon]
         ys = [p.y for p in self.hitbox_polygon]
         image_center_x = sum(xs) / len(xs)
         image_center_y = sum(ys) / len(ys)
-        
-        # Calculer les coordonnées de l'image sur l'écran   
+
+        # Calculer les coordonnées de l'image sur l'écran
         screen_x = (image_center_x - camera_offset[0]) * zoom
         screen_y = (image_center_y - camera_offset[1]) * zoom
-        
+
         # Barre de vie plus large pour les plateformes, placée en dessous de l'image
         bar_width = int(180 * zoom)  # Largeur fixe adaptée aux plateformes
         bar_height = max(12, int(20 * zoom))
         bar_x = int(screen_x - bar_width // 2)
         # Placer la barre en dessous de l'image de la plateforme (environ 120px en dessous du centre)
         bar_y = int(screen_y + 120 * zoom)
-        
+
         # Fond
         background_rect = pygame.Rect(bar_x, bar_y, bar_width, bar_height)
         pygame.draw.rect(screen, (80, 80, 80), background_rect)
-        
+
         # Vie
         health_percentage = self.current_health / self.max_health
         health_width = int(bar_width * health_percentage)
         health_rect = pygame.Rect(bar_x, bar_y, health_width, bar_height)
-        
+
         # Couleur de la barre de vie selon le pourcentage
         if health_percentage > 0.6:
             health_color = (0, 255, 0)  # Vert
@@ -168,168 +189,524 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             health_color = (255, 255, 0)  # Jaune
         else:
             health_color = (255, 0, 0)  # Rouge
-            
+
         pygame.draw.rect(screen, health_color, health_rect)
-        
+
         # Contour
         pygame.draw.rect(screen, (0, 0, 0), background_rect, 2)
-        
+
         # Texte avec la vie actuelle/maximale, placé au-dessus de la barre
         font = pygame.font.Font(None, max(16, int(18 * zoom)))
         health_text = f"{self.current_health}/{self.max_health}"
         text_surface = font.render(health_text, True, (255, 255, 255))
         text_rect = text_surface.get_rect(center=(screen_x, bar_y - 20 * zoom))
         screen.blit(text_surface, text_rect)
-        
+
     # === FONCTIONS d'IA ===
-    def init_ia(self): 
+    def ia_init(self):
         """Fonction d'initialisation de l'IA"""
-        import random
+        from random import randint
 
-        # On défini des scénario pour que l'IA adaptera plus tard.
-        self.scenarios = {
-            "attaque" : 0,
-            "defense" : 0,
-            "production" : 0,
-            "exploration" : 0, 
-        }
-        
-        # On défini des coefficients pour chaque scénario que l'IA adaptera plus tard.
-        self.coef = {
-            "attaque" : random.randint(1,5),
-            "defense" : random.randint(1,5),
-            "production" : random.randint(1,5),
-            "exploration" : random.randint(1,5),
-        }
-        
-        # On défini des coefficients pour chaque unité qui va attaquer notre base.
-        self.coef_unit = {
-            "pompe_petroliere" :0,
-            "eclaireur" : 0,
-            "chaloupe" : 1,
-            "sousmarin" : 2,
-            "bateau" : 3,
-            "paquebot" : 4,
-        }
-        
-        # On récupére le nombre aléatoire.
-        self.nb_random = random.randint(0, 100)
-
-    def update_ia(self) :
-        """Fonction permettant de mettre les variables à jour pour l'IA"""        
-        # On reset les scénarios.
-        self.scenarios = {
-            "attaque" : 0,
-            "defense" : 0,
-            "production" : 0,
-            "exploration" : 0, 
+        # On défini plusieurs coefficients. L'IA modifira a la fin de partie.
+        self.coefficients = {
+            "scenarios": {
+                "defense": {
+                    "simple": 1,
+                    "forte": 2,
+                },
+                "exploration": 1,
+                "production": 1,
+                "attaque":
+                    {
+                    "simple": 1,
+                    "forte": 2,
+                }
+            },
         }
 
-        # On récupére les unités ennemies et alliées
+        # On défini plusieurs marges. L'IA modifira a la fin de partie.
+        self.marges = {
+            "oil": randint(1, 100),
+        }
+
+        # On défini des seuils pour la quantité d'entité. L'IA modifira au fur et a mesure de la partie.
+        self.max_seuil = 10
+        self.seuils = {
+            "active": {
+                "chaloupe": randint(1, self.max_seuil),
+                "bateau": randint(1, self.max_seuil),
+                "sousmarin": randint(1, self.max_seuil),
+                "paquebot": randint(1, self.max_seuil),
+            },
+            "passive": {
+                "eclaireur": 1,
+                "pompe_petroliere": randint(1, self.max_seuil),
+            }
+        }
+
+        # On défini la liste vide
+        self.liste = ["chaloupe", "bateau", "sousmarin", "paquebot"]
+        self.units = []
+        self.last_position = None
+
+        self.wait = False
+        self.current_scenario = False
+
+        self.print_dico(self.marges, "Marges")
+        self.print_dico(self.seuils, "Seuils")
+
+    def ia_update(self):
+        """Fonction permettant de mettre à jour les données de l'IA, appelé a chaque tick"""
+        # On récupére les unités du jeu
         self.units = self.game.units
-        self.enemie_units, self.ally_units = [], []
-        
-        if self.units : 
-            for unit in self.units : 
-                if unit.unit_type != "plateforme" : 
-                    if unit.team == self.team : 
-                        self.ally_units.append(unit)
-                    else :
-                        self.enemie_units.append(unit)
-                        # On affiche la distance entre l'unité et la plateforme
-                    
-        # On récupére le nombre d'unités alliées et ennemies
-        self.nb_ally = len(self.ally_units)
-        self.nb_enemie = len(self.enemie_units)
-        
-        # On récupére le nombre d'îles quantiques cachées
-        if hasattr(self.game, 'quantique_area_hidden'):
-            self.nb_island_hidden = len(self.game.quantique_area_hidden)
-        else :
-            self.nb_island_hidden = 0
-            
-        # On récupére le nombre de pétrole 
-        if hasattr(self.game, 'hud'):
-            if self.team == "red":
-                self.nb_oil_ennemy = self.game.hud.petrole_green.count
-                self.nb_oil_ally = self.game.hud.petrole_red.count
-            else :
-                self.nb_oil_ennemy = self.game.hud.petrole_red.count
-                self.nb_oil_ally = self.game.hud.petrole_green.count
-                    
-        # On prend un scénario
-        return self.take_scenario()
-        
-    def take_scenario(self) :
-        """Fonction permettant de définir un scénario pour l'IA
-        On procédera par attribution de point pour définir le meilleur scénario"""
-        
-        # === SCENARIOS ===
-        # Si des îles quantiques sont cachées, on va les explorer
-        # 
-        # #
-        scenarios = self.scenarios
-        coef = self.coef
-        
-        # Si on des îles cachés on va explorer en fonctions du nombre réstant.
-        if self.nb_island_hidden > 0 :
-            # On explore en fonctions du nombre d'eclaireur a nous présents, en avoir 1 est suffisant.
-            compteur = 0 
-            for unit in self.ally_units : 
-                if unit.unit_type == "eclaireur": 
-                    compteur += 1
-            if compteur < 1 : 
-                scenarios["exploration"] += self.nb_island_hidden * coef["exploration"]
 
-        # Si le nombre d'ennemi est 2 fois supérieur a notre nombre d'ally on défend.
-        if self.nb_enemie > 2 * self.nb_ally : 
-            scenarios["defense"] += 1 * coef["defense"]
-        
-        # Si le nombre d'ennemi est 2 fois inférieur a notre nombre d'ally on attaque.
-        if self.nb_enemie < 2 * self.nb_ally :
-            scenarios["attaque"] += 1 * coef["attaque"]
-            
-        # Si la distance est proche de la base: 
-        # Si distance est inférieur à la range de la plateforme
+        if self.units:
+            # Définitions des différentes listes
+            self.units_ally, self.units_enemy, self.pompe_ally, self.pompe_enemy = [], [], [], []
+            self.units_ally_dico = {"chaloupe": 0,
+                                    "bateau": 0, "sousmarin": 0, "paquebot": 0, "eclaireur": 0}
+            self.units_enemy_dico = {"chaloupe": 0,
+                                     "bateau": 0, "sousmarin": 0, "paquebot": 0, "eclaireur": 0}
+
+            # On récupére les différentes unités dans les 4 listes différentes.
+            for unit in self.units:
+                # Si c'est une unité alliée
+                if unit.team == self.team:
+                    # Si c'est une plateforme
+                    if unit.unit_type == "plateformePertroliere":
+                        continue
+                    # Si c'est une pompe
+                    if unit.unit_type == "pompe_petroliere":
+                        self.pompe_ally.append(unit)
+                    else:
+                        self.units_ally.append(unit)
+                        # On l'ajoute au dico
+                        if self.units_ally_dico.get(unit.unit_type):
+                            self.units_ally_dico[unit.unit_type] += 1
+                        else:
+                            self.units_ally_dico[unit.unit_type] = 1
+                # Si c'est une unité ennemie
+                else:
+                    # Si c'est une pompe
+                    if unit.unit_type == "pompe_petroliere":
+                        self.pompe_enemy.append(unit)
+                    else:
+                        self.units_enemy.append(unit)
+                        # On l'ajoute au dico
+                        if self.units_enemy_dico.get(unit.unit_type):
+                            self.units_enemy_dico[unit.unit_type] += 1
+                        else:
+                            self.units_enemy_dico[unit.unit_type] = 1
+
+            # On récupére le nombre d'unités.
+            self.nb_units_ally = len(self.units_ally)
+            self.nb_units_enemy = len(self.units_enemy)
+            self.nb_pompe_ally = len(self.pompe_ally)
+            self.nb_pompe_enemy = len(self.pompe_enemy)
+
+            # On récupére le nombre d'îles quantiques cachées
+            if hasattr(self.game, 'quantique_area_hidden'):
+                self.nb_island_hidden = len(self.game.quantique_area_hidden)
+
+            # On récupére le nombre de pétrole
+            if hasattr(self.game, 'hud'):
+                if self.team == "red":
+                    self.nb_oil_enemy = self.game.hud.petrole_green.count
+                    self.nb_oil_ally = self.game.hud.petrole_red.count
+                else:
+                    self.nb_oil_enemy = self.game.hud.petrole_red.count
+                    self.nb_oil_ally = self.game.hud.petrole_green.count
+
+            # On récupére le event Handler
+            if hasattr(self.game, 'event_handler'):
+                self.event_handler = self.game.event_handler
+
+            # print("UPDATE !")
+            # print(self.game.units)
+            # self.print_dico(self.units_ally_dico, "Dico ally")
+
+    def ia_scenarios(self):
+        """Fonction permettant de déterminer les scénarios de l'IA"""
+        from random import randint
+
+        self.scenarios = {
+            "defense": {
+                "simple": 0,
+                "forte": 0,
+            },
+            "exploration": 0,
+            "production": 0,
+            "attaque": {
+                "simple": 0,
+                "forte": 0,
+            }
+        }
+
+        # On récupere les coefficients pour plus de facilité.
+        coef_def_sim = self.coefficients["scenarios"]["defense"]["simple"]
+        coef_def_fort = self.coefficients["scenarios"]["defense"]["forte"]
+        coef_exp = self.coefficients["scenarios"]["exploration"]
+        coef_prod = self.coefficients["scenarios"]["production"]
+        coef_att_sim = self.coefficients["scenarios"]["attaque"]["simple"]
+        coef_att_fort = self.coefficients["scenarios"]["attaque"]["forte"]
+
+        # On parcours les unités pour le Test 1 et 2 :
+        for unit in self.units:
+            # Test 1 : Distance d'un enemi présent dans la range de la base => Défense Simple.
+            if self.ia_is_near_from_base(unit):
+                self.scenarios["defense"]["simple"] += coef_def_sim
+
+            # Test 2 : Distance d'un enemi présent dans la range de la base / 2 (Plus proche) => Défense Forte.
+            if self.ia_is_near_from_base(unit, 2):
+                self.scenarios["defense"]["forte"] += coef_def_fort
+
+        # Test 3 : S'il existe encore des zones quantiques cachées => Exploration.
+        if self.nb_island_hidden > 0:
+            self.scenarios["exploration"] += coef_exp
+            if self.units_ally_dico["eclaireur"] > 0:
+                self.scenarios["exploration"] /= 2
+
+        # Test 4 : Si on est proche d'avoir une pompe pétroliere => Production.
+        if self.ia_is_near_oil_goal(self.nb_oil_ally, "pompe_petroliere"):
+            self.scenarios["production"] += coef_prod
+
+        # Test 5 : Si l'ennemi a plus de pétrole que nous => Attaque Simple.
+        if self.nb_oil_enemy > self.nb_oil_ally:
+            self.scenarios["attaque"]["simple"] += coef_att_sim
+
+        # Test 6 : Si l'ennemi a une pompe pétroliere => Attaque Forte.
+        if self.nb_pompe_enemy > 0:
+            self.scenarios["attaque"]["forte"] += coef_att_fort
+
+        # Cas général : Attaque Forte à 50%, Attaque Simple à 50%.
+        if randint(0, 1) == 0:
+            self.scenarios["attaque"]["forte"] += coef_att_fort * 0.5
+        else:
+            self.scenarios["attaque"]["simple"] += coef_att_sim * 0.5
+
+    def ia_get_scenario(self):
+        """Renvoie le meilleur scénario 75% du temps, sinon un scénario aléatoire.
+
+        Returns:
+            tuple: (scénario, sous_scénario, score)
+        """
+        from random import randint, choice
+
+        max_scenario = (None, None, 0)  # (scénario, sous_scenario, score)
+        scenarios = list(self.scenarios.items())
+
+        # --- 75% : choisir le meilleur scénario ---
+        if randint(0, 3) != 0:
+            for cle, valeur in scenarios:
+                if isinstance(valeur, dict):
+                    for sous_cle, sous_valeur in valeur.items():
+                        if sous_valeur > max_scenario[2]:
+                            max_scenario = (cle, sous_cle, sous_valeur)
+                else:
+                    if valeur > max_scenario[2]:
+                        max_scenario = (cle, None, valeur)
+            if self.team == "red" : 
+                print(f"Le scénario choisi est {max_scenario} ")
+
+        # --- 25% : choisir un scénario aléatoire ---
+        else:
+            cle, valeur = choice(scenarios)
+            if isinstance(valeur, dict):
+                sous_cle, sous_valeur = choice(list(valeur.items()))
+                max_scenario = (cle, sous_cle, sous_valeur)
+            else:
+                max_scenario = (cle, None, valeur)
+            if self.team == "red" : 
+                print(f"Le scénario choisi est {max_scenario} en aléatoire")
+        return max_scenario
+
+    def ia_do_scenario(self, scenario: tuple[str, str | None, int]):
+        """Fonction permettant d'executer les scénarios.
+
+        Args:
+            scenario (tuple[str, str  |  None, int]): Le scénario demandé
+
+        Returns:
+            bool: -1 si ca ne s'execute pas.
+        """
+        # On regarde le scénario principal et le secondaire s'il existe.
+        # if self.team == "red":
+        #     print(f"On va faire le scénario {scenario}")
+        match scenario:
+            case ("attaque", "simple", _):
+                self.ia_do_attack_simple()
+            case ("attaque", "forte", _):
+                self.ia_do_attack_forte()
+            case ("defense", "simple", _):
+                self.ia_do_defense_simple()
+            case ("defense", "forte", _):
+                self.ia_do_defense_forte()
+            case ("production", None, _):
+                self.ia_do_production()
+            case ("exploration", None, _):
+                self.ia_do_exploration()
+            case _:
+                return -1
+
+    def ia_do_defense_simple(self):
+        """Fonction permettant de faire le scénario de défense simple.
+
+        Returns : 
+            bool (bool): True si le scénario a été effectué, False sinon."""
+        from Utils import get_cost
+        # On vérifie qu'on peux spawn la chaloupe.
+        nom = "chaloupe"
+        data = nom, self.team, get_cost(nom)
+        if self.event_handler.check_cost(data[1], data[2]):
+            # On spawn la chaloupe.
+            self.event_handler.apply_cost(data[0], data[1], data[2])
+            self.event_handler.spawn_unit(data[0], data[1])
+            return True
+        return False
+
+    def ia_do_defense_forte(self, indice: int = 0):
+        """Fonction permettant de faire le scénario de défense forte.
+        Args : 
+            indice (int): Indice de l'entité à spawn.
+
+        Returns : 
+            bool (bool): True si le scénario a été effectué, False sinon."""
+        # Si on doit attendre, on ne fait rien.
+        if self.wait:
+            return False
+
+        # On verifie le seuil pour le changer dans le cas où il est atteint.
+        if self.ia_check_seuil():
+            self.ia_change_seuil()
+
+        # On parcour la liste dans l'ordre donnée.
+        from random import randint
+        from Utils import get_cost
+        indice = indice % len(self.liste)
+        data = self.liste[indice], self.team, get_cost(self.liste[indice])
+        # Si on peux spawn l'unité.
+        if self.event_handler.check_cost(data[1], data[2]):
+            # Si on est supérieur au seuil on passe a l'indice d'apres.
+            if self.units_ally_dico[data[0]] >= self.seuils["active"][data[0]]:
+                self.ia_do_defense_forte(indice + 1)
+
+            # On a 75% de chance de spawn l'unité.
+            if randint(0, 3) != 0:
+                self.event_handler.apply_cost(data[0], data[1], data[2])
+                self.event_handler.spawn_unit(data[0], data[1])
+                return True
+            else:
+                # 25% de chance de passer a l'unité d'apres.
+                self.ia_do_defense_forte(indice + 1)
+
+        else:
+            # On a 50% de ne rien faire et 50% d'attendre.
+            if randint(0, 1) == 0:
+                # On ne fait rien
+                return False
+            else:
+                # On attend pour le faire spawn.
+                self.ia_wait_for(data[0])
+        return False
+
+    def ia_do_attack_simple(self):
+        """Fonction permettant de faire le scénario d'attaque simple.
+
+        Returns:
+            bool: True si le scénario a fonctionné, False sinon.
+        """
+
+        from Utils import get_cost
+        from random import choice
+        # Les 4 unités ont 25% de chance de spawn.
+        nom = choice(self.liste)
+        data = nom, self.team, get_cost(nom)
+        # On vérifie qu'on peux spawn l'unité.
+        if self.event_handler.check_cost(data[1], data[2]):
+            # On spawn l'unité.
+            self.event_handler.apply_cost(data[0], data[1], data[2])
+            self.event_handler.spawn_unit(data[0], data[1])
+            return True
+        return False
+
+    def ia_do_attack_forte(self, indice: int = 0):
+        """Fonction permettant de faire le scénario d'attaque forte.
+        Args : 
+            indice (int): Indice de l'entité à spawn.
+
+        Returns : 
+            bool (bool): True si le scénario a été effectué, False sinon."""
+        # Si on doit attendre, on ne fait rien.
+        if self.wait:
+            return False
+
+        # On verifie le seuil pour le changer dans le cas où il est atteint.
+        if self.ia_check_seuil():
+            self.ia_change_seuil()
+
+        # On parcour la liste dans l'ordre donnée.
+        from random import randint
+        from Utils import get_cost
+        indice = indice % len(self.liste)
+        data = self.liste[indice], self.team, get_cost(self.liste[indice])
+        # Si on peux spawn l'unité.
+        if self.event_handler.check_cost(data[1], data[2]):
+            # Si on est supérieur au seuil on passe a l'indice d'apres.
+            if self.units_ally_dico[data[0]] >= self.seuils["active"][data[0]]:
+                self.ia_do_attack_forte(indice + 1)
+
+            # On a 25% de chance de spawn l'unité.
+            if randint(0, 3) == 0:
+                self.event_handler.apply_cost(data[0], data[1], data[2])
+                self.event_handler.spawn_unit(data[0], data[1])
+                return True
+            else:
+                # 75% de chance de passer a l'unité d'apres.
+                self.ia_do_attack_forte(indice + 1)
+
+        else:
+            # On a 25% de ne rien faire et 75% d'attendre.
+            if randint(0, 3) == 0:
+                # On ne fait rien
+                return False
+            else:
+                # On attend pour le faire spawn.
+                self.ia_wait_for(data[0])
+        return False
+
+    def ia_do_exploration(self):
+        """Fonction permettant de faire le scénario d'exploration.
+
+        Returns:
+            bool: True si le scénario est réalisé, False sinon.
+        """
+
+        from Utils import get_cost
+        data = "eclaireur", self.team, get_cost("eclaireur")
+        # On vérifie que l'on peux spawn l'éclaireur.
+        if self.event_handler.check_cost(data[1], data[2]):
+            # On vérifie qu'on est sous le seuil.
+            if self.units_ally_dico[data[0]] < self.seuils["passive"][data[0]]:
+                # On spawn l'éclaireur.
+                self.event_handler.apply_cost(data[0], data[1], data[2])
+                self.event_handler.spawn_unit(data[0], data[1])
+
+                return True
+        else:
+            from random import randint
+            # Si on peut pas spawn, on a 25% de chance d'attendre.
+            if randint(0, 3) == 0:
+                self.ia_wait_for(data[0])
+        return False
+
+    def ia_do_production(self):
+        """Fonction permettant de faire le scénario de production.
+
+        Returns:
+            bool: True si le scénario est réalisé, False sinon.
+        """
+
+        from Utils import get_cost
+        data = "pompe_petroliere", self.team, get_cost("pompe_petroliere")
+        # On vérifie que l'on peux spawn la pompe.
+        if self.event_handler.check_cost(data[1], data[2]):
+
+            # On vérifie qu'on est sous le seuil.
+            if self.nb_pompe_ally < self.seuils["passive"][data[0]]:
+
+                # On spawn la pompe.
+                self.event_handler.apply_cost(data[0], data[1], data[2])
+                self.event_handler.spawn_unit(data[0], data[1])
+
+                return True
+        else:
+            from random import randint
+            # Si on peut pas spawn, on a 75% de chance d'attendre.
+            if randint(0, 3) != 0:
+                self.ia_wait_for(data[0])
+        return False
+
+    def ia_wait_for(self, type_unit: str):
+        """Fonction permettant de définir des variables pour attendre.
+
+        Args:
+            type_unit (str): Le type d'unité
+        """
+        # On passe l'attente a vrai
+        self.wait = True
+        self.wait_target = type_unit
+        if self.team == "red":
+            print(f"On attend pour {self.wait_target}")
+
+    def ia_check_wait(self):
+        """Fonction permettant de vérifier si l'IA attend.
+
+        Returns:
+            bool: True si l'IA attend, False sinon.
+        """
+        if self.wait:
+            from Utils import get_cost
+            data = self.wait_target, self.team, get_cost(
+                self.wait_target)
+            # On vérifie que l'on peux spawn l'entité
+            if self.event_handler.check_cost(data[1], data[2]):
+                self.wait = False
+                self.wait_target = None
+                return False
+            return True
+        else:
+            return False
+
+    def ia_check_seuil(self):
+        """Fonction permettant de vérifier si le seuil est atteint pour toutes les unités alliées.
+
+        Returns :
+            bool (bool): True si le seuil est atteint, False sinon."""
+
+        # Si le seuil est atteint pour tous.
+        seuil_atteint = False
+        # On parcours toutes les unités alliées.
+        for cle, valeur in self.units_ally_dico.items():
+            if cle == "eclaireur" or cle == "pompe_petroliere":
+                type_dico = "passive"
+            else:
+                type_dico = "active"
+            # Si une n'a pas atteint son seuil.
+            if self.seuils[type_dico][cle] >= valeur:
+                seuil_atteint = True
+
+        return seuil_atteint
+
+    def ia_change_seuil(self):
+        """Fonction permettant de changer le seuil pour toutes les unités alliées."""
+        from random import randint
+
+        for cle in self.seuils["active"].keys():
+            # Ajoute entre 1 et 5 unités au lieu de doubler
+            self.seuils["active"][cle] = self.max_seuil + randint(1, 5)
+
+        self.seuils["passive"]["pompe_petroliere"] = self.max_seuil + \
+            randint(1, 5)
+
+        self.max_seuil += randint(1, 5)
+
+    def ia_get_distance(self, unit: "Unit", unit2: "Unit"):
+        """Fonction permettant d'avoir la distance entre deux unités
+
+        Args:
+            unit (Unit): La premiere unité
+            unit2 (Unit): La seconde unité
+        Returns :
+            (float): La distance entre les deux unités
+        """
         import math
-        for unit in self.enemie_units : 
-            x, y= unit.position[0], unit.position[1]
-            distance = math.sqrt((x - self.position[0])**2 + (y - self.position[1])**2)
-            # On fais le scénario de défense en prennant en compte la distance et la puissance des unités.
-            if distance < self.range * 2 :
-                if distance < self.range : # La défense est prioritaire
-                    self.scenarios["defense"] += 10 * coef["defense"] * self.coef_unit[unit.unit_type]
-                else : 
-                    self.scenarios["defense"] += 1 * coef["defense"] * self.coef_unit[unit.unit_type]
 
-        # Si le nombre de pétrole ally est proche de faire la construction d'une pompe on attend pour la construction.
-        if self.is_near(self.nb_oil_ally, "pompe_petroliere") : 
-            scenarios["production"] += 1 * coef["production"]
-            
-        return scenarios
-            
-    def take_choice(self) : 
-        """Fonction permettant de prendre une décision pour l'IA"""
-        # On met a jour toutes les variables necessaires
-        self.update_ia()
-        choix = max(self.scenarios, key=self.scenarios.get)
-        
-        from Global import UNIT_CONFIGS
-        if choix == "exploration" : 
-            # On spawn un bateau d'exploration 
-            self.game.event_handler.spawn_unit("eclaireur", self.team, UNIT_CONFIGS["eclaireur"]["cost"]) 
-                
-    def give_info(self): 
-        """Fonction permettant de donner des informations sur l'IA"""
-        # On va afficher le scénario ayant le plus de poids
-        self.print_dico(self.coef, "coefficient")
-        self.print_dico(self.scenarios, "scénario")
-        choix = max(self.scenarios, key=self.scenarios.get)
-        
-        print(f"Le scénario le plus important est : {choix}")
-        print(self.is_near(self.nb_oil_ally, "pompe_petroliere"))
-    
-    def is_near(self, player_oil : int, objectif : str):
+        x, y = unit.position[0], unit.position[1]
+        x2, y2 = unit2.position[0], unit2.position[1]
+
+        return math.sqrt((x - x2)**2 + (y - y2)**2)
+
+    def ia_is_near_oil_goal(self, player_oil: int, objectif: str):
         """Fonction permettant de savoir si un objectif est proche ou non en quantité de pétrole (on se base sur UNIT CONFIGS du global).
 
         Args:
@@ -341,12 +718,26 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         """
         from Global import UNIT_CONFIGS
         # Vérification de la présence de l'objectif dans la config
-        if objectif not in UNIT_CONFIGS :
+        if objectif not in UNIT_CONFIGS:
             return False
 
-        cost = UNIT_CONFIGS[objectif]["cost"]
         # Si la différence est dans la marge
-        return abs(player_oil - cost) <= self.nb_random
+        return abs(player_oil - UNIT_CONFIGS[objectif]["cost"]) <= self.marges["oil"]
+
+    def ia_is_near_from_base(self, unit: "Unit", reducteur: int = 1):
+        """Fonction permettant de savoir si une unité est proche de la base
+
+        Args:
+            unit (Unit): L'entité ciblé
+            reducteur (int, optional): Le reducteur de la range. Defaults to 1.
+
+        Returns:
+            (bool): True si l'unité est proche de la base, False sinon
+        """
+        # Si la distance entre la base est l'entité est inférieur à sa range
+        if unit.unit_type == "plateformePertroliere":  # Si l'unité est une plateforme pétrolière
+            return False
+        return self.ia_get_distance(unit, self) < self.range / reducteur
 
     def print_dico(self, dico: dict, nom: str):
         """Fonction permettant d'afficher un dictionnaire de manière lisible.
@@ -359,25 +750,27 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         print(f"Affichage du dictionnaire : {nom}")
         for element in dico:
             print(f"{element} : {dico[element]}")
-            
-        print("\n\n")
-            
-class PlateformePetroliereRouge(PlateformePetroliere) :
-    def __init__(self, game: "Game", objTiled: "TiledObject") :  # type: ignore
+
+
+class PlateformePetroliereRouge(PlateformePetroliere):
+    def __init__(self, game: "Game", objTiled: "TiledObject", is_ia: bool = True):  # type: ignore
         """Constructeur de la classe PlateformePetroliereRouge.
 
         Args:
             game (Game): L'instance du jeu.
             objTiled (TiledObject): L'objet Tiled correspondant à la plateforme.
-        """ 
-        super().__init__(game, "red", objTiled, True )
-        
-class PlateformePetroliereVerte(PlateformePetroliere) :
-    def __init__(self, game: "Game", objTiled: "TiledObject") :  # type: ignore
+            is_ia (bool, optional): Indique si la plateforme est contrôlée par l'IA. Par défaut, True.
+        """
+        super().__init__(game, "red", objTiled, is_ia)
+
+
+class PlateformePetroliereVerte(PlateformePetroliere):
+    def __init__(self, game: "Game", objTiled: "TiledObject", is_ia: bool = True):  # type: ignore
         """Constructeur de la classe PlateformePetroliereVerte.
 
         Args:
             game (Game): L'instance du jeu.
             objTiled (TiledObject): L'objet Tiled correspondant à la plateforme.
-        """ 
-        super().__init__(game, "green", objTiled, True )
+            is_ia (bool, optional): Indique si la plateforme est contrôlée par l'IA. Par défaut, True.
+        """
+        super().__init__(game, "green", objTiled, is_ia)
