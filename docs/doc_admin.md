@@ -92,7 +92,7 @@ Utilisateur → Interface Menu → Game Engine → Rendu Pygame → Écran
 - RAM : 2 GB minimum
 - Espace disque : 500 MB
 - Résolution : 1024x768 minimum
-- Installation de l'outil pip
+- Outils : Pip, si non-installé suivre ce lien https://pip.pypa.io/en/stable/installation
 
 **Configuration recommandée :**
 - Python : 3.11
