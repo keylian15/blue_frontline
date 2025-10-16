@@ -59,7 +59,9 @@ class SousMarin(Unit):
         self.current_mine_index = 0  # Index de la prochaine position de mine
         
         # Modes d'IA
-        self.ia_mode = "attaque"  # Modes possibles: "fuite", "defense_base", "attaque"
+        self.ia_mode = "patrol"  # Modes possibles: "patrol", "attack", "return_to_platform"
+        self.previous_mode = "patrol"  # Pour suivre le mode précédent
+        self.platform_position = None  # Position de la plateforme pétrolière de l'équipe
         
             
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list[Unit] = None):
@@ -233,17 +235,114 @@ class SousMarin(Unit):
         
         return closest_scout
 
+    def find_base_position(self, all_units):
+        """Trouve la position d'une plateforme pétrolière de l'équipe.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
+            
+        Returns:
+            tuple: Position (x, y) de la plateforme ou None si non trouvée
+        """
+        print(f"🔍 {self.team} sous-marin: Recherche d'une plateforme pétrolière...")
+        
+        for unit in all_units:
+            # Vérifier si c'est une plateforme de la même équipe
+            if hasattr(unit, 'team') and unit.team == self.team:
+                # Vérifier plusieurs possibilités pour identifier une plateforme pétrolière
+                is_platform = False
+                
+                if hasattr(unit, 'is_platform') and unit.is_platform:
+                    is_platform = True
+                    print(f"✅ {self.team} sous-marin: Plateforme trouvée via is_platform flag")
+                
+                if hasattr(unit, 'unit_type'):
+                    # Vérifier si c'est une plateforme par le type
+                    if unit.unit_type in ["plateforme", "platform", "plateforme_petroliere", "PlateformePetroliere"]:
+                        is_platform = True
+                        print(f"✅ {self.team} sous-marin: Plateforme trouvée via unit_type: {unit.unit_type}")
+                
+                # Vérifier par le nom de classe
+                class_name = unit.__class__.__name__.lower()
+                if 'plateforme' in class_name or 'platform' in class_name:
+                    is_platform = True
+                    print(f"✅ {self.team} sous-marin: Plateforme trouvée via class name: {unit.__class__.__name__}")
+                
+                if is_platform:
+                    print(f"🛢️ {self.team} sous-marin: Plateforme pétrolière trouvée à position {unit.position}")
+                    return unit.position
+        
+        print(f"❌ {self.team} sous-marin: Aucune plateforme pétrolière trouvée!")
+        return None
+    
+    def return_to_base(self, all_units):
+        """Fait retourner le sous-marin à une plateforme pétrolière de son équipe.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
+        """
+        # Trouver la plateforme si on ne l'a pas encore
+        if self.platform_position is None:
+            self.platform_position = self.find_base_position(all_units)
+        
+        if self.platform_position:
+            # Calculer la distance à la plateforme
+            dx = self.platform_position[0] - self.position[0]
+            dy = self.platform_position[1] - self.position[1]
+            distance_to_platform = math.sqrt(dx**2 + dy**2)
+            
+            # Si on est proche de la plateforme (moins de 50 pixels), on arrête et on tourne le bateau
+            if distance_to_platform < 50:
+                print(f"🛢️ {self.team} sous-marin: Arrivé à la plateforme pétrolière!")
+                self.stop()
+                self.is_moving = False
+                self.target_position = None
+                
+                # Faire tourner le bateau de 180 degrés pour repartir dans l'autre direction
+                self.angle = (self.angle + 180) % 360
+                self.image = pygame.transform.rotate(self.image_original, self.angle)
+                self.rect = self.image.get_rect(center=self.rect.center)
+                print(f"🔄 {self.team} sous-marin: Bateau tourné de 180° (nouvel angle: {int(self.angle)}°)")
+                
+                # Passer en mode patrol
+                self.ia_mode = "patrol"
+                self.platform_position = None  # Réinitialiser pour chercher une nouvelle plateforme la prochaine fois
+                print(f"✅ {self.team} sous-marin: Retour en mode PATROL!")
+                return
+            
+            # Se déplacer vers la plateforme
+            if not self.is_moving:
+                print(f"🛢️ {self.team} sous-marin: Retour à la plateforme (distance: {int(distance_to_platform)}px)")
+                # Calculer l'angle vers la plateforme
+                angle_to_platform = math.degrees(math.atan2(-dy, dx)) - 90
+                self.angle = angle_to_platform % 360
+                self.image = pygame.transform.rotate(self.image_original, self.angle)
+                self.rect = self.image.get_rect(center=self.rect.center)
+                
+                # Se déplacer vers la plateforme si le chemin est dégagé
+                if self.is_path_clear(self.platform_position[0], self.platform_position[1]):
+                    self.move_to_position(self.platform_position)
+                else:
+                    # Si le chemin direct est bloqué, chercher une route alternative
+                    self.find_alternative_path_to_target(self.platform_position[0], self.platform_position[1])
+        else:
+            # Si on ne trouve pas de plateforme, retour en mode patrol
+            print(f"⚠️ {self.team} sous-marin: Plateforme non trouvée, retour en mode PATROL")
+            self.ia_mode = "patrol"
+            self.patrol_movement()
+    
     def set_ia_mode(self, mode: str):
         """Change le mode d'IA du sous-marin.
         
         Args:
-            mode (str): Le mode à activer ("fuite", "defense_base", "attaque")
+            mode (str): Le mode à activer ("fuite", "defense_base", "attaque", "normal")
         """
-        if mode in ["fuite", "defense_base", "attaque"]:
+        if mode in ["fuite", "defense_base", "attaque", "normal"]:
+            self.previous_mode = self.ia_mode  # Sauvegarder le mode précédent
             self.ia_mode = mode
-            print(f"🎯 {self.team} sous-marin: Mode IA changé en '{mode}'")
+            print(f"🎯 {self.team} sous-marin: Mode IA changé de '{self.previous_mode}' en '{mode}'")
         else:
-            print(f"⚠ Mode IA invalide: {mode}. Modes possibles: fuite, defense_base, attaque")
+            print(f"⚠ Mode IA invalide: {mode}. Modes possibles: fuite, defense_base, attaque, normal")
     
     def ia_mode_fuite(self, all_units):
         """Mode fuite: Le sous-marin fuit les ennemis et pose des mines défensives.
@@ -318,83 +417,140 @@ class SousMarin(Unit):
             self.patrol_movement()
     
     def ia_mouvement(self, all_units):
-        """IA du sous-marin pour se déplacer en ligne droite vers l'avant jusqu'à un obstacle.
+        """IA du sous-marin avec trois modes distincts : patrol, attack, return_to_platform.
         
-        Le sous-marin détecte les éclaireurs à proximité, fonce vers eux jusqu'à collision et pose une mine.
-        Sinon, il patrouille en ligne droite.
+        Flux:
+        1. PATROL → Patrouille normale jusqu'à détecter un éclaireur
+        2. ATTACK → Poursuite et pose de mine
+        3. RETURN_TO_PLATFORM → Retour à la plateforme pétrolière
+        4. Retour en PATROL
         """
         
-        # PRIORITÉ 1 : Chercher des éclaireurs ennemis à proximité (10 cases = 320 pixels)
+        # MODE 1: PATROL - Patrouille normale
+        if self.ia_mode == "patrol":
+            self.behavior_patrol(all_units)
+        
+        # MODE 2: ATTACK - Attaque d'un éclaireur
+        elif self.ia_mode == "attack":
+            self.behavior_attack(all_units)
+        
+        # MODE 3: RETURN_TO_PLATFORM - Retour à la plateforme
+        elif self.ia_mode == "return_to_platform":
+            self.behavior_return_to_platform(all_units)
+    
+    def behavior_patrol(self, all_units):
+        """Comportement de patrouille normale.
+        
+        Cherche des éclaireurs ennemis. Si détecté → passe en mode attack.
+        Sinon, patrouille en ligne droite.
+        """
+        # Chercher des éclaireurs ennemis à proximité (10 cases = 320 pixels)
         nearby_scouts = self.find_nearby_scouts(all_units, detection_range=320)
         
         if nearby_scouts:
-            # Si un éclaireur est détecté, le poursuivre
-            target_scout = self.get_closest_scout(nearby_scouts)
+            # Éclaireur détecté → passer en mode attaque
+            print(f"⚔️ {self.team} sous-marin: ÉCLAIREUR DÉTECTÉ → Passage en mode ATTACK")
+            self.ia_mode = "attack"
+            return
+        
+        # Pas d'éclaireur → patrouille normale
+        self.patrol_movement()
+    
+    def behavior_attack(self, all_units):
+        """Comportement d'attaque d'un éclaireur.
+        
+        Poursuit l'éclaireur et pose une mine à proximité.
+        Si plus d'éclaireur → passe en mode return_to_platform.
+        """
+        # Chercher des éclaireurs ennemis à proximité
+        nearby_scouts = self.find_nearby_scouts(all_units, detection_range=320)
+        
+        if not nearby_scouts:
+            # Plus d'éclaireur → passer en mode retour à la plateforme
+            print(f"🛢️ {self.team} sous-marin: PLUS D'ÉCLAIREUR → Passage en mode RETURN_TO_PLATFORM")
+            self.ia_mode = "return_to_platform"
+            return
+        
+        # Éclaireur détecté, le poursuivre
+        target_scout = self.get_closest_scout(nearby_scouts)
+        
+        if target_scout:
+            # Calculer la distance avec l'éclaireur
+            dx = target_scout.position[0] - self.position[0]
+            dy = target_scout.position[1] - self.position[1]
+            distance_to_scout = math.sqrt(dx**2 + dy**2)
             
-            if target_scout:
-                # Calculer la distance avec l'éclaireur
-                dx = target_scout.position[0] - self.position[0]
-                dy = target_scout.position[1] - self.position[1]
-                distance_to_scout = math.sqrt(dx**2 + dy**2)
+            # Distance de collision
+            collision_distance = 30
+            
+            print(f"🔍 {self.team} sous-marin: Éclaireur à {int(distance_to_scout)}px (seuil: {collision_distance}px)")
+            
+            # Si on est en collision ou très proche, poser une mine
+            if distance_to_scout <= collision_distance:
+                print(f"⚠️ {self.team} sous-marin: COLLISION! Distance: {int(distance_to_scout)}px")
                 
-                # Distance de collision augmentée pour mieux détecter la proximité
-                collision_distance = 30
+                # Arrêter le mouvement
+                self.stop()
+                self.is_moving = False
+                self.target_position = None
                 
-                print(f"🔍 {self.team} sous-marin: Éclaireur détecté à {int(distance_to_scout)}px (seuil: {collision_distance}px)")
+                # Poser une mine si le cooldown est passé
+                if self.can_place_mine():
+                    print(f"✅ {self.team} sous-marin: Cooldown OK, pose de mine...")
+                    mine_placed = self.place_mine(int(self.position[0]), int(self.position[1]))
+                    if mine_placed:
+                        print(f"💣 {self.team} sous-marin a posé une mine - Distance éclaireur: {int(distance_to_scout)}px")
+                else:
+                    print(f"⏳ {self.team} sous-marin: Cooldown en cours...")
+                return
+            
+            # Si l'éclaireur est plus loin, ajuster la trajectoire si nécessaire
+            if self.is_moving and self.target_position:
+                # Vérifier si on se dirige déjà vers l'éclaireur (tolérance de 30 degrés)
+                current_target_dx = self.target_position[0] - self.position[0]
+                current_target_dy = self.target_position[1] - self.position[1]
+                current_angle = math.degrees(math.atan2(-current_target_dy, current_target_dx)) - 90
+                scout_angle = math.degrees(math.atan2(-dy, dx)) - 90
+                angle_diff = abs((scout_angle - current_angle + 180) % 360 - 180)
                 
-                # Si on est en collision ou très très proche, arrêter et poser une mine
-                if distance_to_scout <= collision_distance:
-                    print(f"⚠️ {self.team} sous-marin: PROCHE de l'éclaireur! Distance: {int(distance_to_scout)}px")
-                    
-                    # Arrêter le mouvement en cours
+                # Si on ne se dirige pas vers l'éclaireur, changer de direction
+                if angle_diff > 30:
                     self.stop()
                     self.is_moving = False
                     self.target_position = None
-                    
-                    # Poser une mine si le cooldown est passé
-                    if self.can_place_mine():
-                        print(f"✅ {self.team} sous-marin: Cooldown OK, pose de mine...")
-                        mine_placed = self.place_mine(int(self.position[0]), int(self.position[1]))
-                        if mine_placed:
-                            print(f"💣 {self.team} sous-marin a posé une mine à ({int(self.position[0])}, {int(self.position[1])}) - COLLISION avec éclaireur: {int(distance_to_scout)}px")
-                    else:
-                        print(f"⏳ {self.team} sous-marin: Cooldown en cours...")
-                    return
+            
+            # Se déplacer vers l'éclaireur
+            if not self.is_moving:
+                print(f"🎯 {self.team} sous-marin: Poursuite de l'éclaireur...")
+                # Calculer l'angle vers l'éclaireur
+                angle_to_scout = math.degrees(math.atan2(-dy, dx)) - 90
+                self.angle = angle_to_scout % 360
+                self.image = pygame.transform.rotate(self.image_original, self.angle)
+                self.rect = self.image.get_rect(center=self.rect.center)
                 
-                # Si l'éclaireur est plus loin, arrêter le mouvement actuel et se diriger vers lui
-                if self.is_moving and self.target_position:
-                    # Vérifier si on se dirige déjà vers l'éclaireur (tolérance de 30 degrés)
-                    current_target_dx = self.target_position[0] - self.position[0]
-                    current_target_dy = self.target_position[1] - self.position[1]
-                    current_angle = math.degrees(math.atan2(-current_target_dy, current_target_dx)) - 90
-                    scout_angle = math.degrees(math.atan2(-dy, dx)) - 90
-                    angle_diff = abs((scout_angle - current_angle + 180) % 360 - 180)
-                    
-                    # Si on ne se dirige pas vers l'éclaireur, changer de direction
-                    if angle_diff > 30:
-                        self.stop()
-                        self.is_moving = False
-                        self.target_position = None
-                
-                # Se déplacer vers l'éclaireur
-                if not self.is_moving:
-                    print(f"🎯 {self.team} sous-marin: Se déplace vers l'éclaireur...")
-                    # Calculer l'angle vers l'éclaireur
-                    angle_to_scout = math.degrees(math.atan2(-dy, dx)) - 90
-                    self.angle = angle_to_scout % 360
-                    self.image = pygame.transform.rotate(self.image_original, self.angle)
-                    self.rect = self.image.get_rect(center=self.rect.center)
-                    
-                    # Se déplacer vers l'éclaireur si le chemin est dégagé
-                    if self.is_path_clear(target_scout.position[0], target_scout.position[1]):
-                        self.move_to_position(target_scout.position)
-                    else:
-                        # Si le chemin direct est bloqué, chercher une route alternative
-                        self.find_alternative_path_to_target(target_scout.position[0], target_scout.position[1])
-                return
+                # Se déplacer vers l'éclaireur si le chemin est dégagé
+                if self.is_path_clear(target_scout.position[0], target_scout.position[1]):
+                    self.move_to_position(target_scout.position)
+                else:
+                    # Si le chemin direct est bloqué, chercher une route alternative
+                    self.find_alternative_path_to_target(target_scout.position[0], target_scout.position[1])
+    
+    def behavior_return_to_platform(self, all_units):
+        """Comportement de retour à la plateforme pétrolière.
         
-        # PRIORITÉ 2 : Comportement normal (patrouille)
-        self.patrol_movement()
+        Retourne à une plateforme pétrolière alliée.
+        Arrivé à destination → tourne de 180° et repasse en mode patrol.
+        """
+        # Si un éclaireur est détecté, annuler le retour et passer en mode attack
+        nearby_scouts = self.find_nearby_scouts(all_units, detection_range=320)
+        if nearby_scouts:
+            print(f"⚔️ {self.team} sous-marin: ÉCLAIREUR DÉTECTÉ pendant le retour → Annulation, passage en mode ATTACK")
+            self.ia_mode = "attack"
+            self.platform_position = None  # Réinitialiser la position de la plateforme
+            return
+        
+        # Continuer le retour à la plateforme
+        self.return_to_base(all_units)
     
     def patrol_movement(self):
         """Effectue un mouvement de patrouille (avancer tout droit)."""
