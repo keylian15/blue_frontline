@@ -134,7 +134,8 @@ class EventHandler:
             return True
         
         if event.key == pygame.K_m : 
-            self.game.plateformes["red"].give_info()
+            self.game.plateformes["red"].ia_save_log()
+            self.game.plateformes["green"].ia_save_log()
         return True
     
     def handle_mouse_events(self, event: pygame.event):

@@ -109,10 +109,10 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 scenario = self.current_scenario
             else:
                 self.ia_scenarios()                 # On applique les scenarios de l'IA
-                scenario = self.ia_get_scenario()   # On récupére le scénario de l'IA
-                self.current_scenario = scenario    # On note le scénario courant
                 if self.team == "red":
                     print(f"Les scénarios {self.scenarios}")
+                scenario = self.ia_get_scenario()   # On récupére le scénario de l'IA
+                self.current_scenario = scenario    # On note le scénario courant
 
             # On fait le scénario de l'IA
             self.ia_do_scenario(scenario)
@@ -139,7 +139,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
     def on_destroyed(self):
         """Appelé quand la plateforme est détruite."""
-
+        self.ia_save_log()
         # Déclencher la victoire si la plateforme a une référence vers le Game
         if hasattr(self, 'game') and self.game:
             self.game.on_platform_destroyed(self)
@@ -255,6 +255,47 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         self.print_dico(self.marges, "Marges")
         self.print_dico(self.seuils, "Seuils")
 
+        # On testera toujours si le random est inférieur, si true on prend.
+        self.probabilites = {
+            # --- Choix de scénario global ---
+            "scenario_selection": 0.75,  # 75% : prendre le meilleur scénario
+
+            # --- Cas général d’attaque ---
+            "general": 0.5,             # 50% : attaque forte / 50% : attaque simple
+
+            # --- Défense forte ---
+            "defense_forte": {
+                "no_cost": 0.5,         # 50% : attendre jusqu’à obtention
+                "can_spawn":  0.75,     # 75% : spawn une entité
+            },
+
+            # --- Attaque simple ---
+            "attaque_simple": {
+                # Lorsqu’on prend une entité (répartition équitable)
+                "entities": {
+                    "chaloupe": 0.25,
+                    "bateau": 0.25,
+                    "sousmarin": 0.25,
+                    "paquebot": 0.25
+                }
+            },
+
+            # --- Attaque forte ---
+            "attaque_forte": {
+                "no_cost": 0.75,        # 75% : attendre jusqu’à obtention
+                "can_spawn":  0.25,     # 25% : spawn une entité
+            },
+
+            # --- Exploration ---
+            "exploration":  0.25,       # 25% : attendre si on n’a pas les ressources
+
+            # --- Production ---
+            "production": 0.75,         # 75% : attendre si on n’a pas les ressources
+        }
+
+        # Système de logs
+        self.logs = []
+
     def ia_update(self):
         """Fonction permettant de mettre à jour les données de l'IA, appelé a chaque tick"""
         # On récupére les unités du jeu
@@ -270,11 +311,11 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
             # On récupére les différentes unités dans les 4 listes différentes.
             for unit in self.units:
+                # Si c'est une plateforme
+                if unit.unit_type == "plateformePertroliere":
+                    continue
                 # Si c'est une unité alliée
                 if unit.team == self.team:
-                    # Si c'est une plateforme
-                    if unit.unit_type == "plateformePertroliere":
-                        continue
                     # Si c'est une pompe
                     if unit.unit_type == "pompe_petroliere":
                         self.pompe_ally.append(unit)
@@ -327,7 +368,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
     def ia_scenarios(self):
         """Fonction permettant de déterminer les scénarios de l'IA"""
-        from random import randint
+        from random import random
 
         self.scenarios = {
             "defense": {
@@ -379,7 +420,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             self.scenarios["attaque"]["forte"] += coef_att_fort
 
         # Cas général : Attaque Forte à 50%, Attaque Simple à 50%.
-        if randint(0, 1) == 0:
+        if random() < self.probabilites["general"]:
             self.scenarios["attaque"]["forte"] += coef_att_fort * 0.5
         else:
             self.scenarios["attaque"]["simple"] += coef_att_sim * 0.5
@@ -390,13 +431,13 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         Returns:
             tuple: (scénario, sous_scénario, score)
         """
-        from random import randint, choice
+        from random import random, choice
 
         max_scenario = (None, None, 0)  # (scénario, sous_scenario, score)
         scenarios = list(self.scenarios.items())
 
         # --- 75% : choisir le meilleur scénario ---
-        if randint(0, 3) != 0:
+        if random() < self.probabilites["scenario_selection"]:
             for cle, valeur in scenarios:
                 if isinstance(valeur, dict):
                     for sous_cle, sous_valeur in valeur.items():
@@ -405,7 +446,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 else:
                     if valeur > max_scenario[2]:
                         max_scenario = (cle, None, valeur)
-            if self.team == "red" : 
+            if self.team == "red":
                 print(f"Le scénario choisi est {max_scenario} ")
 
         # --- 25% : choisir un scénario aléatoire ---
@@ -416,7 +457,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 max_scenario = (cle, sous_cle, sous_valeur)
             else:
                 max_scenario = (cle, None, valeur)
-            if self.team == "red" : 
+            if self.team == "red":
                 print(f"Le scénario choisi est {max_scenario} en aléatoire")
         return max_scenario
 
@@ -451,7 +492,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
     def ia_do_defense_simple(self):
         """Fonction permettant de faire le scénario de défense simple.
 
-        Returns : 
+        Returns :
             bool (bool): True si le scénario a été effectué, False sinon."""
         from Utils import get_cost
         # On vérifie qu'on peux spawn la chaloupe.
@@ -466,10 +507,10 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
     def ia_do_defense_forte(self, indice: int = 0):
         """Fonction permettant de faire le scénario de défense forte.
-        Args : 
+        Args :
             indice (int): Indice de l'entité à spawn.
 
-        Returns : 
+        Returns :
             bool (bool): True si le scénario a été effectué, False sinon."""
         # Si on doit attendre, on ne fait rien.
         if self.wait:
@@ -480,7 +521,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             self.ia_change_seuil()
 
         # On parcour la liste dans l'ordre donnée.
-        from random import randint
+        from random import random
         from Utils import get_cost
         indice = indice % len(self.liste)
         data = self.liste[indice], self.team, get_cost(self.liste[indice])
@@ -491,7 +532,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 self.ia_do_defense_forte(indice + 1)
 
             # On a 75% de chance de spawn l'unité.
-            if randint(0, 3) != 0:
+            if random() < self.probabilites["defense_forte"]["can_spawn"]:
                 self.event_handler.apply_cost(data[0], data[1], data[2])
                 self.event_handler.spawn_unit(data[0], data[1])
                 return True
@@ -500,11 +541,8 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 self.ia_do_defense_forte(indice + 1)
 
         else:
-            # On a 50% de ne rien faire et 50% d'attendre.
-            if randint(0, 1) == 0:
-                # On ne fait rien
-                return False
-            else:
+            # On a 50% d'attendre.
+            if random() < self.probabilites["defense_forte"]["no_cost"]:
                 # On attend pour le faire spawn.
                 self.ia_wait_for(data[0])
         return False
@@ -517,9 +555,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         """
 
         from Utils import get_cost
-        from random import choice
         # Les 4 unités ont 25% de chance de spawn.
-        nom = choice(self.liste)
+        nom = self.ia_tirage_pondere(
+            self.probabilites["attaque_simple"]["entities"])
         data = nom, self.team, get_cost(nom)
         # On vérifie qu'on peux spawn l'unité.
         if self.event_handler.check_cost(data[1], data[2]):
@@ -531,10 +569,10 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
     def ia_do_attack_forte(self, indice: int = 0):
         """Fonction permettant de faire le scénario d'attaque forte.
-        Args : 
+        Args :
             indice (int): Indice de l'entité à spawn.
 
-        Returns : 
+        Returns :
             bool (bool): True si le scénario a été effectué, False sinon."""
         # Si on doit attendre, on ne fait rien.
         if self.wait:
@@ -545,7 +583,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             self.ia_change_seuil()
 
         # On parcour la liste dans l'ordre donnée.
-        from random import randint
+        from random import random
         from Utils import get_cost
         indice = indice % len(self.liste)
         data = self.liste[indice], self.team, get_cost(self.liste[indice])
@@ -556,7 +594,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 self.ia_do_attack_forte(indice + 1)
 
             # On a 25% de chance de spawn l'unité.
-            if randint(0, 3) == 0:
+            if random() < self.probabilites["attaque_forte"]["can_spawn"]:
                 self.event_handler.apply_cost(data[0], data[1], data[2])
                 self.event_handler.spawn_unit(data[0], data[1])
                 return True
@@ -565,11 +603,8 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 self.ia_do_attack_forte(indice + 1)
 
         else:
-            # On a 25% de ne rien faire et 75% d'attendre.
-            if randint(0, 3) == 0:
-                # On ne fait rien
-                return False
-            else:
+            # On a 75% d'attendre.
+            if random() < self.probabilites["attaque_forte"]["no_cost"]:
                 # On attend pour le faire spawn.
                 self.ia_wait_for(data[0])
         return False
@@ -593,9 +628,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
                 return True
         else:
-            from random import randint
+            from random import random
             # Si on peut pas spawn, on a 25% de chance d'attendre.
-            if randint(0, 3) == 0:
+            if random() < self.probabilites["exploration"]:
                 self.ia_wait_for(data[0])
         return False
 
@@ -620,9 +655,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
                 return True
         else:
-            from random import randint
+            from random import random
             # Si on peut pas spawn, on a 75% de chance d'attendre.
-            if randint(0, 3) != 0:
+            if random() < self.probabilites["production"]:
                 self.ia_wait_for(data[0])
         return False
 
@@ -638,16 +673,20 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         if self.team == "red":
             print(f"On attend pour {self.wait_target}")
 
-    def ia_check_wait(self):
+    def ia_check_wait(self, data: tuple[str, str, int] = None):
         """Fonction permettant de vérifier si l'IA attend.
+
+        Args:
+            data (tuple[str, str, int], optional): Les données pour le spawn. Defaults to None.
 
         Returns:
             bool: True si l'IA attend, False sinon.
         """
         if self.wait:
             from Utils import get_cost
-            data = self.wait_target, self.team, get_cost(
-                self.wait_target)
+            if not data:
+                data = self.wait_target, self.team, get_cost(
+                    self.wait_target)
             # On vérifie que l'on peux spawn l'entité
             if self.event_handler.check_cost(data[1], data[2]):
                 self.wait = False
@@ -661,21 +700,19 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         """Fonction permettant de vérifier si le seuil est atteint pour toutes les unités alliées.
 
         Returns :
-            bool (bool): True si le seuil est atteint, False sinon."""
+            bool (bool): True si le seuil est atteint pour tous, False sinon."""
 
-        # Si le seuil est atteint pour tous.
-        seuil_atteint = False
         # On parcours toutes les unités alliées.
         for cle, valeur in self.units_ally_dico.items():
             if cle == "eclaireur" or cle == "pompe_petroliere":
                 type_dico = "passive"
             else:
                 type_dico = "active"
-            # Si une n'a pas atteint son seuil.
-            if self.seuils[type_dico][cle] >= valeur:
-                seuil_atteint = True
+            # Si une unité n'a pas atteint son seuil.
+            if valeur < self.seuils[type_dico][cle]:
+                return False
 
-        return seuil_atteint
+        return True
 
     def ia_change_seuil(self):
         """Fonction permettant de changer le seuil pour toutes les unités alliées."""
@@ -739,6 +776,24 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             return False
         return self.ia_get_distance(unit, self) < self.range / reducteur
 
+    def ia_tirage_pondere(self, probas: dict[str, float]) -> str:
+        """Fonction permettant de faire un tirage pondérer sur les probas.
+
+        Args:
+            probas (dict[str, float]): Les probabilités.
+
+        Returns:
+            str: La valeur de la probabilité.
+        """
+        from random import random
+        r = random()
+        cumul = 0.0
+        for cle, p in probas.items():
+            cumul += p
+            if r < cumul:
+                return cle
+        return list(probas.keys())[-1]
+
     def print_dico(self, dico: dict, nom: str):
         """Fonction permettant d'afficher un dictionnaire de manière lisible.
 
@@ -750,6 +805,60 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         print(f"Affichage du dictionnaire : {nom}")
         for element in dico:
             print(f"{element} : {dico[element]}")
+
+    def ia_log_action(self, action_type: str, scenario: str, cost: int, details: dict = None):
+        """Enregistre une action réelle de l'IA.
+
+        Args:
+            action_type (str): Type d'action ("spawn", "wait_start", "wait_end", "scenario_change")
+            scenario (str): Type de scénario 
+            cost (int): Le coût de l'action
+            details (dict): Détails additionnels de l'action
+        """
+        log_entry = {
+            "time": self.game.hud.timer.get_time(),
+            "team": self.team,
+            "scenario": scenario,
+            "action": action_type,
+            "petrole_ally_before": int(self.nb_oil_ally + cost),
+            "petrole_ally_after": self.nb_oil_ally,
+            "petrole_enemy": self.nb_oil_enemy,
+            "units_ally": self.units_ally_dico.copy(),
+            "units_enemy": self.units_enemy_dico.copy(),
+            "nb_pompe_ally": self.nb_pompe_ally,
+            "nb_pompe_enemy": self.nb_pompe_enemy,
+        }
+
+        if details:
+            log_entry.update(details)
+
+        self.logs.append(log_entry)
+
+    def ia_save_log(self):
+        """Fonction qui enregistre les actions de l'IA dans un fichier JSON."""
+        import os
+        import json
+        import datetime
+
+        # Dossier cible
+        log_dir = os.path.join(".", "blue_frontline", "Class", "units", "IA")
+        # Crée le dossier s’il n’existe pas
+        os.makedirs(log_dir, exist_ok=True)
+
+        # Nom du fichier
+        filename = f"logs_ia_{self.team}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        filepath = os.path.join(log_dir, filename)
+
+        # Sauvegarde
+        with open(filepath, 'w', encoding='utf-8') as f:
+            json.dump({
+                "time": self.game.hud.timer.get_time(),
+                "coefficients": self.coefficients,
+                "probabilites": self.probabilites,
+                "marges": self.marges,
+                "seuil": self.seuils,
+                "actions": self.logs
+            }, f, indent=2, ensure_ascii=False)
 
 
 class PlateformePetroliereRouge(PlateformePetroliere):
