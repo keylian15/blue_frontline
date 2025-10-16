@@ -58,6 +58,9 @@ class SousMarin(Unit):
         self.mine_positions_around_target = []  # Positions où poser des mines autour de la cible
         self.current_mine_index = 0  # Index de la prochaine position de mine
         
+        # Modes d'IA
+        self.ia_mode = "attaque"  # Modes possibles: "fuite", "defense_base", "attaque"
+        
             
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list[Unit] = None):
         """Met à jour l'unité en fonction de son état actuel.
@@ -230,8 +233,96 @@ class SousMarin(Unit):
         
         return closest_scout
 
+    def set_ia_mode(self, mode: str):
+        """Change le mode d'IA du sous-marin.
+        
+        Args:
+            mode (str): Le mode à activer ("fuite", "defense_base", "attaque")
+        """
+        if mode in ["fuite", "defense_base", "attaque"]:
+            self.ia_mode = mode
+            print(f"🎯 {self.team} sous-marin: Mode IA changé en '{mode}'")
+        else:
+            print(f"⚠ Mode IA invalide: {mode}. Modes possibles: fuite, defense_base, attaque")
+    
+    def ia_mode_fuite(self, all_units):
+        """Mode fuite: Le sous-marin fuit les ennemis et pose des mines défensives.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
+        """
+        # TODO: Implémenter la logique de fuite
+        pass
+    
+    def ia_mode_defense_base(self, all_units):
+        """Mode défense base: Le sous-marin patrouille autour de sa base et la protège.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
+        """
+        # TODO: Implémenter la logique de défense de base
+        pass
+    
+    def ia_mode_attaque(self, all_units):
+        """Mode attaque: Le sous-marin poursuit activement les ennemis (éclaireurs).
+        
+        Activé automatiquement quand un éclaireur est à proximité.
+        Dans ce mode, le sous-marin s'approche jusqu'à collision et pose une mine.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
+        """
+        # Chercher l'éclaireur le plus proche
+        nearby_scouts = self.find_nearby_scouts(all_units, detection_range=60)
+        
+        if nearby_scouts:
+            target_scout = self.get_closest_scout(nearby_scouts)
+            
+            if target_scout:
+                # Calculer la distance avec l'éclaireur
+                dx = target_scout.position[0] - self.position[0]
+                dy = target_scout.position[1] - self.position[1]
+                distance_to_scout = math.sqrt(dx**2 + dy**2)
+                # Distance de collision très proche (environ la taille d'une unité, ~25 pixels)
+                collision_distance = 25
+                
+                # Si on est en collision ou très très proche, arrêter et poser une mine
+                if distance_to_scout <= collision_distance:
+                    # Arrêter le mouvement en cours
+                    self.stop()
+                    self.is_moving = False
+                    self.target_position = None
+                    
+                    # Poser une mine si le cooldown est passé
+                    if self.can_place_mine():
+                        mine_placed = self.place_mine(int(self.position[0]), int(self.position[1]))
+                        if mine_placed:
+                            print(f"💣 [MODE ATTAQUE] {self.team} sous-marin a posé une mine à ({int(self.position[0])}, {int(self.position[1])}) - COLLISION avec éclaireur: {int(distance_to_scout)}px")
+                else:
+                    # Continuer à poursuivre l'éclaireur
+                    if not self.is_moving:
+                        # Calculer l'angle vers l'éclaireur
+                        angle_to_scout = math.degrees(math.atan2(-dy, dx)) - 90
+                        self.angle = angle_to_scout % 360
+                        self.image = pygame.transform.rotate(self.image_original, self.angle)
+                        self.rect = self.image.get_rect(center=self.rect.center)
+                        
+                        # Se déplacer vers l'éclaireur si le chemin est dégagé
+                        if self.is_path_clear(target_scout.position[0], target_scout.position[1]):
+                            self.move_to_position(target_scout.position)
+                        else:
+                            # Si le chemin direct est bloqué, chercher une route alternative
+                            self.find_alternative_path_to_target(target_scout.position[0], target_scout.position[1])
+        else:
+            # Plus d'éclaireur à proximité, reprendre la patrouille
+            self.patrol_movement()
+    
     def ia_mouvement(self, all_units):
-        """IA du sous-marin pour se déplacer en ligne droite vers l'avant jusqu'à un obstacle."""
+        """IA du sous-marin pour se déplacer en ligne droite vers l'avant jusqu'à un obstacle.
+        
+        Le sous-marin détecte les éclaireurs à proximité, fonce vers eux jusqu'à collision et pose une mine.
+        Sinon, il patrouille en ligne droite.
+        """
         
         # PRIORITÉ 1 : Chercher des éclaireurs ennemis à proximité (10 cases = 320 pixels)
         nearby_scouts = self.find_nearby_scouts(all_units, detection_range=320)
@@ -246,8 +337,15 @@ class SousMarin(Unit):
                 dy = target_scout.position[1] - self.position[1]
                 distance_to_scout = math.sqrt(dx**2 + dy**2)
                 
-                # Si on est très proche (moins de 60 pixels), arrêter et poser une mine
-                if distance_to_scout < 60:
+                # Distance de collision augmentée pour mieux détecter la proximité
+                collision_distance = 30
+                
+                print(f"🔍 {self.team} sous-marin: Éclaireur détecté à {int(distance_to_scout)}px (seuil: {collision_distance}px)")
+                
+                # Si on est en collision ou très très proche, arrêter et poser une mine
+                if distance_to_scout <= collision_distance:
+                    print(f"⚠️ {self.team} sous-marin: PROCHE de l'éclaireur! Distance: {int(distance_to_scout)}px")
+                    
                     # Arrêter le mouvement en cours
                     self.stop()
                     self.is_moving = False
@@ -255,9 +353,12 @@ class SousMarin(Unit):
                     
                     # Poser une mine si le cooldown est passé
                     if self.can_place_mine():
+                        print(f"✅ {self.team} sous-marin: Cooldown OK, pose de mine...")
                         mine_placed = self.place_mine(int(self.position[0]), int(self.position[1]))
                         if mine_placed:
-                            print(f"💣 {self.team} sous-marin a posé une mine à ({int(self.position[0])}, {int(self.position[1])}) - Distance éclaireur: {int(distance_to_scout)}px")
+                            print(f"💣 {self.team} sous-marin a posé une mine à ({int(self.position[0])}, {int(self.position[1])}) - COLLISION avec éclaireur: {int(distance_to_scout)}px")
+                    else:
+                        print(f"⏳ {self.team} sous-marin: Cooldown en cours...")
                     return
                 
                 # Si l'éclaireur est plus loin, arrêter le mouvement actuel et se diriger vers lui
@@ -277,6 +378,7 @@ class SousMarin(Unit):
                 
                 # Se déplacer vers l'éclaireur
                 if not self.is_moving:
+                    print(f"🎯 {self.team} sous-marin: Se déplace vers l'éclaireur...")
                     # Calculer l'angle vers l'éclaireur
                     angle_to_scout = math.degrees(math.atan2(-dy, dx)) - 90
                     self.angle = angle_to_scout % 360
@@ -288,10 +390,14 @@ class SousMarin(Unit):
                         self.move_to_position(target_scout.position)
                     else:
                         # Si le chemin direct est bloqué, chercher une route alternative
-                        self._find_alternative_path_to_target(target_scout.position[0], target_scout.position[1])
+                        self.find_alternative_path_to_target(target_scout.position[0], target_scout.position[1])
                 return
         
         # PRIORITÉ 2 : Comportement normal (patrouille)
+        self.patrol_movement()
+    
+    def patrol_movement(self):
+        """Effectue un mouvement de patrouille (avancer tout droit)."""
         # Si le sous-marin est déjà en mouvement, ne rien faire
         if self.is_moving:
             return
@@ -313,9 +419,9 @@ class SousMarin(Unit):
             self.move_to_position((target_x, target_y))
         else:
             # Si le chemin n'est pas dégagé, chercher une direction alternative
-            self._find_alternative_direction(distance_check)
+            self.find_alternative_direction(distance_check)
     
-    def _find_alternative_direction(self, distance_check):
+    def find_alternative_direction(self, distance_check):
         """Cherche une direction alternative quand le chemin est bloqué.
         
         Args:
@@ -362,7 +468,7 @@ class SousMarin(Unit):
                     direction_found = True
                     break
     
-    def _find_alternative_path_to_target(self, target_x, target_y):
+    def find_alternative_path_to_target(self, target_x, target_y):
         """Cherche un chemin alternatif vers une cible spécifique.
         
         Args:
