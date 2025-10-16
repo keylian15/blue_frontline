@@ -86,7 +86,7 @@ Utilisateur → Interface Menu → Game Engine → Rendu Pygame → Écran
 
 ### 3.1 Prérequis système
 
-**Configuration minimale :**
+**Configuration minimale :**  
 - OS : Windows 10+ / Linux Ubuntu 18.04+ / macOS 10.14+  
 - Python : 3.11  
 - RAM : 2 GB minimum  
