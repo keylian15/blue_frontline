@@ -87,12 +87,12 @@ Utilisateur → Interface Menu → Game Engine → Rendu Pygame → Écran
 ### 3.1 Prérequis système
 
 **Configuration minimale :**
-- OS : Windows 10+ / Linux Ubuntu 18.04+ / macOS 10.14+
-- Python : 3.11
-- RAM : 2 GB minimum
-- Espace disque : 500 MB
-- Résolution : 1024x768 minimum
-- Outils : Pip, si non-installé suivre ce lien https://pip.pypa.io/en/stable/installation
+- OS : Windows 10+ / Linux Ubuntu 18.04+ / macOS 10.14+  
+- Python : 3.11  
+- RAM : 2 GB minimum  
+- Espace disque : 500 MB  
+- Résolution : 1024x768 minimum  
+- Outils : [PIP, Installation si nécessaire ](https://pip.pypa.io/en/stable/installation)
 
 **Configuration recommandée :**
 - Python : 3.11
