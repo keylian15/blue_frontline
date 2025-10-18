@@ -209,6 +209,36 @@ class SousMarin(Unit):
         
         return nearby_scouts
     
+    def find_nearby_paquebots(self, all_units, detection_range=600):
+        """Trouve les paquebots ennemis à proximité.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
+            detection_range (int): Rayon de détection en pixels (par défaut 600px)
+            
+        Returns:
+            list[Unit]: Liste des paquebots ennemis détectés
+        """
+        nearby_paquebots = []
+        
+        for unit in all_units:
+            # Vérifier si c'est un ennemi vivant
+            if not unit.is_alive or unit.team == self.team:
+                continue
+            
+            # Vérifier si c'est un paquebot
+            if hasattr(unit, 'unit_type') and unit.unit_type == "paquebot":
+                # Calculer la distance
+                dx = unit.position[0] - self.position[0]
+                dy = unit.position[1] - self.position[1]
+                distance = math.sqrt(dx**2 + dy**2)
+                
+                # Si dans le rayon de détection
+                if distance <= detection_range:
+                    nearby_paquebots.append(unit)
+        
+        return nearby_paquebots
+    
     def get_closest_scout(self, scouts):
         """Trouve l'éclaireur le plus proche parmi une liste.
         
@@ -441,10 +471,20 @@ class SousMarin(Unit):
     def behavior_patrol(self, all_units):
         """Comportement de patrouille normale.
         
-        Cherche des éclaireurs ennemis. Si détecté → passe en mode attack.
+        Cherche des paquebots ennemis à 80px ou moins → passe en mode return_to_platform.
+        Cherche des éclaireurs ennemis à 320px → passe en mode attack.
         Sinon, patrouille en ligne droite.
         """
-        # Chercher des éclaireurs ennemis à proximité (10 cases = 320 pixels)
+        # PRIORITÉ 1: Chercher des paquebots ennemis à proximité (80 pixels)
+        nearby_paquebots = self.find_nearby_paquebots(all_units, detection_range=80)
+        
+        if nearby_paquebots:
+            # Paquebot détecté → retourner à la plateforme immédiatement
+            print(f"🚢 {self.team} sous-marin: PAQUEBOT DÉTECTÉ à 80px ou moins → Passage en mode RETURN_TO_PLATFORM")
+            self.ia_mode = "return_to_platform"
+            return
+        
+        # PRIORITÉ 2: Chercher des éclaireurs ennemis à proximité (10 cases = 320 pixels)
         nearby_scouts = self.find_nearby_scouts(all_units, detection_range=320)
         
         if nearby_scouts:
@@ -453,16 +493,26 @@ class SousMarin(Unit):
             self.ia_mode = "attack"
             return
         
-        # Pas d'éclaireur → patrouille normale
+        # Pas de menace → patrouille normale
         self.patrol_movement()
     
     def behavior_attack(self, all_units):
         """Comportement d'attaque d'un éclaireur.
         
+        PRIORITÉ: Si paquebot détecté à 80px → passe en mode return_to_platform.
         Poursuit l'éclaireur et pose une mine à proximité.
         Si plus d'éclaireur → passe en mode return_to_platform.
         """
-        # Chercher des éclaireurs ennemis à proximité
+        # PRIORITÉ 1: Vérifier la présence de paquebots à proximité (80 pixels)
+        nearby_paquebots = self.find_nearby_paquebots(all_units, detection_range=80)
+        
+        if nearby_paquebots:
+            # Paquebot détecté → annuler l'attaque et retourner à la plateforme
+            print(f"🚢 {self.team} sous-marin: PAQUEBOT DÉTECTÉ pendant l'attaque → Annulation, passage en mode RETURN_TO_PLATFORM")
+            self.ia_mode = "return_to_platform"
+            return
+        
+        # PRIORITÉ 2: Chercher des éclaireurs ennemis à proximité
         nearby_scouts = self.find_nearby_scouts(all_units, detection_range=320)
         
         if not nearby_scouts:
@@ -541,13 +591,20 @@ class SousMarin(Unit):
         Retourne à une plateforme pétrolière alliée.
         Arrivé à destination → tourne de 180° et repasse en mode patrol.
         """
-        # Si un éclaireur est détecté, annuler le retour et passer en mode attack
-        nearby_scouts = self.find_nearby_scouts(all_units, detection_range=320)
-        if nearby_scouts:
-            print(f"⚔️ {self.team} sous-marin: ÉCLAIREUR DÉTECTÉ pendant le retour → Annulation, passage en mode ATTACK")
-            self.ia_mode = "attack"
-            self.platform_position = None  # Réinitialiser la position de la plateforme
-            return
+        # PRIORITÉ 1: Vérifier la présence de paquebots (ne pas interrompre le retour)
+        nearby_paquebots = self.find_nearby_paquebots(all_units, detection_range=80)
+        if nearby_paquebots:
+            # Un paquebot est toujours présent, continuer le retour
+            print(f"🚢 {self.team} sous-marin: Paquebot toujours détecté, continuation du retour à la plateforme")
+        
+        # PRIORITÉ 2: Si un éclaireur est détecté ET qu'il n'y a pas de paquebot, annuler le retour
+        if not nearby_paquebots:
+            nearby_scouts = self.find_nearby_scouts(all_units, detection_range=320)
+            if nearby_scouts:
+                print(f"⚔️ {self.team} sous-marin: ÉCLAIREUR DÉTECTÉ (pas de paquebot) → Annulation du retour, passage en mode ATTACK")
+                self.ia_mode = "attack"
+                self.platform_position = None  # Réinitialiser la position de la plateforme
+                return
         
         # Continuer le retour à la plateforme
         self.return_to_base(all_units)
