@@ -131,6 +131,7 @@ class EventHandler:
             # Changer d'équipe dans le HUD:
             self.game.hud.toggle_popup_team()
             self.game.hud.switch_team()
+            self.game.overlay_menu.switch_team()
             return True
         
         if event.key == pygame.K_m : 
@@ -150,6 +151,9 @@ class EventHandler:
             self.game.handle_victory_click(pygame.mouse.get_pos())
             return
         
+        # Gérer les clics sur le menu superposé
+        self.game.overlay_menu.handle_event(event)
+        
         # Clic gauche
         if event.button == get_action_key("SELECT_MOVE"):  # Clic gauche
             world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
@@ -161,8 +165,6 @@ class EventHandler:
             elif self.game.selected_unit and self.game.selected_unit.is_alive and hasattr(self.game.selected_unit, 'move_to_position'):
                 # Déplacer l'unité sélectionnée vers la position cliquée
                 self.game.selected_unit.move_to_position((world_x, world_y))
-            else:
-                self.game.select_unit(None)
 
         # Clic droit
         elif event.button == get_action_key("MINE"):  # Clic droit

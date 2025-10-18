@@ -51,9 +51,11 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         self.rect = pygame.Rect(rect_x, rect_y, self.width, self.height)
 
         # Pour compatibilité avec la logique d'unités
+        from Global import UNIT_CONFIGS
         self.range = 30
-        self.damage = 5
-        self.fire_rate = 1  # 1 tir/seconde
+        self.damage_pourcentage = 10
+        self.damage = UNIT_CONFIGS["chaloupe"]["max_health"] * self.damage_pourcentage / 100
+        self.fire_rate = 0.25  # 4 tir/ 4 secondes
         self.last_shot_time = 0
         self.is_platform = True
 
@@ -391,32 +393,53 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         coef_att_sim = self.coefficients["scenarios"]["attaque"]["simple"]
         coef_att_fort = self.coefficients["scenarios"]["attaque"]["forte"]
 
-        # On parcours les unités pour le Test 1 et 2 :
+        # Test 1 : Si la base à moins de 50% de vie => Défense Simple.
+        if self.current_health <= (self.max_health * 0.5):
+            self.scenarios["defense"]["simple"] += coef_def_sim
+
+        # Test 28 : Si la base à moins de 20% de vie => Défense Forte.
+        if self.current_health <= (self.max_health * 0.2):
+            self.scenarios["defense"]["forte"] += coef_def_fort
+
+        # On parcours les unités pour le Test 3 et 4 :
         for unit in self.units:
-            # Test 1 : Distance d'un enemi présent dans la range de la base => Défense Simple.
+            # Test 3 : Distance d'un enemi présent dans la range de la base => Défense Simple.
             if self.ia_is_near_from_base(unit):
                 self.scenarios["defense"]["simple"] += coef_def_sim
 
-            # Test 2 : Distance d'un enemi présent dans la range de la base / 2 (Plus proche) => Défense Forte.
+            # Test 4 : Distance d'un enemi présent dans la range de la base / 2 (Plus proche) => Défense Forte.
             if self.ia_is_near_from_base(unit, 2):
                 self.scenarios["defense"]["forte"] += coef_def_fort
 
-        # Test 3 : S'il existe encore des zones quantiques cachées => Exploration.
+        # Test 5 : S'il existe encore des zones quantiques cachées => Exploration.
         if self.nb_island_hidden > 0:
             self.scenarios["exploration"] += coef_exp
             if self.units_ally_dico["eclaireur"] > 0:
                 self.scenarios["exploration"] /= 2
 
-        # Test 4 : Si on est proche d'avoir une pompe pétroliere => Production.
+        # Test 6 : Si on est proche d'avoir une pompe pétroliere => Production.
         if self.ia_is_near_oil_goal(self.nb_oil_ally, "pompe_petroliere"):
             self.scenarios["production"] += coef_prod
 
-        # Test 5 : Si l'ennemi a plus de pétrole que nous => Attaque Simple.
+        # Test 7 : Si l'ennemi a plus de pétrole que nous => Attaque Simple.
         if self.nb_oil_enemy > self.nb_oil_ally:
             self.scenarios["attaque"]["simple"] += coef_att_sim
 
-        # Test 6 : Si l'ennemi a une pompe pétroliere => Attaque Forte.
+        # Test 8 : Si l'ennemi a une pompe pétroliere => Attaque Forte.
         if self.nb_pompe_enemy > 0:
+            self.scenarios["attaque"]["forte"] += coef_att_fort
+
+        # Test 9 : Si la base ennemi à moins de 50% de vie => Attaque Simple.
+        ennemy_team = "red" if self.team == "green" else "green"
+        if self.game.plateformes[ennemy_team].current_health <= (self.game.plateformes[ennemy_team].max_health * 0.5):
+            self.scenarios["attaque"]["simple"] += coef_att_sim
+
+        # Test 10 : Si la base ennemi à moins de 20% de vie => Attaque Forte.
+        if self.game.plateformes[ennemy_team].current_health <= (self.game.plateformes[ennemy_team].max_health * 0.2):
+            self.scenarios["attaque"]["simple"] += coef_att_fort
+
+        # Test 11 : Si le nombre d'unités alliées est 2 fois supérieur au nombre d'unités ennemies => Attaque Forte.
+        if self.nb_units_ally >= (2 * self.nb_units_enemy) :
             self.scenarios["attaque"]["forte"] += coef_att_fort
 
         # Cas général : Attaque Forte à 50%, Attaque Simple à 50%.

@@ -373,6 +373,7 @@ class Game :
         self.input_manager.game = game
         self.renderer.game = game
         self.combat_system.game = game
+        self.overlay_menu.game = game
         
         # S'assurer que les unités sont dans le nouveau groupe
         if hasattr(self, 'units') and self.units:

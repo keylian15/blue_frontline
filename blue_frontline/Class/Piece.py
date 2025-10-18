@@ -4,3 +4,4 @@ class Piece:
     def __init__(self):
         """Initialise les pièces."""
         self.count = 0
+        self.multiplicateur = 1
