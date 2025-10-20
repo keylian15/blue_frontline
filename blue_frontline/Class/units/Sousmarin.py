@@ -60,9 +60,19 @@ class SousMarin(Unit):
         self.current_mine_index = 0  # Index de la prochaine position de mine
         
         # Modes d'IA
-        self.ia_mode = "patrol"  # Modes possibles: "patrol", "attack", "return_to_platform"
+        # Nouvel état par défaut : défense de base
+        self.ia_mode = "defense_base"  # Modes possibles: "defense_base", "patrol", "attack", "return_to_platform"
         self.previous_mode = "patrol"  # Pour suivre le mode précédent
         self.platform_position = None  # Position de la plateforme pétrolière de l'équipe
+
+        # ===== Défense de base =====
+        # Rayon demi-côté du carré de défense en pixels (300px demandé)
+        self.defense_square_radius = 300
+        self.defense_max_mines = 40
+        self.defense_grid_spacing = 60  # espacement entre emplacements de mines (approx)
+        self.defense_mine_positions = []  # positions planifiées pour poser des mines
+        self.defense_current_mine_index = 0
+        self.defense_positions_generated = False
         
         # Variables pour A* pathfinding (spécifiques au sous-marin)
         self.current_path = []  # Chemin A* actuel
@@ -133,7 +143,7 @@ class SousMarin(Unit):
     
     
     
-    def is_position_valid(self, x, y):
+    def is_position_valid(self, x, y, treat_platform_as_obstacle: bool = False):
         """Vérifie si une position est valide (pas dans un obstacle)."""
         world_pos = (x, y)
         
@@ -152,16 +162,19 @@ class SousMarin(Unit):
             if point_in_many_polygons(self.game.quantique_area_hidden, world_pos):
                 return False
         
-        # Vérifier s'il y a une autre unité mobile à cette position (ignorer les plateformes)
+        # Vérifier s'il y a une autre unité mobile à cette position
         unit_at_pos = self.game.find_unit_at_position(x, y, self)
         if unit_at_pos:
-            # Ignorer les plateformes pétrolières (is_platform) et les bases
+            # Si on considère les plateformes comme obstacles, rejeter toute position occupée
+            if treat_platform_as_obstacle:
+                return False
+            # Sinon, autoriser la plateforme mais bloquer les autres unités
             if not hasattr(unit_at_pos, 'is_platform') or not unit_at_pos.is_platform:
                 return False
             
         return True
     
-    def is_path_clear(self, target_x, target_y, num_checks=10):
+    def is_path_clear(self, target_x, target_y, num_checks=10, treat_platform_as_obstacle: bool = False):
         """Vérifie si le chemin vers la position cible est dégagé (pas d'obstacles sur la trajectoire).
         
         Args:
@@ -178,11 +191,11 @@ class SousMarin(Unit):
             ratio = i / num_checks
             check_x = self.position[0] + (target_x - self.position[0]) * ratio
             check_y = self.position[1] + (target_y - self.position[1]) * ratio
-            
+
             # Si un point du trajet n'est pas valide, le chemin est bloqué
-            if not self.is_position_valid(check_x, check_y):
+            if not self.is_position_valid(check_x, check_y, treat_platform_as_obstacle=treat_platform_as_obstacle):
                 return False
-        
+
         return True
     
     def find_nearby_scouts(self, all_units, detection_range=320):
@@ -727,6 +740,11 @@ class SousMarin(Unit):
 
         
 
+        # MODE 0: DEFENSE_BASE - patrouille minière autour de la plateforme (activé au spawn)
+        if self.ia_mode == "defense_base":
+            self.behavior_defense_base(all_units)
+            return
+
         # MODE 1: PATROL - Patrouille normale
         if self.ia_mode == "patrol":
             self.behavior_patrol(all_units)
@@ -787,6 +805,198 @@ class SousMarin(Unit):
         
         # Pas de menace → patrouille normale
         self.patrol_movement()
+
+    def generate_defense_mine_positions(self, all_units):
+        """Génère une liste d'emplacements valides pour poser des mines dans un carré autour de la plateforme.
+
+        Utilise `is_position_valid` pour filtrer et tente de contourner les obstacles en cherchant
+        une position proche si un point de la grille est invalide.
+        """
+        # Trouver la plateforme si nécessaire
+        if self.platform_position is None:
+            self.platform_position = self.find_base_position(all_units)
+
+        if not self.platform_position:
+            print(f"⚠️ {self.team} sous-marin: Impossible de générer positions défense — plateforme introuvable")
+            return
+
+        cx, cy = self.platform_position
+        half = self.defense_square_radius
+        spacing = max(32, int(self.defense_grid_spacing))
+
+        positions = []
+        # Définir les bornes du carré centré sur la plateforme
+        x_start = int(cx - half)
+        x_end = int(cx + half)
+        y_start = int(cy - half)
+        y_end = int(cy + half)
+
+        # Générer des points le long des 4 côtés (périmètre) avec un espacement donné
+        # Top et bottom edges
+        x = x_start
+        while x <= x_end and len(positions) < self.defense_max_mines:
+            for y in (y_start, y_end):
+                if len(positions) >= self.defense_max_mines:
+                    break
+                if self.is_position_valid(x, y, treat_platform_as_obstacle=True):
+                    positions.append((x, y))
+                else:
+                    # tenter de trouver une position proche le long de la normale extérieure
+                    found = False
+                    for r in (20, 40, 60, 80):
+                        for angle in range(0, 360, 30):
+                            rx = x + int(math.cos(math.radians(angle)) * r)
+                            ry = y + int(math.sin(math.radians(angle)) * r)
+                            if self.is_position_valid(rx, ry, treat_platform_as_obstacle=True):
+                                positions.append((rx, ry))
+                                found = True
+                                break
+                        if found:
+                            break
+            x += spacing
+
+        # Left and right edges (avoid duplicating corners)
+        y = y_start + spacing
+        while y <= y_end - spacing and len(positions) < self.defense_max_mines:
+            for x in (x_start, x_end):
+                if len(positions) >= self.defense_max_mines:
+                    break
+                if self.is_position_valid(x, y, treat_platform_as_obstacle=True):
+                    if (x, y) not in positions:
+                        positions.append((x, y))
+                else:
+                    found = False
+                    for r in (20, 40, 60, 80):
+                        for angle in range(0, 360, 30):
+                            rx = x + int(math.cos(math.radians(angle)) * r)
+                            ry = y + int(math.sin(math.radians(angle)) * r)
+                            if self.is_position_valid(rx, ry, treat_platform_as_obstacle=True):
+                                if (rx, ry) not in positions:
+                                    positions.append((rx, ry))
+                                found = True
+                                break
+                        if found:
+                            break
+            y += spacing
+
+        # Si insuffisant, tenter d'ajouter points intermédiaires le long du périmètre avec pas réduit
+        if len(positions) < self.defense_max_mines:
+            small_step = max(16, spacing // 2)
+            # parcours top/bottom
+            x = x_start
+            while x <= x_end and len(positions) < self.defense_max_mines:
+                for y in (y_start, y_end):
+                    if len(positions) >= self.defense_max_mines:
+                        break
+                    if (x, y) not in positions and self.is_position_valid(x, y, treat_platform_as_obstacle=True):
+                        positions.append((x, y))
+                x += small_step
+            # parcours left/right
+            y = y_start + small_step
+            while y <= y_end - small_step and len(positions) < self.defense_max_mines:
+                for x in (x_start, x_end):
+                    if len(positions) >= self.defense_max_mines:
+                        break
+                    if (x, y) not in positions and self.is_position_valid(x, y, treat_platform_as_obstacle=True):
+                        positions.append((x, y))
+                y += small_step
+
+        # Enfin tailler la liste à la taille demandée
+        self.defense_mine_positions = positions[:self.defense_max_mines]
+        self.defense_current_mine_index = 0
+        self.defense_positions_generated = True
+        print(f"✅ {self.team} sous-marin: {len(self.defense_mine_positions)} positions de mines (périmètre) générées pour défense")
+
+    def behavior_defense_base(self, all_units):
+        """Patrouille minière autour de la plateforme : pose jusqu'à `defense_max_mines` mines.
+
+        Comportement :
+        - Si menace lourde (chaloupe/bateau/paquebot) détectée, basculer en `return_to_platform` (sécurité).
+        - Générer positions de mines (une fois).
+        - Se déplacer vers la position suivante et poser une mine si possible (respect cooldown).
+        - Si toutes les mines posées, repasser en `patrol`.
+        """
+        # Priorités de sécurité (identiques à patrol)
+        nearby_chaloupes = self.find_nearby_chaloupes(all_units, detection_range=500)
+        if nearby_chaloupes:
+            print(f"⛵ {self.team} sous-marin: CHALOUPE détectée pendant défense -> switch RETURN_TO_PLATFORM")
+            self.ia_mode = "return_to_platform"
+            return
+
+        nearby_bateaux = self.find_nearby_bateaux(all_units, detection_range=450)
+        if nearby_bateaux:
+            print(f"⛴️ {self.team} sous-marin: BATEAU détecté pendant défense -> switch RETURN_TO_PLATFORM")
+            self.ia_mode = "return_to_platform"
+            return
+
+        nearby_paquebots = self.find_nearby_paquebots(all_units, detection_range=300)
+        if nearby_paquebots:
+            print(f"🚢 {self.team} sous-marin: PAQUEBOT détecté pendant défense -> switch RETURN_TO_PLATFORM")
+            self.ia_mode = "return_to_platform"
+            return
+
+        # Trouver la plateforme et générer positions si nécessaire
+        if not self.defense_positions_generated:
+            self.generate_defense_mine_positions(all_units)
+
+        # Si aucune position générée -> fallback en patrol
+        if not self.defense_mine_positions:
+            print(f"⚠️ {self.team} sous-marin: Aucune position de défense générée -> fallback PATROL")
+            self.ia_mode = "patrol"
+            return
+
+        # Si on a déjà placé le nombre maximal, revenir en patrol
+        if self.mines_placed >= self.defense_max_mines:
+            print(f"✅ {self.team} sous-marin: Défense terminée ({self.mines_placed} mines) -> retour en PATROL")
+            self.ia_mode = "patrol"
+            return
+
+        # Aller poser la mine suivante
+        idx = self.defense_current_mine_index
+        if idx >= len(self.defense_mine_positions):
+            # toutes les positions assignées mais pas forcément posées (peut arriver si invalidées)
+            # réessayer de régénérer
+            self.defense_positions_generated = False
+            self.generate_defense_mine_positions(all_units)
+            idx = self.defense_current_mine_index
+
+        target_pos = self.defense_mine_positions[idx]
+
+        # Si on est proche, poser la mine
+        dx = target_pos[0] - self.position[0]
+        dy = target_pos[1] - self.position[1]
+        dist = math.hypot(dx, dy)
+
+        if dist <= 20:
+            # Arrêter et poser la mine si possible
+            self.stop()
+            self.is_moving = False
+            self.target_position = None
+            if self.can_place_mine():
+                placed = self.place_mine(int(self.position[0]), int(self.position[1]))
+                if placed:
+                    print(f"💣 {self.team} sous-marin: Mine posée en défense ({self.mines_placed}/{self.defense_max_mines})")
+                    # Avancer à la position suivante
+                    self.defense_current_mine_index += 1
+            else:
+                # attendre cooldown
+                pass
+            return
+
+        # Sinon, se déplacer vers la cible
+        if not self.is_moving:
+            # tourner et tenter le déplacement direct ou alternatif
+            angle_to_target = math.degrees(math.atan2(-dy, dx)) - 90
+            self.angle = angle_to_target % 360
+            self.image = pygame.transform.rotate(self.image_original, self.angle)
+            self.rect = self.image.get_rect(center=self.rect.center)
+
+            if self.is_path_clear(target_pos[0], target_pos[1], treat_platform_as_obstacle=True):
+                self.move_to_position(target_pos)
+            else:
+                # tenter un chemin alternatif qui évite explicitement la plateforme
+                self.find_alternative_path_to_target(target_pos[0], target_pos[1], avoid_platform=True)
+
     
     def behavior_attack(self, all_units):
         """Comportement d'attaque d'un éclaireur.
@@ -997,7 +1207,7 @@ class SousMarin(Unit):
                     direction_found = True
                     break
     
-    def find_alternative_path_to_target(self, target_x, target_y):
+    def find_alternative_path_to_target(self, target_x, target_y, avoid_platform: bool = False):
         """Cherche un chemin alternatif vers une cible spécifique.
         
         Args:
@@ -1020,7 +1230,7 @@ class SousMarin(Unit):
             test_x = self.position[0] + math.cos(test_angle_rad) * distance_check
             test_y = self.position[1] - math.sin(test_angle_rad) * distance_check
             
-            if self.is_path_clear(test_x, test_y):
+            if self.is_path_clear(test_x, test_y, treat_platform_as_obstacle=avoid_platform):
                 self.angle = test_angle_deg
                 self.image = pygame.transform.rotate(self.image_original, self.angle)
                 self.rect = self.image.get_rect(center=self.rect.center)
