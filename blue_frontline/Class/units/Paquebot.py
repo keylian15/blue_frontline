@@ -95,7 +95,7 @@ class Paquebot(Unit):
                     # Blocage détecté, recalculer chemin dans un thread
                     if not self.need_recalculate_path:
                         self.need_recalculate_path = True
-                        self.start_pathfinding_thread()
+                        self.start_pathfinding_thread(self.compute_path)
 
         if screen:
             self.draw_range(screen, camera_offset)
@@ -118,7 +118,7 @@ class Paquebot(Unit):
         if self.path_thread and self.path_thread.is_alive():
             return  # Un calcul est déjà en cours
         self.need_recalculate_path = False
-        self.start_pathfinding_thread()
+        self.start_pathfinding_thread(self.compute_path)
 
     # def start_pathfinding_thread(self):
     #     self.path_thread = threading.Thread(target=self.compute_path)
