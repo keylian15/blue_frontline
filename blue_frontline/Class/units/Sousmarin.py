@@ -1,6 +1,7 @@
 import time
 import math
 import pygame
+import threading
 from Class.units.Unit import Unit
 from Class.Combat import CombatSystem, Mine
 from math import * 
@@ -62,6 +63,11 @@ class SousMarin(Unit):
         self.ia_mode = "patrol"  # Modes possibles: "patrol", "attack", "return_to_platform"
         self.previous_mode = "patrol"  # Pour suivre le mode précédent
         self.platform_position = None  # Position de la plateforme pétrolière de l'équipe
+        
+        # Variables pour A* pathfinding (spécifiques au sous-marin)
+        self.current_path = []  # Chemin A* actuel
+        self.path_index = 0  # Index dans le chemin actuel
+        self.is_computing_path = False  # Flag indiquant qu'un calcul est en cours
         
             
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list[Unit] = None):
@@ -295,6 +301,180 @@ class SousMarin(Unit):
         
         return closest_scout
 
+    def a_star_search(self, start, goal):
+        """Implémentation A* sur grille 32x32 pixels.
+
+        Args:
+            start (tuple): (x, y) position départ
+            goal (tuple): (x, y) position but
+
+        Returns:
+            list de (x,y): chemin en pixels (centre des tuiles) ou None
+        """
+        def pos_to_grid(pos):
+            return (int(pos[0] // 32), int(pos[1] // 32))
+
+        def grid_to_pos(grid):
+            return (grid[0] * 32 + 16, grid[1] * 32 + 16)
+
+        start_grid = pos_to_grid(start)
+        goal_grid = pos_to_grid(goal)
+
+        # Construire l'ensemble des obstacles sur la grille
+        obstacles = set()
+        if hasattr(self.game, 'obstacles') and self.game.obstacles:
+            for poly in self.game.obstacles:
+                min_x = min(p[0] for p in poly) // 32
+                max_x = max(p[0] for p in poly) // 32
+                min_y = min(p[1] for p in poly) // 32
+                max_y = max(p[1] for p in poly) // 32
+                for x in range(int(min_x), int(max_x)+1):
+                    for y in range(int(min_y), int(max_y)+1):
+                        obstacles.add((x, y))
+        
+        # Ajouter les zones quantiques cachées comme obstacles
+        if hasattr(self.game, 'quantique_area_hidden') and self.game.quantique_area_hidden:
+            for poly in self.game.quantique_area_hidden:
+                min_x = min(p[0] for p in poly) // 32
+                max_x = max(p[0] for p in poly) // 32
+                min_y = min(p[1] for p in poly) // 32
+                max_y = max(p[1] for p in poly) // 32
+                for x in range(int(min_x), int(max_x)+1):
+                    for y in range(int(min_y), int(max_y)+1):
+                        obstacles.add((x, y))
+
+        # Directions de déplacement (4 directions: haut, bas, gauche, droite)
+        neighbors = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+
+        # Ensembles pour A*
+        open_set = set([start_grid])
+        came_from = {}
+
+        g_score = {start_grid: 0}
+        f_score = {start_grid: self.heuristic(start_grid, goal_grid)}
+
+        while open_set:
+            # Trouver le nœud avec le plus petit f_score
+            current = min(open_set, key=lambda x: f_score.get(x, float('inf')))
+            
+            # Si on a atteint le but
+            if current == goal_grid:
+                path = []
+                while current in came_from:
+                    path.append(grid_to_pos(current))
+                    current = came_from[current]
+                path.append(grid_to_pos(start_grid))
+                path.reverse()
+                return path
+
+            open_set.remove(current)
+
+            # Explorer les voisins
+            for dx, dy in neighbors:
+                neighbor = (current[0] + dx, current[1] + dy)
+                
+                # Ignorer les obstacles
+                if neighbor in obstacles:
+                    continue
+                
+                # Vérifier les limites de la carte
+                if neighbor[0] < 0 or neighbor[1] < 0:
+                    continue
+                if neighbor[0] >= (self.game.map_width // 32) or neighbor[1] >= (self.game.map_height // 32):
+                    continue
+                
+                tentative_g_score = g_score[current] + 1
+                
+                if tentative_g_score < g_score.get(neighbor, float('inf')):
+                    came_from[neighbor] = current
+                    g_score[neighbor] = tentative_g_score
+                    f_score[neighbor] = tentative_g_score + self.heuristic(neighbor, goal_grid)
+                    open_set.add(neighbor)
+
+        # Aucun chemin trouvé
+        return None
+
+    def heuristic(self, a, b):
+        """Distance de Manhattan."""
+        return abs(a[0] - b[0]) + abs(a[1] - b[1])
+
+    def recalculate_path(self):
+        """Signale qu'il faut recalculer le chemin.
+        """
+        if not self.need_recalculate_path:
+            self.need_recalculate_path = True
+            self.current_path = []
+            self.path_index = 0
+    
+    def compute_path(self):
+        """Calcule le chemin A* vers la plateforme en arrière-plan (appelé dans un thread)."""
+        start = self.position
+        goal = self.platform_position
+        
+        if not start or not goal:
+            self.is_computing_path = False
+            return
+
+        # Calculer le chemin avec A*
+        path = self.a_star_search(start, goal)
+        
+        if path:
+            self.new_path = path
+            self.path_found = True
+            print(f"🧵 {self.team} sous-marin: Chemin calculé en thread ({len(path)} points)")
+        else:
+            self.new_path = None
+            self.path_found = False
+            print(f"⚠️ {self.team} sous-marin: Aucun chemin trouvé en thread")
+        
+        self.is_computing_path = False
+    
+    def update_path_from_thread(self):
+        """Met à jour le chemin depuis le résultat du thread."""
+        if self.path_found and self.new_path:
+            self.current_path = self.new_path
+            self.path_index = 0
+            self.need_recalculate_path = False
+            self.path_found = False
+            self.new_path = None
+            print(f"✅ {self.team} sous-marin: Chemin mis à jour depuis le thread")
+            return True
+        return False
+
+    def follow_path(self):
+        """Suit le chemin A* calculé."""
+        if not self.current_path or self.path_index >= len(self.current_path):
+            return False
+        
+        # Obtenir la prochaine position dans le chemin
+        next_pos = self.current_path[self.path_index]
+        
+        # Calculer la distance à la prochaine position
+        dx = next_pos[0] - self.position[0]
+        dy = next_pos[1] - self.position[1]
+        distance = math.sqrt(dx**2 + dy**2)
+        
+        # Si on est proche de la prochaine position (moins de 20 pixels), passer à la suivante
+        if distance < 20:
+            self.path_index += 1
+            if self.path_index >= len(self.current_path):
+                # Fin du chemin
+                return False
+            next_pos = self.current_path[self.path_index]
+        
+        # Se déplacer vers la prochaine position
+        if not self.is_moving or self.target_position != next_pos:
+            # Calculer l'angle vers la prochaine position
+            angle_to_next = math.degrees(math.atan2(-dy, dx)) - 90
+            self.angle = angle_to_next % 360
+            self.image = pygame.transform.rotate(self.image_original, self.angle)
+            self.rect = self.image.get_rect(center=self.rect.center)
+            
+            # Se déplacer vers la prochaine position
+            self.move_to_position(next_pos)
+        
+        return True
+
     def find_base_position(self, all_units):
         """Trouve la position d'une plateforme pétrolière de l'équipe.
         
@@ -334,9 +514,90 @@ class SousMarin(Unit):
         
         print(f"❌ {self.team} sous-marin: Aucune plateforme pétrolière trouvée!")
         return None
+
+    def handle_platform_collision(self, all_units):
+        """Détecte si le sous-marin est en collision avec sa plateforme et force
+        un retournement de 180° dans tous les cas.
+
+        Ce handler est appelé à chaque tick IA pour garantir que le sous-marin
+        tourne systématiquement s'il entre en contact physique avec la
+        plateforme (indépendamment du mode IA courant).
+        """
+        # Chercher la plateforme la plus proche de la même équipe
+        platform_unit = None
+        for unit in all_units:
+            if not hasattr(unit, 'team') or unit.team != self.team:
+                continue
+            # Reconnaître une plateforme via plusieurs marqueurs possibles
+            is_platform = False
+            if hasattr(unit, 'is_platform') and unit.is_platform:
+                is_platform = True
+            if hasattr(unit, 'unit_type') and unit.unit_type in ["plateforme", "platform", "plateforme_petroliere", "PlateformePetroliere"]:
+                is_platform = True
+            class_name = unit.__class__.__name__.lower()
+            if 'plateforme' in class_name or 'platform' in class_name:
+                is_platform = True
+
+            if is_platform:
+                platform_unit = unit
+                break
+
+        if not platform_unit:
+            return
+
+        # Collision physique simple: utiliser la distance centre-à-centre
+        # ou si la plateforme expose un rect, faire une intersection cercle/rect.
+        sub_x, sub_y = self.position
+        # Rayon approximatif du sous-marin
+        sub_radius = 25
+
+        plat_rect = getattr(platform_unit, 'rect', None)
+        if plat_rect:
+            # Trouver le point le plus proche sur le rect
+            closest_x = max(plat_rect.left, min(sub_x, plat_rect.right))
+            closest_y = max(plat_rect.top, min(sub_y, plat_rect.bottom))
+            dx = closest_x - sub_x
+            dy = closest_y - sub_y
+            dist_sq = dx*dx + dy*dy
+            if dist_sq <= (sub_radius * sub_radius):
+                # Collision détectée
+                self.stop()
+                self.is_moving = False
+                self.target_position = None
+                self.current_path = []
+                self.path_index = 0
+                # Tourner de 180°
+                self.angle = (self.angle + 180) % 360
+                self.image = pygame.transform.rotate(self.image_original, self.angle)
+                self.rect = self.image.get_rect(center=self.rect.center)
+                # Forcer repasse en patrol
+                self.ia_mode = "patrol"
+                self.platform_position = None
+                print(f"🔁 {self.team} sous-marin: Collision plateforme détectée → rotation 180° (angle={int(self.angle)})")
+                return
+        else:
+            # Pas de rect disponible: fallback distance simple vers la position déclarée
+            if hasattr(platform_unit, 'position') and platform_unit.position:
+                dx = platform_unit.position[0] - sub_x
+                dy = platform_unit.position[1] - sub_y
+                distance = math.sqrt(dx*dx + dy*dy)
+                # Seuil conservateur (approx. taille plateforme + sous-marin)
+                if distance <= 50:
+                    self.stop()
+                    self.is_moving = False
+                    self.target_position = None
+                    self.current_path = []
+                    self.path_index = 0
+                    self.angle = (self.angle + 180) % 360
+                    self.image = pygame.transform.rotate(self.image_original, self.angle)
+                    self.rect = self.image.get_rect(center=self.rect.center)
+                    self.ia_mode = "patrol"
+                    self.platform_position = None
+                    print(f"🔁 {self.team} sous-marin: Collision plateforme (distance) → rotation 180° (angle={int(self.angle)})")
+                    return
     
     def return_to_base(self, all_units):
-        """Fait retourner le sous-marin à une plateforme pétrolière de son équipe.
+        """Fait retourner le sous-marin à une plateforme pétrolière de son équipe en utilisant A*.
         
         Args:
             all_units (list[Unit]): Liste de toutes les unités du jeu
@@ -344,6 +605,7 @@ class SousMarin(Unit):
         # Trouver la plateforme si on ne l'a pas encore
         if self.platform_position is None:
             self.platform_position = self.find_base_position(all_units)
+            self.need_recalculate_path = True  # Forcer le recalcul du chemin
         
         if self.platform_position:
             # Calculer la distance à la plateforme
@@ -357,6 +619,8 @@ class SousMarin(Unit):
                 self.stop()
                 self.is_moving = False
                 self.target_position = None
+                self.current_path = []
+                self.path_index = 0
                 
                 # Faire tourner le bateau de 180 degrés pour repartir dans l'autre direction
                 self.angle = (self.angle + 180) % 360
@@ -370,25 +634,59 @@ class SousMarin(Unit):
                 print(f"✅ {self.team} sous-marin: Retour en mode PATROL!")
                 return
             
-            # Se déplacer vers la plateforme
-            if not self.is_moving:
-                print(f"🛢️ {self.team} sous-marin: Retour à la plateforme (distance: {int(distance_to_platform)}px)")
-                # Calculer l'angle vers la plateforme
-                angle_to_platform = math.degrees(math.atan2(-dy, dx)) - 90
-                self.angle = angle_to_platform % 360
-                self.image = pygame.transform.rotate(self.image_original, self.angle)
-                self.rect = self.image.get_rect(center=self.rect.center)
-                
-                # Se déplacer vers la plateforme si le chemin est dégagé
-                if self.is_path_clear(self.platform_position[0], self.platform_position[1]):
-                    self.move_to_position(self.platform_position)
-                else:
-                    # Si le chemin direct est bloqué, chercher une route alternative
-                    self.find_alternative_path_to_target(self.platform_position[0], self.platform_position[1])
+            # Calculer ou suivre le chemin A* en utilisant le thread centralisé
+            # 1) Si un chemin a été trouvé par le thread, l'appliquer
+            if self.update_path_from_thread():
+                # Le chemin a été mis à jour, on peut continuer pour le suivre
+                pass
+            # 2) Si on doit recalculer ou s'il n'y a pas de chemin, démarrer/attendre le thread
+            elif self.need_recalculate_path or not self.current_path:
+                # Si aucun thread n'est en cours, en lancer un
+                if not getattr(self, 'path_thread', None) or not self.path_thread.is_alive():
+                    print(f"🧵 {self.team} sous-marin: Lancement du calcul A* en thread...")
+                    # Démarrer la computation en arrière-plan via l'utilitaire Unit
+                    # (start_pathfinding_thread stocke le Thread dans self.path_thread)
+                    try:
+                        # Utiliser la méthode fournie par Unit
+                        self.start_pathfinding_thread(self.compute_path)
+                    except Exception:
+                        # En cas de problème avec le threading, retomber sur le calcul synchrone
+                        print(f"⚠️ {self.team} sous-marin: Échec du lancement du thread, calcul synchrone A*...")
+                        path = self.a_star_search(self.position, self.platform_position)
+                        if path:
+                            self.current_path = path
+                            self.path_index = 0
+                            self.need_recalculate_path = False
+                            print(f"✅ {self.team} sous-marin: Chemin A* trouvé ({len(path)} points)")
+                        else:
+                            print(f"⚠️ {self.team} sous-marin: A* a échoué, utilisation du chemin direct")
+                            if self.is_path_clear(self.platform_position[0], self.platform_position[1]):
+                                self.move_to_position(self.platform_position)
+                            else:
+                                self.find_alternative_path_to_target(self.platform_position[0], self.platform_position[1])
+                        return
+
+                # Si le thread est terminé mais n'a pas trouvé de chemin, retomber sur la méthode directe
+                if getattr(self, 'path_thread', None) and not self.path_thread.is_alive() and not self.path_found and not self.current_path:
+                    print(f"⚠️ {self.team} sous-marin: A* a échoué en thread, utilisation du chemin direct")
+                    if self.is_path_clear(self.platform_position[0], self.platform_position[1]):
+                        self.move_to_position(self.platform_position)
+                    else:
+                        self.find_alternative_path_to_target(self.platform_position[0], self.platform_position[1])
+                    # Réinitialiser la demande de recalcul
+                    self.need_recalculate_path = False
+                    return
+
+            # Suivre le chemin A*
+            if not self.follow_path():
+                # Le chemin est terminé mais on n'est pas encore arrivé, recalculer
+                self.need_recalculate_path = True
         else:
             # Si on ne trouve pas de plateforme, retour en mode patrol
             print(f"⚠️ {self.team} sous-marin: Plateforme non trouvée, retour en mode PATROL")
             self.ia_mode = "patrol"
+            self.current_path = []
+            self.path_index = 0
             self.patrol_movement()
     
     def set_ia_mode(self, mode: str):
@@ -404,16 +702,7 @@ class SousMarin(Unit):
         else:
             print(f"⚠ Mode IA invalide: {mode}. Modes possibles: fuite, defense_base, attaque, normal")
     
-    def ia_mode_fuite(self, all_units):
-        """Mode fuite: Le sous-marin fuit les ennemis et pose des mines défensives.
-        
-        Args:
-            all_units (list[Unit]): Liste de toutes les unités du jeu
-        """
-        # TODO: Implémenter la logique de fuite
-        pass
-    
-    def ia_mode_defense_base(self, all_units):
+
         """Mode défense base: Le sous-marin patrouille autour de sa base et la protège.
         
         Args:
@@ -486,6 +775,9 @@ class SousMarin(Unit):
         4. Retour en PATROL
         """
         
+        # Avant tout: gérer la collision avec la plateforme (toujours faire 180° si on se cogne)
+        self.handle_platform_collision(all_units)
+
         # MODE 1: PATROL - Patrouille normale
         if self.ia_mode == "patrol":
             self.behavior_patrol(all_units)
