@@ -515,86 +515,7 @@ class SousMarin(Unit):
         print(f"❌ {self.team} sous-marin: Aucune plateforme pétrolière trouvée!")
         return None
 
-    def handle_platform_collision(self, all_units):
-        """Détecte si le sous-marin est en collision avec sa plateforme et force
-        un retournement de 180° dans tous les cas.
 
-        Ce handler est appelé à chaque tick IA pour garantir que le sous-marin
-        tourne systématiquement s'il entre en contact physique avec la
-        plateforme (indépendamment du mode IA courant).
-        """
-        # Chercher la plateforme la plus proche de la même équipe
-        platform_unit = None
-        for unit in all_units:
-            if not hasattr(unit, 'team') or unit.team != self.team:
-                continue
-            # Reconnaître une plateforme via plusieurs marqueurs possibles
-            is_platform = False
-            if hasattr(unit, 'is_platform') and unit.is_platform:
-                is_platform = True
-            if hasattr(unit, 'unit_type') and unit.unit_type in ["plateforme", "platform", "plateforme_petroliere", "PlateformePetroliere"]:
-                is_platform = True
-            class_name = unit.__class__.__name__.lower()
-            if 'plateforme' in class_name or 'platform' in class_name:
-                is_platform = True
-
-            if is_platform:
-                platform_unit = unit
-                break
-
-        if not platform_unit:
-            return
-
-        # Collision physique simple: utiliser la distance centre-à-centre
-        # ou si la plateforme expose un rect, faire une intersection cercle/rect.
-        sub_x, sub_y = self.position
-        # Rayon approximatif du sous-marin
-        sub_radius = 25
-
-        plat_rect = getattr(platform_unit, 'rect', None)
-        if plat_rect:
-            # Trouver le point le plus proche sur le rect
-            closest_x = max(plat_rect.left, min(sub_x, plat_rect.right))
-            closest_y = max(plat_rect.top, min(sub_y, plat_rect.bottom))
-            dx = closest_x - sub_x
-            dy = closest_y - sub_y
-            dist_sq = dx*dx + dy*dy
-            if dist_sq <= (sub_radius * sub_radius):
-                # Collision détectée
-                self.stop()
-                self.is_moving = False
-                self.target_position = None
-                self.current_path = []
-                self.path_index = 0
-                # Tourner de 180°
-                self.angle = (self.angle + 180) % 360
-                self.image = pygame.transform.rotate(self.image_original, self.angle)
-                self.rect = self.image.get_rect(center=self.rect.center)
-                # Forcer repasse en patrol
-                self.ia_mode = "patrol"
-                self.platform_position = None
-                print(f"🔁 {self.team} sous-marin: Collision plateforme détectée → rotation 180° (angle={int(self.angle)})")
-                return
-        else:
-            # Pas de rect disponible: fallback distance simple vers la position déclarée
-            if hasattr(platform_unit, 'position') and platform_unit.position:
-                dx = platform_unit.position[0] - sub_x
-                dy = platform_unit.position[1] - sub_y
-                distance = math.sqrt(dx*dx + dy*dy)
-                # Seuil conservateur (approx. taille plateforme + sous-marin)
-                if distance <= 50:
-                    self.stop()
-                    self.is_moving = False
-                    self.target_position = None
-                    self.current_path = []
-                    self.path_index = 0
-                    self.angle = (self.angle + 180) % 360
-                    self.image = pygame.transform.rotate(self.image_original, self.angle)
-                    self.rect = self.image.get_rect(center=self.rect.center)
-                    self.ia_mode = "patrol"
-                    self.platform_position = None
-                    print(f"🔁 {self.team} sous-marin: Collision plateforme (distance) → rotation 180° (angle={int(self.angle)})")
-                    return
     
     def return_to_base(self, all_units):
         """Fait retourner le sous-marin à une plateforme pétrolière de son équipe en utilisant A*.
@@ -612,9 +533,9 @@ class SousMarin(Unit):
             dx = self.platform_position[0] - self.position[0]
             dy = self.platform_position[1] - self.position[1]
             distance_to_platform = math.sqrt(dx**2 + dy**2)
-            
-            # Si on est proche de la plateforme (moins de 50 pixels), on arrête et on tourne le bateau
-            if distance_to_platform < 50:
+
+            # Si on est proche de la plateforme (moins de 80 pixels), on arrête SANS faire de virage
+            if distance_to_platform < 80:
                 print(f"🛢️ {self.team} sous-marin: Arrivé à la plateforme pétrolière!")
                 self.stop()
                 self.is_moving = False
@@ -622,11 +543,9 @@ class SousMarin(Unit):
                 self.current_path = []
                 self.path_index = 0
                 
-                # Faire tourner le bateau de 180 degrés pour repartir dans l'autre direction
-                self.angle = (self.angle + 180) % 360
-                self.image = pygame.transform.rotate(self.image_original, self.angle)
-                self.rect = self.image.get_rect(center=self.rect.center)
-                print(f"🔄 {self.team} sous-marin: Bateau tourné de 180° (nouvel angle: {int(self.angle)}°)")
+                # NE PAS faire tourner le bateau - le garder dans sa direction actuelle
+                # Le sous-marin garde son cap au lieu de faire un virage à 180°
+                print(f"✅ {self.team} sous-marin: Arrêt à la plateforme (angle actuel: {int(self.angle)}°)")
                 
                 # Passer en mode patrol
                 self.ia_mode = "patrol"
@@ -775,8 +694,8 @@ class SousMarin(Unit):
         4. Retour en PATROL
         """
         
-        # Avant tout: gérer la collision avec la plateforme (toujours faire 180° si on se cogne)
-        self.handle_platform_collision(all_units)
+
+        
 
         # MODE 1: PATROL - Patrouille normale
         if self.ia_mode == "patrol":
@@ -796,6 +715,7 @@ class SousMarin(Unit):
         Cherche des chaloupes ennemies à 500px ou moins → passe en mode return_to_platform.
         Cherche des paquebots ennemis à 300px ou moins → passe en mode return_to_platform.
         Cherche des éclaireurs ennemis à 320px → passe en mode attack.
+        Détecte la plateforme alliée à 100px → fait un virage à 180°.
         Sinon, patrouille en ligne droite.
         """
         # PRIORITÉ 1: Chercher des chaloupes ennemies à proximité (500 pixels)
