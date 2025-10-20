@@ -104,15 +104,25 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 self.last_shot_time = current_time
         # === Partie IA ===
         if self.is_ia:
-            # On met a jour les données de l'IA
-            self.ia_update()
+            self.ia_update()                    # On met a jour les données de l'IA
+            if self.ia_check_wait():            # Si on doit attendre
+                return
+            # On note le scénario courant s'il existe.
+            if self.current_scenario:
+                scenario = self.current_scenario
+            else:
+                self.ia_scenarios()                 # On applique les scenarios de l'IA
+                if self.team == "red":
+                    print(f"Les scénarios {self.scenarios}")
+                scenario = self.ia_get_scenario()   # On récupére le scénario de l'IA
+                self.current_scenario = scenario    # On note le scénario courant
 
-            # On réévalue le scénario
-            self.ia_scenarios()
-            scenario = self.ia_get_scenario()
-
-            # On exécute le scénario, il peut être différent de celui qui a décidé d'attendre
+            # On fait le scénario de l'IA
             self.ia_do_scenario(scenario)
+
+            # Si le scénario est terminé ou a échoué, on le remet à None
+            if self.wait is False:
+                self.current_scenario = None
 
     def take_damage(self, damage: int, killer: str = None):
         """Inflige des dégâts à la plateforme.
@@ -213,8 +223,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                     {
                     "simple": 1,
                     "forte": 2,
-                },
-                "boost": 5,
+                }
             },
         }
 
@@ -244,7 +253,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         self.last_position = None
 
         self.wait = False
-        self.wait_target = None
+        self.current_scenario = False
 
         self.print_dico(self.marges, "Marges")
         self.print_dico(self.seuils, "Seuils")
@@ -380,7 +389,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         coef_prod = self.coefficients["scenarios"]["production"]
         coef_att_sim = self.coefficients["scenarios"]["attaque"]["simple"]
         coef_att_fort = self.coefficients["scenarios"]["attaque"]["forte"]
-        coef_boost = self.coefficients["scenarios"]["boost"]
 
         # Test 1 : Si la base à moins de 50% de vie => Défense Simple.
         if self.current_health <= (self.max_health * 0.5):
@@ -436,34 +444,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             self.scenarios["attaque"]["forte"] += coef_att_fort * 0.5
         else:
             self.scenarios["attaque"]["simple"] += coef_att_sim * 0.5
-
-        # === Bonus si on attendait quelque chose ===
-        if self.wait and self.wait_target:
-            from Utils import get_cost
-
-            # Vérifier si on peut maintenant spawn l'unité attendue
-            if self.event_handler.check_cost(self.team, get_cost(self.wait_target)):
-                # Déterminer quel scénario correspond à cette unité
-                if self.wait_target == "chaloupe":
-                    # Bonus pour défense simple (qui spawn des chaloupes)
-                    self.scenarios["defense"]["simple"] += coef_boost
-
-                elif self.wait_target in ["bateau", "sousmarin", "paquebot"]:
-                    # Bonus pour défense/attaque forte (qui spawent ces unités)
-                    self.scenarios["defense"]["forte"] += coef_boost
-                    self.scenarios["attaque"]["forte"] += coef_boost
-
-                elif self.wait_target == "eclaireur":
-                    # Bonus pour exploration
-                    self.scenarios["exploration"] += coef_boost
-
-                elif self.wait_target == "pompe_petroliere":
-                    # Bonus pour production
-                    self.scenarios["production"] += coef_boost
-
-                # On reset le wait car on va pouvoir agir
-                self.wait = False
-                self.wait_target = None
 
     def ia_get_scenario(self):
         """Renvoie le meilleur scénario 75% du temps, sinon un scénario aléatoire.
@@ -550,6 +530,10 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
         Returns :
             bool (bool): True si le scénario a été effectué, False sinon."""
+        # Si on doit attendre, on ne fait rien.
+        if self.wait:
+            return False
+
         # On verifie le seuil pour le changer dans le cas où il est atteint.
         if self.ia_check_seuil():
             self.ia_change_seuil()
@@ -580,9 +564,8 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         else:
             # On a 50% d'attendre.
             if random() < self.probabilites["defense_forte"]["no_cost"]:
-                # On préfère attendre, mais on ne bloque pas
-                self.wait = True
-                self.wait_target = data[0]
+                # On attend pour le faire spawn.
+                self.ia_wait_for(data[0])
         return False
 
     def ia_do_attack_simple(self):
@@ -612,6 +595,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
         Returns :
             bool (bool): True si le scénario a été effectué, False sinon."""
+        # Si on doit attendre, on ne fait rien.
+        if self.wait:
+            return False
 
         # On verifie le seuil pour le changer dans le cas où il est atteint.
         if self.ia_check_seuil():
@@ -643,9 +629,8 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         else:
             # On a 75% d'attendre.
             if random() < self.probabilites["attaque_forte"]["no_cost"]:
-                # On préfère attendre, mais on ne bloque pas
-                self.wait = True
-                self.wait_target = data[0]
+                # On attend pour le faire spawn.
+                self.ia_wait_for(data[0])
         return False
 
     def ia_do_exploration(self):
@@ -670,9 +655,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             from random import random
             # Si on peut pas spawn, on a 25% de chance d'attendre.
             if random() < self.probabilites["exploration"]:
-                # On préfère attendre, mais on ne bloque pas
-                self.wait = True
-                self.wait_target = data[0]
+                self.ia_wait_for(data[0])
         return False
 
     def ia_do_production(self):
@@ -699,10 +682,43 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             from random import random
             # Si on peut pas spawn, on a 75% de chance d'attendre.
             if random() < self.probabilites["production"]:
-                # On préfère attendre, mais on ne bloque pas
-                self.wait = True
-                self.wait_target = data[0]
+                self.ia_wait_for(data[0])
         return False
+
+    def ia_wait_for(self, type_unit: str):
+        """Fonction permettant de définir des variables pour attendre.
+
+        Args:
+            type_unit (str): Le type d'unité
+        """
+        # On passe l'attente a vrai
+        self.wait = True
+        self.wait_target = type_unit
+        if self.team == "red":
+            print(f"On attend pour {self.wait_target}")
+
+    def ia_check_wait(self, data: tuple[str, str, int] = None):
+        """Fonction permettant de vérifier si l'IA attend.
+
+        Args:
+            data (tuple[str, str, int], optional): Les données pour le spawn. Defaults to None.
+
+        Returns:
+            bool: True si l'IA attend, False sinon.
+        """
+        if self.wait:
+            from Utils import get_cost
+            if not data:
+                data = self.wait_target, self.team, get_cost(
+                    self.wait_target)
+            # On vérifie que l'on peux spawn l'entité
+            if self.event_handler.check_cost(data[1], data[2]):
+                self.wait = False
+                self.wait_target = None
+                return False
+            return True
+        else:
+            return False
 
     def ia_check_seuil(self):
         """Fonction permettant de vérifier si le seuil est atteint pour toutes les unités alliées.
