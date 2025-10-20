@@ -40,10 +40,10 @@ class Paquebot(Unit):
         self.manual_override = False
 
         # Multithreading pour pathfinding
-        self.path_thread = None
-        self.path_found = False
-        self.new_path = []
-        self.need_recalculate_path = False
+        # self.path_thread = None
+        # self.path_found = False
+        # self.new_path = []
+        # self.need_recalculate_path = False
 
         if ia:
             self.aller_vers_base_ennemie_avec_pathfinding()
@@ -120,9 +120,9 @@ class Paquebot(Unit):
         self.need_recalculate_path = False
         self.start_pathfinding_thread()
 
-    def start_pathfinding_thread(self):
-        self.path_thread = threading.Thread(target=self.compute_path)
-        self.path_thread.start()
+    # def start_pathfinding_thread(self):
+    #     self.path_thread = threading.Thread(target=self.compute_path)
+    #     self.path_thread.start()
 
     def compute_path(self):
         start = self.position
@@ -202,11 +202,11 @@ class Paquebot(Unit):
         """Distance de Manhattan."""
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
-    def recalculate_path(self):
-        """Signale qu'il faut recalculer le chemin."""
-        if not self.need_recalculate_path:
-            self.need_recalculate_path = True
-            self.start_pathfinding_thread()
+    # def recalculate_path(self):
+    #     """Signale qu'il faut recalculer le chemin."""
+    #     if not self.need_recalculate_path:
+    #         self.need_recalculate_path = True
+    #         self.start_pathfinding_thread()
 
     def ia(self):
         self.aller_vers_base_ennemie_avec_pathfinding()
