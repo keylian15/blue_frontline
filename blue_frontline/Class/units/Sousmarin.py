@@ -1153,14 +1153,14 @@ class SousMarin(Unit):
         target_y = self.position[1] - math.sin(angle_rad) * distance_check
         
         # Vérifier si le chemin vers la position cible est dégagé (pas seulement le point final)
-        if self.is_path_clear(target_x, target_y):
+        if self.is_path_clear(target_x, target_y, treat_platform_as_obstacle=True):
             # Si le chemin est dégagé, se déplacer vers cette position
             self.move_to_position((target_x, target_y))
         else:
             # Si le chemin n'est pas dégagé, chercher une direction alternative
-            self.find_alternative_direction(distance_check)
+            self.find_alternative_direction(distance_check, avoid_platform=True)
     
-    def find_alternative_direction(self, distance_check):
+    def find_alternative_direction(self, distance_check, avoid_platform: bool = False):
         """Cherche une direction alternative quand le chemin est bloqué.
         
         Args:
@@ -1178,7 +1178,7 @@ class SousMarin(Unit):
             test_y = self.position[1] - math.sin(test_angle) * distance_check
             
             # Vérifier tout le chemin, pas seulement la destination
-            if self.is_path_clear(test_x, test_y):
+            if self.is_path_clear(test_x, test_y, treat_platform_as_obstacle=avoid_platform):
                 # Mettre à jour l'angle du sous-marin
                 self.angle = (self.angle + angle_offset) % 360
                 self.image = pygame.transform.rotate(self.image_original, self.angle)
@@ -1197,7 +1197,7 @@ class SousMarin(Unit):
                 test_y = self.position[1] - math.sin(test_angle) * shorter_distance
                 
                 # Vérifier tout le chemin, pas seulement la destination
-                if self.is_path_clear(test_x, test_y):
+                if self.is_path_clear(test_x, test_y, treat_platform_as_obstacle=avoid_platform):
                     # Mettre à jour l'angle du sous-marin
                     self.angle = (self.angle + angle_offset) % 360
                     self.image = pygame.transform.rotate(self.image_original, self.angle)
