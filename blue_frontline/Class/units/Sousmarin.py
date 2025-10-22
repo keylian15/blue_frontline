@@ -62,7 +62,7 @@ class SousMarin(Unit):
         
         # Modes d'IA
         # Nouvel état par défaut : défense de base
-        self.ia_mode = "patrol"  # Modes possibles: "defense_base", "patrol", "attack", "return_to_platform"
+        self.ia_mode = "defense_base"  # Modes possibles: "defense_base", "patrol", "attack", "return_to_platform"
         self.previous_mode = "patrol"  # Pour suivre le mode précédent
         self.platform_position = None  # Position de la plateforme pétrolière de l'équipe
 
@@ -1020,8 +1020,96 @@ class SousMarin(Unit):
             self.platform_position = self.find_base_position(all_units)
 
         if not self.platform_position:
-            print(f"⚠️ {self.team} sous-marin: Impossible de générer positions défense — plateforme introuvable")
+            # Pas de plateforme trouvée : ne rien générer
             return
+
+        cx, cy = self.platform_position
+        half = self.defense_square_radius
+        spacing = max(32, int(self.defense_grid_spacing))
+
+        positions = []
+        # Définir les bornes du carré centré sur la plateforme
+        x_start = int(cx - half)
+        x_end = int(cx + half)
+        y_start = int(cy - half)
+        y_end = int(cy + half)
+
+        # Générer des points le long des 4 côtés (périmètre) avec un espacement donné
+        # Top et bottom edges
+        x = x_start
+        while x <= x_end and len(positions) < self.defense_max_mines:
+            for y in (y_start, y_end):
+                if len(positions) >= self.defense_max_mines:
+                    break
+                if self.is_position_valid(x, y, treat_platform_as_obstacle=True):
+                    positions.append((x, y))
+                else:
+                    # tenter de trouver une position proche le long de la normale extérieure
+                    found = False
+                    for r in (20, 40, 60, 80):
+                        for angle in range(0, 360, 30):
+                            rx = x + int(math.cos(math.radians(angle)) * r)
+                            ry = y + int(math.sin(math.radians(angle)) * r)
+                            if self.is_position_valid(rx, ry, treat_platform_as_obstacle=True):
+                                positions.append((rx, ry))
+                                found = True
+                                break
+                        if found:
+                            break
+            x += spacing
+
+        # Left and right edges (avoid duplicating corners)
+        y = y_start + spacing
+        while y <= y_end - spacing and len(positions) < self.defense_max_mines:
+            for x in (x_start, x_end):
+                if len(positions) >= self.defense_max_mines:
+                    break
+                if self.is_position_valid(x, y, treat_platform_as_obstacle=True):
+                    if (x, y) not in positions:
+                        positions.append((x, y))
+                else:
+                    found = False
+                    for r in (20, 40, 60, 80):
+                        for angle in range(0, 360, 30):
+                            rx = x + int(math.cos(math.radians(angle)) * r)
+                            ry = y + int(math.sin(math.radians(angle)) * r)
+                            if self.is_position_valid(rx, ry, treat_platform_as_obstacle=True):
+                                if (rx, ry) not in positions:
+                                    positions.append((rx, ry))
+                                found = True
+                                break
+                        if found:
+                            break
+            y += spacing
+
+        # Si insuffisant, tenter d'ajouter points intermédiaires le long du périmètre avec pas réduit
+        if len(positions) < self.defense_max_mines:
+            small_step = max(16, spacing // 2)
+            # parcours top/bottom
+            x = x_start
+            while x <= x_end and len(positions) < self.defense_max_mines:
+                for y in (y_start, y_end):
+                    if len(positions) >= self.defense_max_mines:
+                        break
+                    if (x, y) not in positions and self.is_position_valid(x, y, treat_platform_as_obstacle=True):
+                        positions.append((x, y))
+                x += small_step
+            # parcours left/right
+            y = y_start + small_step
+            while y <= y_end - small_step and len(positions) < self.defense_max_mines:
+                for x in (x_start, x_end):
+                    if len(positions) >= self.defense_max_mines:
+                        break
+                    if (x, y) not in positions and self.is_position_valid(x, y, treat_platform_as_obstacle=True):
+                        positions.append((x, y))
+                y += small_step
+
+        # Enfin tailler la liste à la taille demandée
+        self.defense_mine_positions = positions[:self.defense_max_mines]
+        self.defense_current_mine_index = 0
+        self.defense_positions_generated = True
+        print(f"✅ {self.team} sous-marin: {len(self.defense_mine_positions)} positions de mines (périmètre) générées pour défense")
+
 
     def behavior_group_attack(self, all_units):
         """Comportement pour les sous-marins en mode 'group_attack'.
