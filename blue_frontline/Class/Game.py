@@ -12,6 +12,8 @@ from Class.Petrole import Petrole
 from Class.Piece import Piece
 from Class.Timer import Timer
 from Class.units import Unit
+from Class.units.Sousmarin import SousMarinRouge
+from Class.AchievementNotification import AchievementNotificationManager
 from Class.AchievementNotification import AchievementNotificationManager
 from Class.units import PlateformePetroliere
 
@@ -63,7 +65,7 @@ class Game :
         self.initializer.init_game_systems()
         self.initializer.init_ui()
         self.initializer.init_sound()
-
+        
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
         
