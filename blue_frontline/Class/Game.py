@@ -15,8 +15,7 @@ from Class.units import Unit
 from Class.units.Sousmarin import SousMarinRouge
 from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
-from Class import IAInitializer
-
+ 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
     
