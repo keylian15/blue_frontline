@@ -13,9 +13,9 @@ from Class.Piece import Piece
 from Class.Timer import Timer
 from Class.units import Unit
 from Class.units.Sousmarin import SousMarinRouge
-from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
-from Class import IAInitializer
+from Class.AchievementNotification import AchievementNotificationManager
+from Class.units import PlateformePetroliere
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
@@ -375,6 +375,7 @@ class Game :
         self.input_manager.game = game
         self.renderer.game = game
         self.combat_system.game = game
+        self.overlay_menu.game = game
         
         # S'assurer que les unités sont dans le nouveau groupe
         if hasattr(self, 'units') and self.units:

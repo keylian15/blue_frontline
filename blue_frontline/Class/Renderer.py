@@ -129,7 +129,11 @@ class Renderer:
         
         # Ne pas afficher les cercles et la portée pour les plateformes
         if hasattr(self.game.selected_unit, 'is_platform') and self.game.selected_unit.is_platform:
-            return
+            # On appellera le menu d'upgrade en plus
+            if self.game.overlay_menu.show :
+                self.game.overlay_menu.draw()
+            else : 
+                self.game.overlay_menu.switch()
         
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
         unit_screen_x = (self.game.selected_unit.position[0] - camera_offset[0]) * self.game.camera.zoom_level
