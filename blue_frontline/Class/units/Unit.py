@@ -61,25 +61,6 @@ class Unit(pygame.sprite.Sprite):
         self.path_found = False
         self.new_path = []
         self.need_recalculate_path = False
-        
-    def start_pathfinding_thread(self, function: callable):
-        """Va chercher le ou les thread qui vont faire les calcul
-
-        Args:
-            function (callable): La fonction de pathfinding à exécuter dans le thread.
-        """
-        self.path_thread = threading.Thread(target=function)
-        self.path_thread.start()
-        
-    def recalculate_path(self, function: callable):
-        """Signale qu'il faut recalculer le chemin.
-
-        Args:
-            function (callable): La fonction de pathfinding à exécuter dans le thread.
-        """
-        if not self.need_recalculate_path:
-            self.need_recalculate_path = True
-            self.start_pathfinding_thread(function)
 
     # Chaque unité peut avoir sa propre tuile, pour chaque équipe, et tout est configurable
     def load_sprite_from_tileset(self, team: str, unit_type: str):
@@ -595,3 +576,21 @@ class Unit(pygame.sprite.Sprite):
                 closest_enemy = enemy
                 
         return closest_enemy
+
+    def start_pathfinding_thread(self, function: callable):
+        """Va chercher le ou les thread qui vont faire les calcul
+
+        Args:
+            function (callable): La fonction de pathfinding à exécuter dans le thread.
+        """
+        self.path_thread = threading.Thread(target=function,daemon=True)
+        self.path_thread.start()
+    
+    def recalculate_path(self, function: callable):
+        """Signale qu'il faut recalculer le chemin.
+        Args:
+            function (callable): La fonction de pathfinding à exécuter dans le thread.
+        """
+        if not self.need_recalculate_path:
+            self.need_recalculate_path = True
+            self.start_pathfinding_thread(function)
