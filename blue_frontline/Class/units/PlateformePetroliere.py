@@ -112,8 +112,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 scenario = self.current_scenario
             else:
                 self.ia_scenarios()                 # On applique les scenarios de l'IA
-                if self.team == "red":
-                    print(f"Les scénarios {self.scenarios}")
                 scenario = self.ia_get_scenario()   # On récupére le scénario de l'IA
                 self.current_scenario = scenario    # On note le scénario courant
 
@@ -394,7 +392,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         if self.current_health <= (self.max_health * 0.5):
             self.scenarios["defense"]["simple"] += coef_def_sim
 
-        # Test 28 : Si la base à moins de 20% de vie => Défense Forte.
+        # Test 2 : Si la base à moins de 20% de vie => Défense Forte.
         if self.current_health <= (self.max_health * 0.2):
             self.scenarios["defense"]["forte"] += coef_def_fort
 
@@ -466,8 +464,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 else:
                     if valeur > max_scenario[2]:
                         max_scenario = (cle, None, valeur)
-            if self.team == "red":
-                print(f"Le scénario choisi est {max_scenario} ")
 
         # --- 25% : choisir un scénario aléatoire ---
         else:
@@ -477,8 +473,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 max_scenario = (cle, sous_cle, sous_valeur)
             else:
                 max_scenario = (cle, None, valeur)
-            if self.team == "red":
-                print(f"Le scénario choisi est {max_scenario} en aléatoire")
         return max_scenario
 
     def ia_do_scenario(self, scenario: tuple[str, str | None, int]):
@@ -520,6 +514,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             # On spawn la chaloupe.
             self.event_handler.apply_cost(data[0], data[1], data[2])
             self.event_handler.spawn_unit(data[0], data[1])
+            # === Logs ===
+            self.ia_log_action('spawn', self.current_scenario,
+                               data[2], {'unit': data[0]})
             return True
         return False
 
@@ -548,18 +545,27 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             # Si on est supérieur au seuil on passe a l'indice d'apres.
             if self.units_ally_dico[data[0]] >= self.seuils["active"][data[0]]:
                 self.ia_do_defense_forte(indice + 1)
+                # === Logs ===
+                self.ia_log_action('change_unit', self.current_scenario, 0, {
+                    'other': ('seuil atteint', data[0])})
 
             # On a 75% de chance de spawn l'unité.
             if random() < self.probabilites["defense_forte"]["can_spawn"]:
                 self.event_handler.apply_cost(data[0], data[1], data[2])
                 self.event_handler.spawn_unit(data[0], data[1])
+                # === Logs ===
+                self.ia_log_action('spawn', self.current_scenario, data[2], {'unit': data[0]})
                 return True
             else:
                 # 25% de chance de passer a l'unité d'apres, si on a pas la derniere unité.
                 if indice < len(self.liste) - 1:
                     self.ia_do_defense_forte(indice + 1)
+                    # === Logs ===
+                    self.ia_log_action('change_unit', self.current_scenario, 0, {
+                        'other': ('proba', self.probabilites["attaque_forte"]["can_spawn"])})
+
                 else:
-                    self.ia_do_defense_forte(indice + 1)
+                    self.ia_do_defense_forte(indice)
 
         else:
             # On a 50% d'attendre.
@@ -585,6 +591,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             # On spawn l'unité.
             self.event_handler.apply_cost(data[0], data[1], data[2])
             self.event_handler.spawn_unit(data[0], data[1])
+            # === Logs ===
+            self.ia_log_action('spawn', self.current_scenario,
+                               data[2], {'unit': data[0]})
             return True
         return False
 
@@ -614,17 +623,29 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             if self.units_ally_dico[data[0]] >= self.seuils["active"][data[0]]:
                 self.ia_do_attack_forte(indice + 1)
 
+                # === Logs ===
+                self.ia_log_action('change_unit', self.current_scenario, 0, {
+                    'other': ('seuil atteint', data[0])})
+
             # On a 25% de chance de spawn l'unité.
             if random() < self.probabilites["attaque_forte"]["can_spawn"]:
                 self.event_handler.apply_cost(data[0], data[1], data[2])
                 self.event_handler.spawn_unit(data[0], data[1])
+
+                # === Logs ===
+                self.ia_log_action('spawn', self.current_scenario, data[2], {
+                    'unit_type': data[0]})
                 return True
             else:
                 # 75% de chance de passer a l'unité d'apres, sauf si on a la derniere unité.
                 if indice < len(self.liste) - 1:
                     self.ia_do_attack_forte(indice + 1)
+                    # === Logs ===
+                    self.ia_log_action('change_unit', self.current_scenario, 0, {
+                        'other': ('proba', self.probabilites["attaque_forte"]["can_spawn"])})
+
                 else:
-                    self.ia_do_attack_forte(indice + 1)
+                    self.ia_do_attack_forte(indice)
 
         else:
             # On a 75% d'attendre.
@@ -649,7 +670,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 # On spawn l'éclaireur.
                 self.event_handler.apply_cost(data[0], data[1], data[2])
                 self.event_handler.spawn_unit(data[0], data[1])
-
+                # === Logs ===
+                self.ia_log_action('spawn', self.current_scenario, data[2], {
+                                   'unit_type': data[0]})
                 return True
         else:
             from random import random
@@ -676,7 +699,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 # On spawn la pompe.
                 self.event_handler.apply_cost(data[0], data[1], data[2])
                 self.event_handler.spawn_unit(data[0], data[1])
-
+                # === Logs ===
+                self.ia_log_action('spawn', self.current_scenario, data[2], {
+                                   'unit_type': data[0]})
                 return True
         else:
             from random import random
@@ -694,8 +719,10 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         # On passe l'attente a vrai
         self.wait = True
         self.wait_target = type_unit
-        if self.team == "red":
-            print(f"On attend pour {self.wait_target}")
+        # === Logs ===
+        from Utils import get_cost
+        self.ia_log_action('wait', self.current_scenario, get_cost(
+            self.wait_target), {'unit': self.wait_target})
 
     def ia_check_wait(self, data: tuple[str, str, int] = None):
         """Fonction permettant de vérifier si l'IA attend.
@@ -750,6 +777,10 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             randint(1, 5)
 
         self.max_seuil += randint(1, 5)
+
+        # === Logs ===
+        self.ia_log_action('change_seuil', self.current_scenario, 0, {
+                           'other': ('seuils', self.seuils)})
 
     def ia_get_distance(self, unit: "Unit", unit2: "Unit"):
         """Fonction permettant d'avoir la distance entre deux unités
@@ -834,49 +865,59 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         """Enregistre une action réelle de l'IA.
 
         Args:
-            action_type (str): Type d'action ("spawn", "wait_start", "wait_end", "scenario_change")
-            scenario (str): Type de scénario 
-            cost (int): Le coût de l'action
-            details (dict): Détails additionnels de l'action
+            action_type (str): L'action qu'on log, spawn par exemple
+            scenario (str): Le scénario dans lequel cela se produit
+            cost (int): Le cout de l'action 
+            details (dict, optional): Les différents détails, le type d'unité ou la raison par exemple. Defaults to None.
         """
         log_entry = {
-            "time": self.game.hud.timer.get_time(),
-            "team": self.team,
-            "scenario": scenario,
-            "action": action_type,
-            "petrole_ally_before": int(self.nb_oil_ally + cost),
-            "petrole_ally_after": self.nb_oil_ally,
-            "petrole_enemy": self.nb_oil_enemy,
-            "units_ally": self.units_ally_dico.copy(),
-            "units_enemy": self.units_enemy_dico.copy(),
-            "nb_pompe_ally": self.nb_pompe_ally,
-            "nb_pompe_enemy": self.nb_pompe_enemy,
+            "meta": {
+                "time": self.game.hud.timer.get_time(),
+                "generation": len(self.logs) + 1
+            },
+            "decision": {
+                "scenario": scenario,
+                "reason": details.get("reason") if details else None
+            },
+            "action": {
+                "type": action_type,
+                "unit": details.get("unit") if details else None,
+                "cost": cost
+            },
+            "context": {
+                "oil_ally": int(self.nb_oil_ally + cost),
+                "oil_enemy": self.nb_oil_enemy,
+                "units_ally": self.units_ally_dico.copy(),
+                "units_enemy": self.units_enemy_dico.copy(),
+                "nb_units_ally": self.nb_units_ally,
+                "nb_units_enemy": self.nb_units_enemy,
+                "nb_pompe_ally": self.nb_pompe_ally,
+                "nb_pompe_enemy": self.nb_pompe_enemy,
+                "nb_island_hidden": self.nb_island_hidden
+            },
+            "result": {
+                "oil_ally_after": self.nb_oil_ally,
+                "nb_units_ally_after": self.nb_units_ally - 1 if action_type == "spawn" else self.nb_units_ally,
+            },
+            "other": details.get("other") if details else None
         }
-
-        if details:
-            log_entry.update(details)
 
         self.logs.append(log_entry)
 
     def ia_save_log(self):
-        """Fonction qui enregistre les actions de l'IA dans un fichier JSON."""
+        """Enregistre les actions de l'IA dans un fichier JSON."""
         import os
         import json
-        import datetime
-
-        # Dossier cible
         log_dir = os.path.join(".", "blue_frontline", "Class", "units", "IA")
-        # Crée le dossier s’il n’existe pas
         os.makedirs(log_dir, exist_ok=True)
 
-        # Nom du fichier
-        filename = f"logs_ia_{self.team}_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+        filename = f"logs_ia_{self.team}.json"
         filepath = os.path.join(log_dir, filename)
 
-        # Sauvegarde
         with open(filepath, 'w', encoding='utf-8') as f:
             json.dump({
                 "time": self.game.hud.timer.get_time(),
+                "team": self.team,
                 "coefficients": self.coefficients,
                 "probabilites": self.probabilites,
                 "marges": self.marges,
