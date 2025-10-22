@@ -1,13 +1,9 @@
 {
-  "unlocked_achievements": [
-    "fleet_admiral",
-    "first_unit",
-    "big_spender"
-  ],
+  "unlocked_achievements": [],
   "stats": {
     "units_created": {
       "chaloupe": 0,
-      "bateau": 22,
+      "bateau": 0,
       "eclaireur": 0,
       "paquebot": 0,
       "sousmarin": 0
@@ -21,18 +17,14 @@
     },
     "games_won": 0,
     "games_lost": 0,
-    "total_petrole_spent": 1320,
+    "total_petrole_spent": 0,
     "total_coins_earned": 0,
     "platforms_destroyed": 0,
-    "bullets_fired": 18,
-    "quantum_islands_activated": 3,
-    "total_playtime_seconds": 1.002469000000792,
-    "units_created_same_game": [
-      "bateau"
-    ],
-    "max_units_alive": 20,
-    "different_unit_types_created": [
-      "bateau"
-    ]
+    "bullets_fired": 0,
+    "quantum_islands_activated": 0,
+    "total_playtime_seconds": 0,
+    "units_created_same_game": [],
+    "max_units_alive": 0,
+    "different_unit_types_created": []
   }
 }
