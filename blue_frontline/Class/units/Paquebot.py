@@ -39,18 +39,41 @@ class Paquebot(Unit):
         # Gestion prise en main manuelle (désactive IA)
         self.manual_override = False
 
-        # Multithreading pour pathfinding
-        # self.path_thread = None
-        # self.path_found = False
-        # self.new_path = []
-        # self.need_recalculate_path = False
-
         if ia:
             self.aller_vers_base_ennemie_avec_pathfinding()
 
     def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
+        """Met à jour l'état du paquebot.
+
+        Args:
+            dt (int, optional): Delta temps. Defaults to 0.
+            combat_system (CombatSystem, optional): Système de combat. Defaults to None.
+            screen (Surface, optional): Écran. Defaults to None.
+            camera_offset (tuple, optional): Offset caméra. Defaults to (0, 0).
+            all_units (list, optional): Liste des unités. Defaults to None.
+        """
         super().update(dt, combat_system, screen, camera_offset, all_units)
 
+        # Récupération base ennemie et sa position
+        target_pos, target_base = self.pos_base_ennemie()
+        
+        if target_pos and target_base:
+            # Calcul distance vers base
+            dx = target_pos[0] - self.position[0]
+            dy = target_pos[1] - self.position[1]
+            distance = math.sqrt(dx*dx + dy*dy)
+            
+            # Si à portée de tir, on s'arrête et on attaque
+            if distance <= self.range * 32:  # range est en tuiles, conversion en pixels
+                self.stop()
+                self.is_moving = False
+                self.path_to_follow = []
+                self.current_path_index = 0
+                
+                # On définit la base comme cible pour l'attaque
+                self.target = target_base
+                return
+    
         # Suivi du chemin pathfinding dans le thread
         if self.path_thread and self.path_thread.is_alive():
             # Le thread calcule encore, on attend
@@ -101,11 +124,16 @@ class Paquebot(Unit):
             self.draw_range(screen, camera_offset)
 
     def pos_base_ennemie(self):
+        """Retourne la position de la base ennemie et l'objet base.
+
+        Returns:
+            tuple: (position (x,y), base) ou (None, None) si pas de base trouvée
+        """
         if self.team == "red":
-            return self.game.plateformes["green"].position
+            return (self.game.plateformes["green"].position, self.game.plateformes["green"])
         elif self.team == "green":
-            return self.game.plateformes["red"].position
-        return None
+            return (self.game.plateformes["red"].position, self.game.plateformes["red"])
+        return None, None
 
     def aller_vers_base_ennemie(self):
         """Déplacement direct vers la base ennemie sans pathfinding."""
@@ -118,19 +146,17 @@ class Paquebot(Unit):
         if self.path_thread and self.path_thread.is_alive():
             return  # Un calcul est déjà en cours
         self.need_recalculate_path = False
+        # Utilise la méthode de la classe parente
         self.start_pathfinding_thread(self.compute_path)
 
-    # def start_pathfinding_thread(self):
-    #     self.path_thread = threading.Thread(target=self.compute_path)
-    #     self.path_thread.start()
-
     def compute_path(self):
+        """Calcule le chemin vers la base ennemie."""
         start = self.position
-        goal = self.pos_base_ennemie()
-        if not start or not goal:
+        target_pos, _ = self.pos_base_ennemie() # On ne récupère que la position
+        if not start or not target_pos:
             return
 
-        path = self.a_star_search(start, goal)
+        path = self.a_star_search(start, target_pos)
         if path:
             self.new_path = path
             self.path_found = True
