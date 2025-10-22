@@ -2,6 +2,7 @@ import time
 import math
 import pygame
 import threading
+import random
 from Class.units.Unit import Unit
 from Class.Combat import CombatSystem, Mine
 from math import * 
@@ -61,7 +62,7 @@ class SousMarin(Unit):
         
         # Modes d'IA
         # Nouvel état par défaut : défense de base
-        self.ia_mode = "defense_base"  # Modes possibles: "defense_base", "patrol", "attack", "return_to_platform"
+        self.ia_mode = "patrol"  # Modes possibles: "defense_base", "patrol", "attack", "return_to_platform"
         self.previous_mode = "patrol"  # Pour suivre le mode précédent
         self.platform_position = None  # Position de la plateforme pétrolière de l'équipe
 
@@ -78,6 +79,19 @@ class SousMarin(Unit):
         self.current_path = []  # Chemin A* actuel
         self.path_index = 0  # Index dans le chemin actuel
         self.is_computing_path = False  # Flag indiquant qu'un calcul est en cours
+        # ===== Variables pour la logique de groupe (IA coordonnée) =====
+        # Identifiant du groupe auquel appartient ce sous-marin (None si isolé)
+        self.group_id = None
+        # Booléen indiquant si cette unité est le leader du groupe
+        self.is_leader = False
+        # Slot de formation (index) pour positionner les suiveurs autour du leader
+        self.formation_slot = None
+        # Distance voulue entre leader et suiveur en formation (px)
+        self.formation_distance = 80
+        # Référence à la cible actuelle du groupe (unité ennemi)
+        self.group_target_unit = None
+        # Délai interne pour éviter de reformer un groupe trop souvent
+        self._last_group_formed_time = 0
         
             
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list[Unit] = None):
@@ -227,6 +241,148 @@ class SousMarin(Unit):
                     nearby_scouts.append(unit)
         
         return nearby_scouts
+
+    # ------------------ LOGIQUE DE GROUPE ------------------
+    def form_attack_group(self, all_units, detected_target=None, radius=600, min_members=2):
+        """Forme un groupe d'attaque autour de ce sous-marin.
+
+        Si suffisamment d'alliés sont proches (< radius), on choisit un leader
+        et on assigne group_id + ia_mode='group_attack' aux membres.
+
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités.
+            detected_target (Unit|None): La cible initiale détectée (éventuellement None).
+            radius (int): Rayon de recherche d'alliés en pixels.
+            min_members (int): Nombre minimum de membres pour former un groupe (inclut le détecteur).
+        """
+        # Vérifier cooldown anti-reformation
+        now = time.time()
+        if now - getattr(self, '_last_group_formed_time', 0) < 1.0:
+            return False
+
+        # Trouver alliés sous-marins vivants de la même équipe.
+        # Accepte les instances de SousMarin OU les unités avec unit_type == 'sousmarin'
+        allies = []
+        for u in all_units:
+            if u is self:
+                continue
+            if not getattr(u, 'is_alive', False):
+                continue
+            if getattr(u, 'team', None) != self.team:
+                continue
+            if isinstance(u, SousMarin) or getattr(u, 'unit_type', None) == 'sousmarin':
+                allies.append(u)
+
+        # Exclure soi-même pour le calcul mais on l'ajoutera
+        # Utiliser <= radius pour inclure la frontière
+        nearby = [a for a in allies if a != self and math.hypot(a.position[0]-self.position[0], a.position[1]-self.position[1]) <= radius]
+
+        # inclure soi-même
+        nearby_with_self = [self] + nearby
+
+        # debug: afficher les comptes pour diagnostic
+        print(f"[debug] tentative formation: alliés_detectes={len(nearby)}, total_avec_moi={len(nearby_with_self)}, min_req={min_members}")
+
+        if len(nearby_with_self) >= min_members:
+            # Créer un id de groupe unique
+            group_id = random.randint(1000, 9999)
+            # Choisir un leader: le plus proche de la cible si fournie, sinon le détecteur
+            leader = self
+            if detected_target:
+                # choisir l'allié le plus proche de la cible
+                best = None
+                bestd = float('inf')
+                for a in nearby_with_self:
+                    dx = a.position[0] - detected_target.position[0]
+                    dy = a.position[1] - detected_target.position[1]
+                    d = math.hypot(dx, dy)
+                    if d < bestd:
+                        best = a
+                        bestd = d
+                if best:
+                    leader = best
+
+            # Assignation des membres
+            slot = 0
+            for a in nearby_with_self:
+                a.group_id = group_id
+                a.group_target_unit = detected_target
+                a.is_leader = (a == leader)
+                a.formation_slot = slot if not a.is_leader else 0
+                a.ia_mode = 'group_attack'
+                slot += 1
+
+            leader.is_leader = True
+            leader.group_id = group_id
+            leader.group_target_unit = detected_target
+            leader.ia_mode = 'group_attack'
+
+            self._last_group_formed_time = now
+            print(f"Groupe {group_id} formé avec {len(nearby_with_self)} sous-marins (leader: {leader.team} #{id(leader)})")
+            return True
+
+        # debug: formation non réalisée
+        print(f"[debug] formation échouée: nearby_with_self={len(nearby_with_self)} < min_members={min_members}")
+        return False
+
+    def broadcast_attack_signal(self, all_units):
+        """Le leader envoie un signal d'attaque à tous les alliés de son groupe."""
+        if not self.is_leader or not self.group_id:
+            return
+        for ally in all_units:
+            if getattr(ally, 'group_id', None) == self.group_id:
+                # Transmettre la cible
+                ally.group_target_unit = self.group_target_unit
+                # Autoriser l'attaque (changer de mode interne si besoin)
+                ally.ia_mode = 'group_attack'
+                # Demander une attaque immédiate (pour synchroniser)
+                try:
+                    ally.attack_target(self.group_target_unit)
+                except Exception:
+                    # ne pas faire planter si une unité n'implémente pas attack_target
+                    pass
+
+    def attack_target(self, target_unit):
+        """Effectue l'attaque vers la target sans redétection (logique similaire à behavior_attack)."""
+        if not target_unit or not target_unit.is_alive:
+            return
+
+        dx = target_unit.position[0] - self.position[0]
+        dy = target_unit.position[1] - self.position[1]
+        distance = math.hypot(dx, dy)
+        collision_distance = 35
+
+        # Si proche, poser une mine
+        if distance <= collision_distance:
+            self.stop()
+            self.is_moving = False
+            self.target_position = None
+            if self.can_place_mine():
+                placed = self.place_mine(int(self.position[0]), int(self.position[1]))
+                if placed:
+                    print(f"💣 Groupe {self.group_id}: {self.team} sous-marin a posé une mine lors de l'attaque")
+            return
+
+        # sinon, se déplacer vers la position cible
+        if self.is_path_clear(target_unit.position[0], target_unit.position[1]):
+            self.move_to_position(target_unit.position)
+        else:
+            self.find_alternative_path_to_target(target_unit.position[0], target_unit.position[1])
+
+    def coordinate_retreat(self, all_units):
+        """Ordre de retraite coordonnée: envoie tous les membres du groupe en 'return_to_platform'."""
+        if not self.group_id:
+            return
+        for ally in all_units:
+            if getattr(ally, 'group_id', None) == self.group_id:
+                ally.ia_mode = 'return_to_platform'
+                # réinitialiser certains flags de groupe
+                ally.group_id = None
+                ally.is_leader = False
+                ally.formation_slot = None
+                ally.group_target_unit = None
+        print(f"Groupe {self.group_id} en retraite vers la plateforme.")
+
     
     def find_nearby_paquebots(self, all_units, detection_range=600):
         """Trouve les paquebots ennemis à proximité.
@@ -317,6 +473,21 @@ class SousMarin(Unit):
                     nearby_bateaux.append(unit)
         
         return nearby_bateaux
+
+    def get_nearby_allied_submarines(self, all_units, radius=600):
+        """Renvoie la liste des sous-marins alliés (vivants) dans un rayon donné (exclut self)."""
+        allies = []
+        for u in all_units:
+            if u is self:
+                continue
+            if not getattr(u, 'is_alive', False):
+                continue
+            if isinstance(u, SousMarin) and u.team == self.team:
+                dx = u.position[0] - self.position[0]
+                dy = u.position[1] - self.position[1]
+                if math.hypot(dx, dy) <= radius:
+                    allies.append(u)
+        return allies
     
     def get_closest_scout(self, scouts):
         """Trouve l'éclaireur le plus proche parmi une liste.
@@ -752,6 +923,10 @@ class SousMarin(Unit):
         # MODE 2: ATTACK - Attaque d'un éclaireur
         elif self.ia_mode == "attack":
             self.behavior_attack(all_units)
+
+        # MODE 2b: GROUP_ATTACK - Attaque coordonnée
+        elif self.ia_mode == "group_attack":
+            self.behavior_group_attack(all_units)
         
         # MODE 3: RETURN_TO_PLATFORM - Retour à la plateforme
         elif self.ia_mode == "return_to_platform":
@@ -771,7 +946,15 @@ class SousMarin(Unit):
         nearby_chaloupes = self.find_nearby_chaloupes(all_units, detection_range=500)
         
         if nearby_chaloupes:
-            # Chaloupe détectée → retourner à la plateforme immédiatement
+            # Chaloupe détectée → tenter formation de groupe avant de fuir
+            allies = self.get_nearby_allied_submarines(all_units, radius=600)
+            if len(allies) >= 2:
+                formed = self.form_attack_group(all_units, detected_target=nearby_chaloupes[0], radius=600, min_members=3)
+                if formed:
+                    print(f"⛵ {self.team} sous-marin: CHALOUPE détectée mais groupe formé -> group_attack")
+                    self.ia_mode = 'group_attack'
+                    return
+            # Sinon, comportement original: fuir vers la plateforme
             print(f"⛵ {self.team} sous-marin: CHALOUPE DÉTECTÉE à 500px ou moins → Passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
@@ -780,7 +963,14 @@ class SousMarin(Unit):
         nearby_bateaux = self.find_nearby_bateaux(all_units, detection_range=450)
         
         if nearby_bateaux:
-            # Bateau détecté → retourner à la plateforme immédiatement
+            # Bateau détecté → tenter formation de groupe avant de fuir
+            allies = self.get_nearby_allied_submarines(all_units, radius=600)
+            if len(allies) >= 2:
+                formed = self.form_attack_group(all_units, detected_target=nearby_bateaux[0], radius=600, min_members=3)
+                if formed:
+                    print(f"⛴️ {self.team} sous-marin: BATEAU détecté mais groupe formé -> group_attack")
+                    self.ia_mode = 'group_attack'
+                    return
             print(f"⛴️ {self.team} sous-marin: BATEAU DÉTECTÉ à 450px ou moins → Passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
@@ -789,7 +979,14 @@ class SousMarin(Unit):
         nearby_paquebots = self.find_nearby_paquebots(all_units, detection_range=300)
         
         if nearby_paquebots:
-            # Paquebot détecté → retourner à la plateforme immédiatement
+            # Paquebot détecté → tenter formation de groupe avant de fuir
+            allies = self.get_nearby_allied_submarines(all_units, radius=600)
+            if len(allies) >= 2:
+                formed = self.form_attack_group(all_units, detected_target=nearby_paquebots[0], radius=600, min_members=3)
+                if formed:
+                    print(f"🚢 {self.team} sous-marin: PAQUEBOT détecté mais groupe formé -> group_attack")
+                    self.ia_mode = 'group_attack'
+                    return
             print(f"🚢 {self.team} sous-marin: PAQUEBOT DÉTECTÉ à 300px ou moins → Passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
@@ -798,9 +995,15 @@ class SousMarin(Unit):
         nearby_scouts = self.find_nearby_scouts(all_units, detection_range=320)
         
         if nearby_scouts:
-            # Éclaireur détecté → passer en mode attaque
-            print(f"⚔️ {self.team} sous-marin: ÉCLAIREUR DÉTECTÉ → Passage en mode ATTACK")
-            self.ia_mode = "attack"
+            # Éclaireur détecté → tenter de former un groupe d'attaque
+            target = self.get_closest_scout(nearby_scouts)
+            formed = self.form_attack_group(all_units, detected_target=target, radius=600, min_members=2)
+            if formed:
+                print(f"⚔️ {self.team} sous-marin: ÉCLAIREUR DÉTECTÉ → Groupe d'attaque formé (group_attack)")
+                self.ia_mode = 'group_attack'
+            else:
+                print(f"⚔️ {self.team} sous-marin: ÉCLAIREUR DÉTECTÉ → Passage en mode ATTACK individuel")
+                self.ia_mode = "attack"
             return
         
         # Pas de menace → patrouille normale
@@ -820,92 +1023,126 @@ class SousMarin(Unit):
             print(f"⚠️ {self.team} sous-marin: Impossible de générer positions défense — plateforme introuvable")
             return
 
-        cx, cy = self.platform_position
-        half = self.defense_square_radius
-        spacing = max(32, int(self.defense_grid_spacing))
+    def behavior_group_attack(self, all_units):
+        """Comportement pour les sous-marins en mode 'group_attack'.
 
-        positions = []
-        # Définir les bornes du carré centré sur la plateforme
-        x_start = int(cx - half)
-        x_end = int(cx + half)
-        y_start = int(cy - half)
-        y_end = int(cy + half)
+        - Le leader calcule la route vers la cible (A* ou direct) et la suit.
+        - Les suiveurs gardent une position en formation relative au leader.
+        - Quand le leader est à portée suffisante, il broadcast le signal d'attaque.
+        """
+        # Récupérer les membres du groupe
+        if not self.group_id:
+            # Pas de groupe, revenir en patrol
+            self.ia_mode = 'patrol'
+            return
 
-        # Générer des points le long des 4 côtés (périmètre) avec un espacement donné
-        # Top et bottom edges
-        x = x_start
-        while x <= x_end and len(positions) < self.defense_max_mines:
-            for y in (y_start, y_end):
-                if len(positions) >= self.defense_max_mines:
-                    break
-                if self.is_position_valid(x, y, treat_platform_as_obstacle=True):
-                    positions.append((x, y))
+        members = [u for u in all_units if getattr(u, 'group_id', None) == self.group_id and u.is_alive]
+        if not members:
+            self.group_id = None
+            self.ia_mode = 'patrol'
+            return
+
+        # Trouver le leader
+        leader = None
+        for m in members:
+            if getattr(m, 'is_leader', False):
+                leader = m
+                break
+
+        if leader is None:
+            # Si aucun leader, élire le premier membre comme leader
+            leader = members[0]
+            leader.is_leader = True
+
+        # Vérifier si la cible est toujours valide
+        target = self.group_target_unit
+        if not target or not target.is_alive:
+            # cible perdue -> fin du groupe
+            print(f"Groupe {self.group_id}: cible perdue, dissolution du groupe")
+            for m in members:
+                m.group_id = None
+                m.is_leader = False
+                m.ia_mode = 'patrol'
+            return
+
+        # Calculer la distance à la cible pour tous les membres
+        dx_target = target.position[0] - self.position[0]
+        dy_target = target.position[1] - self.position[1]
+        dist_to_target = math.hypot(dx_target, dy_target)
+        
+        # Ajuster distances selon le type de cible (paquebot = plus grand)
+        if getattr(target, 'unit_type', None) == 'paquebot' or 'paquebot' in target.__class__.__name__.lower():
+            collision_distance = 80
+        else:
+            collision_distance = 35
+        if dist_to_target <= collision_distance:
+            self.stop()
+            self.is_moving = False
+            self.target_position = None
+            if self.can_place_mine():
+                placed = self.place_mine(int(self.position[0]), int(self.position[1]))
+                if placed:
+                    print(f"💣 Groupe {self.group_id}: {self.team} sous-marin a posé une mine (distance: {int(dist_to_target)}px)")
+            return
+
+        # Si je suis leader, je vais gérer la route/attaque
+        if self.is_leader:
+            # Leader: suivre la cible comme en attaque (A* si nécessaire)
+            # Si le leader est proche, envoyer le signal d'attaque
+            attack_range = 180 if getattr(target, 'unit_type', None) == 'paquebot' else 120
+            if dist_to_target <= attack_range:
+                # Envoyer le signal d'attaque
+                print(f"Leader groupe {self.group_id}: à portée de la cible ({int(dist_to_target)}px). Broadcast attaque !")
+                self.broadcast_attack_signal(all_units)
+
+            # Se déplacer vers la cible
+            if self.is_path_clear(target.position[0], target.position[1]):
+                self.move_to_position(target.position)
+            else:
+                self.find_alternative_path_to_target(target.position[0], target.position[1])
+
+        else:
+            # Si je suis suiveur, je dois suivre une position relative au leader
+            if leader is None:
+                return
+
+            # Vérifier d'abord si je suis proche de la cible pour attaquer
+            # (distance déjà calculée plus haut : dist_to_target)
+            attack_distance = 140 if getattr(target, 'unit_type', None) == 'paquebot' else 80
+            if dist_to_target <= attack_distance:
+                # Je suis assez proche, me diriger vers la cible pour attaquer
+                if not self.is_moving or self.target_position != target.position:
+                    if self.is_path_clear(target.position[0], target.position[1]):
+                        self.move_to_position(target.position)
+                    else:
+                        self.find_alternative_path_to_target(target.position[0], target.position[1])
+                return
+
+            # Sinon, maintenir la formation autour du leader
+            # Définir un angle de formation en V selon mon slot
+            slot = getattr(self, 'formation_slot', 0) or 0
+            # base_angle est l'angle du leader (cap)
+            base_angle = leader.angle
+            # décaler l'angle pour former un V centré
+            offset_angle = base_angle + (slot * 20 - 40)
+            fx = leader.position[0] - math.cos(math.radians(offset_angle)) * self.formation_distance
+            fy = leader.position[1] - math.sin(math.radians(offset_angle)) * self.formation_distance
+
+            # Se déplacer vers la position de formation
+            if not self.is_moving:
+                # tourner vers la position de formation
+                dx = fx - self.position[0]
+                dy = fy - self.position[1]
+                angle_to = math.degrees(math.atan2(-dy, dx)) - 90
+                self.angle = angle_to % 360
+                self.image = pygame.transform.rotate(self.image_original, self.angle)
+                self.rect = self.image.get_rect(center=self.rect.center)
+
+                if self.is_path_clear(fx, fy):
+                    self.move_to_position((fx, fy))
                 else:
-                    # tenter de trouver une position proche le long de la normale extérieure
-                    found = False
-                    for r in (20, 40, 60, 80):
-                        for angle in range(0, 360, 30):
-                            rx = x + int(math.cos(math.radians(angle)) * r)
-                            ry = y + int(math.sin(math.radians(angle)) * r)
-                            if self.is_position_valid(rx, ry, treat_platform_as_obstacle=True):
-                                positions.append((rx, ry))
-                                found = True
-                                break
-                        if found:
-                            break
-            x += spacing
-
-        # Left and right edges (avoid duplicating corners)
-        y = y_start + spacing
-        while y <= y_end - spacing and len(positions) < self.defense_max_mines:
-            for x in (x_start, x_end):
-                if len(positions) >= self.defense_max_mines:
-                    break
-                if self.is_position_valid(x, y, treat_platform_as_obstacle=True):
-                    if (x, y) not in positions:
-                        positions.append((x, y))
-                else:
-                    found = False
-                    for r in (20, 40, 60, 80):
-                        for angle in range(0, 360, 30):
-                            rx = x + int(math.cos(math.radians(angle)) * r)
-                            ry = y + int(math.sin(math.radians(angle)) * r)
-                            if self.is_position_valid(rx, ry, treat_platform_as_obstacle=True):
-                                if (rx, ry) not in positions:
-                                    positions.append((rx, ry))
-                                found = True
-                                break
-                        if found:
-                            break
-            y += spacing
-
-        # Si insuffisant, tenter d'ajouter points intermédiaires le long du périmètre avec pas réduit
-        if len(positions) < self.defense_max_mines:
-            small_step = max(16, spacing // 2)
-            # parcours top/bottom
-            x = x_start
-            while x <= x_end and len(positions) < self.defense_max_mines:
-                for y in (y_start, y_end):
-                    if len(positions) >= self.defense_max_mines:
-                        break
-                    if (x, y) not in positions and self.is_position_valid(x, y, treat_platform_as_obstacle=True):
-                        positions.append((x, y))
-                x += small_step
-            # parcours left/right
-            y = y_start + small_step
-            while y <= y_end - small_step and len(positions) < self.defense_max_mines:
-                for x in (x_start, x_end):
-                    if len(positions) >= self.defense_max_mines:
-                        break
-                    if (x, y) not in positions and self.is_position_valid(x, y, treat_platform_as_obstacle=True):
-                        positions.append((x, y))
-                y += small_step
-
-        # Enfin tailler la liste à la taille demandée
-        self.defense_mine_positions = positions[:self.defense_max_mines]
-        self.defense_current_mine_index = 0
-        self.defense_positions_generated = True
-        print(f"✅ {self.team} sous-marin: {len(self.defense_mine_positions)} positions de mines (périmètre) générées pour défense")
+                    # essayer un point proche
+                    self.find_alternative_path_to_target(fx, fy)
 
     def behavior_defense_base(self, all_units):
         """Patrouille minière autour de la plateforme : pose jusqu'à `defense_max_mines` mines.
@@ -919,18 +1156,40 @@ class SousMarin(Unit):
         # Priorités de sécurité (identiques à patrol)
         nearby_chaloupes = self.find_nearby_chaloupes(all_units, detection_range=500)
         if nearby_chaloupes:
+            # Chaloupe détectée en défense -> tenter formation de groupe
+            allies = self.get_nearby_allied_submarines(all_units, radius=600)
+            if len(allies) >= 2:
+                formed = self.form_attack_group(all_units, detected_target=nearby_chaloupes[0], radius=600, min_members=3)
+                if formed:
+                    print(f"⛵ {self.team} sous-marin: CHALOUPE détectée pendant défense mais groupe formé -> group_attack")
+                    self.ia_mode = 'group_attack'
+                    return
             print(f"⛵ {self.team} sous-marin: CHALOUPE détectée pendant défense -> switch RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
 
         nearby_bateaux = self.find_nearby_bateaux(all_units, detection_range=450)
         if nearby_bateaux:
+            allies = self.get_nearby_allied_submarines(all_units, radius=600)
+            if len(allies) >= 2:
+                formed = self.form_attack_group(all_units, detected_target=nearby_bateaux[0], radius=600, min_members=3)
+                if formed:
+                    print(f"⛴️ {self.team} sous-marin: BATEAU détecté pendant défense mais groupe formé -> group_attack")
+                    self.ia_mode = 'group_attack'
+                    return
             print(f"⛴️ {self.team} sous-marin: BATEAU détecté pendant défense -> switch RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
 
         nearby_paquebots = self.find_nearby_paquebots(all_units, detection_range=300)
         if nearby_paquebots:
+            allies = self.get_nearby_allied_submarines(all_units, radius=600)
+            if len(allies) >= 2:
+                formed = self.form_attack_group(all_units, detected_target=nearby_paquebots[0], radius=600, min_members=3)
+                if formed:
+                    print(f"🚢 {self.team} sous-marin: PAQUEBOT détecté pendant défense mais groupe formé -> group_attack")
+                    self.ia_mode = 'group_attack'
+                    return
             print(f"🚢 {self.team} sous-marin: PAQUEBOT détecté pendant défense -> switch RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
@@ -1011,7 +1270,14 @@ class SousMarin(Unit):
         nearby_chaloupes = self.find_nearby_chaloupes(all_units, detection_range=500)
         
         if nearby_chaloupes:
-            # Chaloupe détectée → annuler l'attaque et retourner à la plateforme
+            # Chaloupe détectée → tenter formation de groupe avant de fuir
+            allies = self.get_nearby_allied_submarines(all_units, radius=600)
+            if len(allies) >= 2:
+                formed = self.form_attack_group(all_units, detected_target=nearby_chaloupes[0], radius=600, min_members=3)
+                if formed:
+                    print(f"⛵ {self.team} sous-marin: CHALOUPE détectée pendant l'attaque mais groupe formé -> group_attack")
+                    self.ia_mode = 'group_attack'
+                    return
             print(f"⛵ {self.team} sous-marin: CHALOUPE DÉTECTÉE pendant l'attaque → Annulation, passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
@@ -1020,7 +1286,13 @@ class SousMarin(Unit):
         nearby_bateaux = self.find_nearby_bateaux(all_units, detection_range=400)
         
         if nearby_bateaux:
-            # Bateau détecté → annuler l'attaque et retourner à la plateforme
+            allies = self.get_nearby_allied_submarines(all_units, radius=600)
+            if len(allies) >= 2:
+                formed = self.form_attack_group(all_units, detected_target=nearby_bateaux[0], radius=600, min_members=3)
+                if formed:
+                    print(f"⛴️ {self.team} sous-marin: BATEAU détecté pendant l'attaque mais groupe formé -> group_attack")
+                    self.ia_mode = 'group_attack'
+                    return
             print(f"⛴️ {self.team} sous-marin: BATEAU DÉTECTÉ pendant l'attaque → Annulation, passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
@@ -1029,7 +1301,13 @@ class SousMarin(Unit):
         nearby_paquebots = self.find_nearby_paquebots(all_units, detection_range=300)
         
         if nearby_paquebots:
-            # Paquebot détecté → annuler l'attaque et retourner à la plateforme
+            allies = self.get_nearby_allied_submarines(all_units, radius=600)
+            if len(allies) >= 2:
+                formed = self.form_attack_group(all_units, detected_target=nearby_paquebots[0], radius=600, min_members=3)
+                if formed:
+                    print(f"🚢 {self.team} sous-marin: PAQUEBOT détecté pendant l'attaque mais groupe formé -> group_attack")
+                    self.ia_mode = 'group_attack'
+                    return
             print(f"🚢 {self.team} sous-marin: PAQUEBOT DÉTECTÉ pendant l'attaque → Annulation, passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
