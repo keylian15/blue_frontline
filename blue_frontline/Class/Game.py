@@ -261,22 +261,13 @@ class Game :
 
     def build_nav_grid(self):
         """
-        Construit/actualise la grille de navigation A* pour l'IA Éclaireur.
-
-        Règles :
-        - Cellule bloquée si :
-            * dans self.obstacles                (îles, récifs, terrain solide)
-            * dans self.quantique_area_hidden    (zone quantique PAS encore révélée)
-        - Sinon elle est navigable.
-        - Coût normal (1.0) en eau profonde
-        - Coût plus élevé (2.0) en eau peu profonde (ralentit les bateaux)
-        
-        Résultat :
-        - self.nav_grid_raw         -> SimpleGrid brut (walkable + costs)
-        - self.nav_grid_adapter     -> GridAdapter prêt pour l'IA (A*)
+        Construit/actualise la grille de navigation IA (A*).
+            Remplit:
+                self.nav_grid_raw      : SimpleGrid (walkable + coûts)
+                self.nav_grid_adapter  : GridAdapter prêt pour ScoutAI
         """
 
-        tile_size = 32  # la map.tmx est en tuiles 32x32
+        tile_size = 32  # adapte si vos tiles sont différentes
         width_in_cells = self.map_width // tile_size
         height_in_cells = self.map_height // tile_size
 
@@ -284,7 +275,6 @@ class Game :
 
         for cx in range(width_in_cells):
             for cy in range(height_in_cells):
-                # On prend le centre monde de la cellule
                 world_x = cx * tile_size + tile_size * 0.5
                 world_y = cy * tile_size + tile_size * 0.5
                 p = (world_x, world_y)
@@ -292,25 +282,27 @@ class Game :
                 walkable = True
                 cost = 1.0
 
-                # 1) Zones bloquantes dures : îles/récifs/etc.
+                # 1. Si c'est un rocher / île / terre ferme => interdit
                 if point_in_many_polygons(self.obstacles, p):
                     walkable = False
 
-                # 2) Zones quantiques PAS encore révélées = interdit
-                elif point_in_many_polygons(self.quantique_area_hidden, p):
-                    walkable = False
-
                 else:
-                    # 3) Eau peu profonde => navigable mais plus cher
+                    # 2. Eau peu profonde = navigable mais lent
                     if point_in_many_polygons(self.eau_peu_profondes, p):
                         cost = 2.0
                     else:
-                        cost = 1.0  # eau profonde, rapide
+                        cost = 1.0
+
+                    # 3. Zone quantique cachée:
+                    #    -> DOIT rester traversable car l'éclaireur doit aller dedans.
+                    #    On pourrait même la rendre "prioritaire" en baissant le coût.
+                    if point_in_many_polygons(self.quantique_area_hidden, p):
+                        # On encourage l'IA à y aller, coût un peu plus bas.
+                        cost = 0.5
 
                 grid.walkable[cx][cy] = walkable
                 grid.costs[cx][cy] = cost
 
-        # Stocke la grille + l'adapter utilisable par l'IA
         self.nav_grid_raw = grid
         self.nav_grid_adapter = make_grid_adapter_from_simplegrid(grid)
 
