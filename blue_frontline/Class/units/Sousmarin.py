@@ -98,6 +98,11 @@ class SousMarin(Unit):
         self.group_target_unit = None
         # Délai interne pour éviter de reformer un groupe trop souvent
         self._last_group_formed_time = 0
+        # Pour pathfinding générique vers une cible (attaques)
+        self.path_goal = None
+        self.new_path = None
+        self.path_found = False
+        self.need_recalculate_path = False
 
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] = (0, 0), all_units: list[Unit] = None):
         """Met à jour l'unité en fonction de son état actuel.
@@ -374,7 +379,31 @@ class SousMarin(Unit):
                         f"💣 Groupe {self.group_id}: {self.team} sous-marin a posé une mine lors de l'attaque")
             return
 
-        # sinon, se déplacer vers la position cible
+        # sinon, utiliser A* pour atteindre la cible (thread si possible)
+        goal = (target_unit.position[0], target_unit.position[1])
+        # Si la goal a changé, demander un nouveau chemin
+        if self.path_goal != goal:
+            self.path_goal = goal
+            # lancer le thread de pathfinding si possible
+            try:
+                if not getattr(self, 'path_thread', None) or not self.path_thread.is_alive():
+                    self.start_pathfinding_thread(self.compute_path_to_goal)
+            except Exception:
+                # retomber sur calcul synchrone
+                path = self.a_star_search(self.position, goal)
+                if path:
+                    self.current_path = path
+                    self.path_index = 0
+                    self.need_recalculate_path = False
+
+        # appliquer tout chemin disponible
+        if self.update_path_from_thread() or self.current_path:
+            # suivre le chemin A*
+            followed = self.follow_path()
+            if followed:
+                return
+
+        # fallback: si A* impossible, essayer le mouvement direct
         if self.is_path_clear(target_unit.position[0], target_unit.position[1]):
             self.move_to_position(target_unit.position)
         else:
@@ -653,6 +682,26 @@ class SousMarin(Unit):
             self.new_path = None
             self.path_found = False
             print(f"⚠️ {self.team} sous-marin: Aucun chemin trouvé en thread")
+
+        self.is_computing_path = False
+
+    def compute_path_to_goal(self):
+        """Calcule le chemin A* vers `self.path_goal` en arrière-plan (thread)."""
+        goal = self.path_goal
+        start = self.position
+        if not start or not goal:
+            self.is_computing_path = False
+            return
+
+        path = self.a_star_search(start, goal)
+        if path:
+            self.new_path = path
+            self.path_found = True
+            print(f"🧵 {self.team} sous-marin: Chemin vers cible calculé en thread ({len(path)} points)")
+        else:
+            self.new_path = None
+            self.path_found = False
+            print(f"⚠️ {self.team} sous-marin: Aucun chemin trouvé vers la cible en thread")
 
         self.is_computing_path = False
 
@@ -1152,7 +1201,25 @@ class SousMarin(Unit):
                     f"Leader groupe {self.group_id}: à portée de la cible ({int(dist_to_target)}px). Broadcast attaque !")
                 self.broadcast_attack_signal(all_units)
 
-            # Se déplacer vers la cible
+            # Se déplacer vers la cible en utilisant A* (thread si possible)
+            goal = (target.position[0], target.position[1])
+            if self.path_goal != goal:
+                self.path_goal = goal
+                try:
+                    if not getattr(self, 'path_thread', None) or not self.path_thread.is_alive():
+                        self.start_pathfinding_thread(self.compute_path_to_goal)
+                except Exception:
+                    path = self.a_star_search(self.position, goal)
+                    if path:
+                        self.current_path = path
+                        self.path_index = 0
+                        self.need_recalculate_path = False
+
+            if self.update_path_from_thread() or self.current_path:
+                if self.follow_path():
+                    return
+
+            # fallback direct
             if self.is_path_clear(target.position[0], target.position[1]):
                 self.move_to_position(target.position)
             else:
@@ -1480,10 +1547,28 @@ class SousMarin(Unit):
                 self.rect = self.image.get_rect(center=self.rect.center)
 
                 # Se déplacer vers l'éclaireur si le chemin est dégagé
+                # Utiliser A* pour atteindre l'éclaireur (thread si possible)
+                goal = (target_scout.position[0], target_scout.position[1])
+                if self.path_goal != goal:
+                    self.path_goal = goal
+                    try:
+                        if not getattr(self, 'path_thread', None) or not self.path_thread.is_alive():
+                            self.start_pathfinding_thread(self.compute_path_to_goal)
+                    except Exception:
+                        path = self.a_star_search(self.position, goal)
+                        if path:
+                            self.current_path = path
+                            self.path_index = 0
+                            self.need_recalculate_path = False
+
+                if self.update_path_from_thread() or self.current_path:
+                    if self.follow_path():
+                        return
+
+                # fallback
                 if self.is_path_clear(target_scout.position[0], target_scout.position[1]):
                     self.move_to_position(target_scout.position)
                 else:
-                    # Si le chemin direct est bloqué, chercher une route alternative
                     self.find_alternative_path_to_target(
                         target_scout.position[0], target_scout.position[1])
 
