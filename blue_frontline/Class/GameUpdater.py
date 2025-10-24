@@ -51,7 +51,14 @@ class GameUpdater:
                 # Si l'unité est une IA, on met à jour si elle est ia
                 # On récuperera la valeur depuis les paramètres de gameplay
                 from Global import GAMEPLAY_SETTINGS
-                unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(unit.unit_type[0].upper() + unit.unit_type[1:])
+                # Cas spécial pour les bases :
+                if unit.unit_type == "plateformePetroliere":
+                    if unit.team == "red" : 
+                        unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get("BaseRouge")
+                    elif unit.team == "green" :
+                        unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get("BaseVerte")
+                else:
+                    unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(unit.unit_type[0].upper() + unit.unit_type[1:])
             
             # Mettre à jour l'unité avec toutes les informations nécessaires
             unit.update(dt, self.game.combat_system, self.game.screen, camera_offset, self.game.units)

@@ -467,7 +467,8 @@ def get_controls_keys():
 
 GAMEPLAY_SETTINGS = {
     "AI_ACTIVATION": {
-        "PlateformePetroliere": True,
+        "BaseRouge": True,
+        "BaseVerte": True,
         "Chaloupe": True,
         "Bateau": True,
         "Paquebot": True,
