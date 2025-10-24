@@ -12,13 +12,14 @@ from Utils import point_in_many_polygons
 class SousMarin(Unit):
 
     """Classe unifiée pour les unités Sous-marin (Rouge et Vert)."""
-    
-    def __init__(self, game, team: str):
+
+    def __init__(self, game, team: str, is_ia: bool = True):
         """Initialise une instance de SousMarin.
 
         Args:
             game: Instance du jeu.
             team (str): Équipe de l'unité.
+            is_ia (bool): Indique si l'unité est contrôlée par l'IA. Défaut à True.
         """
         # Récupérer la configuration depuis Global.py
         config = UNIT_CONFIGS["sousmarin"]
@@ -64,7 +65,7 @@ class SousMarin(Unit):
         # Nouvel état par défaut : défense de base
         self.ia_mode = "defense_base"  # Modes possibles: "defense_base", "patrol", "attack", "return_to_platform"
         self.previous_mode = "patrol"  # Pour suivre le mode précédent
-        self.is_ia = True
+        self.is_ia = is_ia
         self.platform_position = None  # Position de la plateforme pétrolière de l'équipe
 
         # ===== Défense de base =====
