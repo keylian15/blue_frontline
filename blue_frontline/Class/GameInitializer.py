@@ -10,9 +10,9 @@ from Class.units.Eclaireur import EclaireurRouge, EclaireurVert
 from Class.units.Paquebot import PaquebotRouge, PaquebotVert
 from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
 from Class.Hud import Hud
+from Class.OverlayMenu import OverlayMenu
 from Global import *
 from Utils import *
-from Class.PlateformePetroliere import PlateformePetroliere
 
 class GameInitializer:
     """Gestionnaire d'initialisation des composants du jeu."""
@@ -82,21 +82,16 @@ class GameInitializer:
                 self.game.green_platform_zone = obj.points  
             elif obj.name == "Spawn_base_rouge":
                 self.game.red_platform_zone = obj.points  # Récupérer les points du polygone
-        
-
+            elif obj.name == "Spawn_base_verte_pompe" : 
+                self.game.green_pompe_zone = obj.as_points
+            elif obj.name == "Spawn_base_rouge_pompe" : 
+                self.game.red_pompe_zone = obj.as_points
         
         # Créer les plateformes à partir des positions Tiled
-        plateforme_rouge = PlateformePetroliere(
-            red_platform_obj.x, red_platform_obj.y,
-            "red", 1000, red_platform_obj)
-        plateforme_verte = PlateformePetroliere(
-            green_platform_obj.x, green_platform_obj.y,
-            "green", 1000, green_platform_obj)
-                
-        # Ajouter les références au jeu
-        plateforme_rouge.game = self.game
-        plateforme_verte.game = self.game
-        
+        from Class.units.PlateformePetroliere import PlateformePetroliereRouge, PlateformePetroliereVerte
+        plateforme_rouge = PlateformePetroliereRouge(self.game, red_platform_obj)
+        plateforme_verte = PlateformePetroliereVerte(self.game, green_platform_obj)
+
         # Stocker les plateformes
         self.game.plateformes = {"red": plateforme_rouge, "green": plateforme_verte}
         
@@ -111,6 +106,20 @@ class GameInitializer:
         # Ajouter au groupe de sprites
         self.game.group.add(plateforme_rouge)
         self.game.group.add(plateforme_verte)
+        
+        # Système d'améliorations
+        self.game.upgrades = {
+            'red': {
+                'destruction': {'level': 1, 'cost': [0, 100, 200, 500]},
+                'degat': {'level': 1, 'cost': [0, 200, 400, 600]},
+                'vitesse': {'level': 1, 'cost': [0, 200, 400, 600]}
+            },
+            'green': {
+                'destruction': {'level': 1, 'cost': [0, 100, 200, 500]},
+                'degat': {'level': 1, 'cost': [0, 200, 400, 600]},
+                'vitesse': {'level': 1, 'cost': [0, 200, 400, 600]}
+            }
+        }            
 
         # === Positions ponctuelles pour l'audio (bases) ===
         # On fournit explicitement des tuples (x,y) au moteur audio
@@ -139,6 +148,7 @@ class GameInitializer:
         pygame.font.init()
         self.game.font = pygame.font.Font(None, 24)
         self.game.hud = Hud(self.game.screen)
+        self.game.overlay_menu = OverlayMenu(self.game.screen, self.game)
         
     def init_sound(self):
         """Initialise le système sonore (via l'API publique)."""
