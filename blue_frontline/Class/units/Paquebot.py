@@ -8,7 +8,7 @@ from Global import UNIT_CONFIGS
 
 
 class Paquebot(Unit):
-    def __init__(self, game: "Game", team: str, ia: bool = True):
+    def __init__(self, game: "Game", team: str, is_ia: bool = True):
         config = UNIT_CONFIGS["paquebot"]
         super().__init__(game, team=team, unit_type="paquebot")
 
@@ -39,8 +39,10 @@ class Paquebot(Unit):
         # Gestion prise en main manuelle (désactive IA)
         self.manual_override = False
 
-        if ia:
-            self.aller_vers_base_ennemie_avec_pathfinding()
+        # Mode d'exécution IA : tick depuis update() (pas de thread IA par unité)
+        self.ia_enabled = is_ia
+        self._last_ia_tick = time.time()
+        self._ia_tick_interval = 0.15  # cadence IA en secondes
 
     def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
         """Met à jour l'état du paquebot.
@@ -100,7 +102,7 @@ class Paquebot(Unit):
         # Reprise après déplacement manuel
         if self.manual_override and not self.is_moving:
             self.manual_override = False
-            self.aller_vers_base_ennemie_avec_pathfinding()
+            self.calcul_chemin()
 
         # Détection blocage simple
         now = time.time()
@@ -120,8 +122,31 @@ class Paquebot(Unit):
                         self.need_recalculate_path = True
                         self.start_pathfinding_thread(self.compute_path)
 
+        # Tick IA non-bloquant (exécuté depuis la boucle principale)
+        if self.ia_enabled:
+            now_ia = time.time()
+            if now_ia - self._last_ia_tick >= self._ia_tick_interval:
+                self._last_ia_tick = now_ia
+                self.ia_decision(all_units)
         if screen:
             self.draw_range(screen, camera_offset)
+
+        # Si la cible est une unité ennemie et qu'elle est à portée, tirer via le combat_system
+        # Vérifie que target est bien une unité (possède team/position) et est vivante
+        target = getattr(self, "target", None)
+        if target and hasattr(target, "position") and hasattr(target, "team") and getattr(target, "is_alive", True):
+            # s'assurer qu'il s'agit d'un ennemi
+            if target.team != self.team:
+                try:
+                    if self.is_in_range(target) and self.can_attack():
+                        # Utilise le combat_system si fourni, sinon appel direct
+                        if combat_system is not None:
+                            self.attack(target, combat_system)
+                        else:
+                            self.attack(target)
+                except Exception:
+                    # silence sur erreurs d'attaque pour ne pas casser la boucle de jeu
+                    pass
 
     def pos_base_ennemie(self):
         """Retourne la position de la base ennemie et l'objet base.
@@ -137,11 +162,11 @@ class Paquebot(Unit):
 
     def aller_vers_base_ennemie(self):
         """Déplacement direct vers la base ennemie sans pathfinding."""
-        position_base_ennemie = self.pos_base_ennemie()
-        if position_base_ennemie:
-            self.move_to_position(position_base_ennemie)
+        target_pos, _ = self.pos_base_ennemie()
+        if target_pos:
+            self.move_to_position(target_pos)
 
-    def aller_vers_base_ennemie_avec_pathfinding(self):
+    def calcul_chemin(self):
         """Démarre le calcul du chemin vers la base ennemie dans un thread."""
         if self.path_thread and self.path_thread.is_alive():
             return  # Un calcul est déjà en cours
@@ -156,12 +181,12 @@ class Paquebot(Unit):
         if not start or not target_pos:
             return
 
-        path = self.a_star_search(start, target_pos)
+        path = self.ia_a_star_search(start, target_pos)
         if path:
             self.new_path = path
             self.path_found = True
 
-    def a_star_search(self, start, goal):
+    def ia_a_star_search(self, start, goal):
         """Implémentation A* sur grille 32x32 pixels.
 
         Args:
@@ -234,9 +259,49 @@ class Paquebot(Unit):
     #         self.need_recalculate_path = True
     #         self.start_pathfinding_thread()
 
-    def ia(self):
-        self.aller_vers_base_ennemie_avec_pathfinding()
+    def ia_decision(self, all_units=None):
+        """Décisions IA non bloquantes avec optimisation multithreading."""
+        # Si prise en main manuelle, laisser l'utilisateur agir
+        if getattr(self, "manual_override", False):
+            return
 
+        # Si besoin de recalculer chemin (blocage)
+        if getattr(self, "need_recalculate_path", False):
+            self.calcul_chemin()
+            return
+
+        # Vérification directe des ennemis à portée sans thread
+        if getattr(self, "enemies_in_range", None):
+            closest = self.get_closest_enemy_in_range()
+            if closest:
+                self.target = closest
+                self.stop()
+                return
+
+        # Récupération des données nécessaires
+        units = all_units if all_units is not None else getattr(self.game, "units", [])
+        allied_base_obj = self.game.plateformes.get(self.team)
+        allied_pos = getattr(allied_base_obj, "position", None) if allied_base_obj else None
+        enemy_pos, _ = self.pos_base_ennemie()
+
+        # Défense de la base
+        if allied_pos:
+            defend_radius = 6 * 32
+            for u in units:
+                if (getattr(u, "team", None) and u.team != self.team 
+                    and getattr(u, "is_alive", True)):
+                    u_pos = getattr(u, "position", (0, 0))
+                    d = math.hypot(u_pos[0] - allied_pos[0], 
+                                 u_pos[1] - allied_pos[1])
+                    if d <= defend_radius:
+                        self.target = u
+                        if not (self.path_thread and self.path_thread.is_alive()):
+                            self.start_pathfinding_thread(lambda: self.compute_path())
+                        return
+
+        # Si aucune action défensive n'est nécessaire, aller vers la base ennemie
+        if enemy_pos and not self.path_to_follow and not (self.path_thread and self.path_thread.is_alive()):
+            self.calcul_chemin()
 
 # Alias pour compatibilité
 class PaquebotRouge(Paquebot):
