@@ -253,9 +253,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         self.wait = False
         self.current_scenario = False
 
-        self.print_dico(self.marges, "Marges")
-        self.print_dico(self.seuils, "Seuils")
-
         # On testera toujours si le random est inférieur, si true on prend.
         self.probabilites = {
             # --- Choix de scénario global ---
@@ -296,6 +293,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
         # Système de logs
         self.logs = []
+
+        # Pour les upgrades
+        self.max_upgrade = False
 
     def ia_update(self):
         """Fonction permettant de mettre à jour les données de l'IA, appelé a chaque tick"""
@@ -362,6 +362,12 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             # On récupére le event Handler
             if hasattr(self.game, 'event_handler'):
                 self.event_handler = self.game.event_handler
+
+            # On fait les améliorations automatiques de la plateforme
+            if not self.max_upgrade:
+                nom_upgrade = self.ia_get_upgrade()
+                if nom_upgrade:
+                    self.ia_do_upgrade(nom_upgrade)
 
     def ia_scenarios(self):
         """Fonction permettant de déterminer les scénarios de l'IA"""
@@ -877,6 +883,64 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         print(f"Affichage du dictionnaire : {nom}")
         for element in dico:
             print(f"{element} : {dico[element]}")
+
+    def ia_get_upgrade(self):
+        """Détermine quelle amélioration l'IA peut acheter, en choisissant la moins chère.
+
+        Returns:
+            str | None: Nom de l'amélioration la moins chère possible, ou None si toutes sont au max.
+        """
+        upgrades = self.game.overlay_menu.upgrades[self.team]
+        pieces_attr = "piece_red" if self.team == "red" else "piece_green"
+        pieces = getattr(self.game.hud, pieces_attr)
+
+        choix = None
+        cout_min = float('inf')
+
+        for nom, upgrade in upgrades.items():
+            level = upgrade["level"]
+
+            # Si déjà au max, on passe
+            # Les niveaux vont de 1 à 4, donc max = 4 (dernière valeur)
+            if level >= len(upgrade["values"]):
+                continue
+
+            # Coût du prochain niveau (le niveau actuel est "level", donc le coût est à l'index "level")
+            cost = upgrade["costs"][level]
+
+            # Si on peut se le payer et que c'est le moins cher jusqu'à présent
+            if pieces.count >= cost and cost < cout_min:
+                cout_min = cost
+                choix = nom
+
+        # Si aucune upgrade possible, on indique qu'on est au max
+        if choix is None:
+            self.max_upgrade = True
+
+        return choix
+
+    def ia_do_upgrade(self, nom: str):
+        """Effectue une amélioration si les ressources sont suffisantes.
+
+        Args:
+            nom (str): Nom de l'amélioration.
+        """
+        upgrade = self.game.overlay_menu.upgrades[self.team][nom]
+        level = upgrade["level"]
+
+        # Vérifie qu'on n'est pas déjà au niveau max
+        if level >= len(upgrade["values"]):
+            return
+
+        cost = upgrade["costs"][level]
+
+        # Sélection des pièces selon l'équipe
+        pieces_attr = "piece_red" if self.team == "red" else "piece_green"
+        pieces = getattr(self.game.hud, pieces_attr)
+
+        if pieces.count >= cost:
+            pieces.count -= cost
+            upgrade["level"] += 1
 
     def ia_log_action(self, action_type: str, scenario: str, cost: int, details: dict = None):
         """Enregistre une action réelle de l'IA.

@@ -107,20 +107,6 @@ class GameInitializer:
         self.game.group.add(plateforme_rouge)
         self.game.group.add(plateforme_verte)
         
-        # Système d'améliorations
-        self.game.upgrades = {
-            'red': {
-                'destruction': {'level': 1, 'cost': [0, 100, 200, 500]},
-                'degat': {'level': 1, 'cost': [0, 200, 400, 600]},
-                'vitesse': {'level': 1, 'cost': [0, 200, 400, 600]}
-            },
-            'green': {
-                'destruction': {'level': 1, 'cost': [0, 100, 200, 500]},
-                'degat': {'level': 1, 'cost': [0, 200, 400, 600]},
-                'vitesse': {'level': 1, 'cost': [0, 200, 400, 600]}
-            }
-        }            
-
         # === Positions ponctuelles pour l'audio (bases) ===
         # On fournit explicitement des tuples (x,y) au moteur audio
         # self.game.red_platform_spawn   = (platform_rouge_x, platform_rouge_y)
