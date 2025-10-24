@@ -5,6 +5,7 @@ from Class.units.Unit import Unit
 from Class.Combat import CombatSystem
 from Global import UNIT_CONFIGS
 from Utils import point_in_many_polygons
+from shapely.geometry import Point as ShapelyPoint, Polygon
 
 
 class Bateau(Unit):
@@ -345,7 +346,13 @@ class Bateau(Unit):
         start_grid = pos_to_grid(start)
         goal_grid = pos_to_grid(goal)
 
-        # Construire l'ensemble des obstacles
+        # Préparer les zones d’eau peu profonde
+        shallow_polygons = []
+        if hasattr(self.game, "eau_peu_profondes"):
+            for poly in self.game.eau_peu_profondes:
+                shallow_polygons.append(Polygon([(p.x, p.y) for p in poly]))
+
+        # Préparer les zones bloquantes (obstacles)
         obstacles = set()
         for poly in self.game.obstacles:
             min_x = min(p[0] for p in poly) // 32
@@ -356,8 +363,8 @@ class Bateau(Unit):
                 for y in range(int(min_y), int(max_y)+1):
                     obstacles.add((x, y))
 
-        # Ajouter les zones quantiques cachées si elles existent
-        if hasattr(self.game, 'quantique_area_hidden'):
+        # Zones cachées quantiques
+        if hasattr(self.game, "quantique_area_hidden"):
             for poly in self.game.quantique_area_hidden:
                 min_x = min(p[0] for p in poly) // 32
                 max_x = max(p[0] for p in poly) // 32
@@ -367,20 +374,24 @@ class Bateau(Unit):
                     for y in range(int(min_y), int(max_y)+1):
                         obstacles.add((x, y))
 
-        # Déplacements possibles (4 directions)
+        # Directions de mouvement
         neighbors = [(0, 1), (1, 0), (0, -1), (-1, 0)]
 
         open_set = set([start_grid])
         came_from = {}
-
         g_score = {start_grid: 0}
         f_score = {start_grid: self.IA_heuristic(start_grid, goal_grid)}
 
+        def is_in_shallow_water(grid):
+            """Retourne True si la cellule se trouve dans une zone d’eau peu profonde."""
+            pos = grid_to_pos(grid)
+            pt = ShapelyPoint(pos[0], pos[1])
+            return any(poly.contains(pt) for poly in shallow_polygons)
+
         while open_set:
-            current = min(open_set, key=lambda x: f_score.get(x, float('inf')))
+            current = min(open_set, key=lambda x: f_score.get(x, float("inf")))
 
             if current == goal_grid:
-                # Reconstruire le chemin
                 path = []
                 while current in came_from:
                     path.append(grid_to_pos(current))
@@ -393,17 +404,20 @@ class Bateau(Unit):
 
             for dx, dy in neighbors:
                 neighbor = (current[0] + dx, current[1] + dy)
-
                 if neighbor in obstacles:
                     continue
 
-                tentative_g_score = g_score[current] + 1
+                # Base cost = 1, shallow water adds penalty
+                movement_cost = 1.0
+                if is_in_shallow_water(neighbor):
+                    movement_cost = 3.0  # 🚩 Plus lent dans l’eau peu profonde
 
-                if tentative_g_score < g_score.get(neighbor, float('inf')):
+                tentative_g_score = g_score[current] + movement_cost
+
+                if tentative_g_score < g_score.get(neighbor, float("inf")):
                     came_from[neighbor] = current
                     g_score[neighbor] = tentative_g_score
-                    f_score[neighbor] = tentative_g_score + \
-                        self.IA_heuristic(neighbor, goal_grid)
+                    f_score[neighbor] = tentative_g_score + self.IA_heuristic(neighbor, goal_grid)
                     open_set.add(neighbor)
 
         return None
