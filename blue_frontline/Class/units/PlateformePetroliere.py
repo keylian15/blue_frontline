@@ -39,7 +39,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         rect_y = int(min_y)
         # <===
 
-        self.unit_type = "plateformePertroliere"
+        self.unit_type = "plateformePetroliere"
         self.is_selected = False
 
         # Image invisible (rectangle transparent) - garde les hitboxes mais invisible
@@ -140,7 +140,8 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
     def on_destroyed(self):
         """Appelé quand la plateforme est détruite."""
-        self.ia_save_log()
+        if self.is_ia:
+            self.ia_save_log(self.team)
         # Déclencher la victoire si la plateforme a une référence vers le Game
         if hasattr(self, 'game') and self.game:
             self.game.on_platform_destroyed(self)
@@ -313,7 +314,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             # On récupére les différentes unités dans les 4 listes différentes.
             for unit in self.units:
                 # Si c'est une plateforme
-                if unit.unit_type == "plateformePertroliere":
+                if unit.unit_type == "plateformePetroliere":
                     continue
                 # Si c'est une unité alliée
                 if unit.team == self.team:
@@ -518,8 +519,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         data = nom, self.team, get_cost(nom)
         if self.event_handler.check_cost(data[1], data[2]):
             # On spawn la chaloupe.
+            from Global import GAMEPLAY_SETTINGS
             self.event_handler.apply_cost(data[0], data[1], data[2])
-            self.event_handler.spawn_unit(data[0], data[1])
+            self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize()])
             # === Logs ===
             self.ia_log_action('spawn', self.current_scenario,
                                data[2], {'unit': data[0]})
@@ -560,8 +562,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
             # On a 75% de chance de spawn l'unité.
             if random() < self.probabilites["defense_forte"]["can_spawn"]:
+                from Global import GAMEPLAY_SETTINGS
                 self.event_handler.apply_cost(data[0], data[1], data[2])
-                self.event_handler.spawn_unit(data[0], data[1])
+                self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize()])
                 # === Logs ===
                 self.ia_log_action(
                     'spawn', self.current_scenario, data[2], {'unit': data[0]})
@@ -575,8 +578,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                     self.ia_do_defense_forte(indice + 1)
 
                 else:
+                    from Global import GAMEPLAY_SETTINGS
                     self.event_handler.apply_cost(data[0], data[1], data[2])
-                    self.event_handler.spawn_unit(data[0], data[1])
+                    self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize()])
                     # === Logs ===
                     self.ia_log_action('spawn', self.current_scenario, data[2], {
                         'unit_type': data[0]})
@@ -604,8 +608,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         # On vérifie qu'on peux spawn l'unité.
         if self.event_handler.check_cost(data[1], data[2]):
             # On spawn l'unité.
+            from Global import GAMEPLAY_SETTINGS
             self.event_handler.apply_cost(data[0], data[1], data[2])
-            self.event_handler.spawn_unit(data[0], data[1])
+            self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize()])
             # === Logs ===
             self.ia_log_action('spawn', self.current_scenario,
                                data[2], {'unit': data[0]})
@@ -646,8 +651,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
             # On a 25% de chance de spawn l'unité.
             if random() < self.probabilites["attaque_forte"]["can_spawn"]:
+                from Global import GAMEPLAY_SETTINGS
                 self.event_handler.apply_cost(data[0], data[1], data[2])
-                self.event_handler.spawn_unit(data[0], data[1])
+                self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize()])
 
                 # === Logs ===
                 self.ia_log_action('spawn', self.current_scenario, data[2], {
@@ -663,8 +669,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                     self.ia_do_attack_forte(indice + 1)
 
                 else:
+                    from Global import GAMEPLAY_SETTINGS
                     self.event_handler.apply_cost(data[0], data[1], data[2])
-                    self.event_handler.spawn_unit(data[0], data[1])
+                    self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize()])
                     # === Logs ===
                     self.ia_log_action('spawn', self.current_scenario, data[2], {
                         'unit_type': data[0]})
@@ -691,8 +698,9 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             # On vérifie qu'on est sous le seuil.
             if self.units_ally_dico[data[0]] < self.seuils["passive"][data[0]]:
                 # On spawn l'éclaireur.
+                from Global import GAMEPLAY_SETTINGS
                 self.event_handler.apply_cost(data[0], data[1], data[2])
-                self.event_handler.spawn_unit(data[0], data[1])
+                self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize()])
                 # === Logs ===
                 self.ia_log_action('spawn', self.current_scenario, data[2], {
                                    'unit_type': data[0]})
@@ -850,7 +858,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             (bool): True si l'unité est proche de la base, False sinon
         """
         # Si la distance entre la base est l'entité est inférieur à sa range
-        if unit.unit_type == "plateformePertroliere":  # Si l'unité est une plateforme pétrolière
+        if unit.unit_type == "plateformePetroliere":  # Si l'unité est une plateforme pétrolière
             return False
         return self.ia_get_distance(unit, self) < self.range / reducteur
 
@@ -871,18 +879,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             if r < cumul:
                 return cle
         return list(probas.keys())[-1]
-
-    def print_dico(self, dico: dict, nom: str):
-        """Fonction permettant d'afficher un dictionnaire de manière lisible.
-
-        Args:
-            dico (dict): Le dictionnaire à afficher.
-            nom (str): Le nom du dictionnaire.
-        """
-        print(f"------ Team {self.team} ------\n")
-        print(f"Affichage du dictionnaire : {nom}")
-        for element in dico:
-            print(f"{element} : {dico[element]}")
 
     def ia_get_upgrade(self):
         """Détermine quelle amélioration l'IA peut acheter, en choisissant la moins chère.
@@ -985,8 +981,12 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
         self.logs.append(log_entry)
 
-    def ia_save_log(self):
-        """Enregistre les actions de l'IA dans un fichier JSON."""
+    def ia_save_log(self, team: str):
+        """Enregistre les actions de l'IA dans un fichier JSON.
+
+        Args:
+            team (str): L'équipe de l'IA qui demande les logs.
+        """
         import os
         import json
         log_dir = os.path.join(".", "blue_frontline", "Class", "units", "IA")
@@ -994,17 +994,20 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
         filename = f"logs_ia_{self.team}.json"
         filepath = os.path.join(log_dir, filename)
+        info = {
+            "time": self.game.hud.timer.get_time(),
+            "team": self.team,
+            "coefficients": self.coefficients,
+            "probabilites": self.probabilites,
+            "marges": self.marges,
+            "seuil": self.seuils,
+            "actions": self.logs
+        }
+        if self.team:
+            info['winner'] = self.team
 
         with open(filepath, 'w', encoding='utf-8') as f:
-            json.dump({
-                "time": self.game.hud.timer.get_time(),
-                "team": self.team,
-                "coefficients": self.coefficients,
-                "probabilites": self.probabilites,
-                "marges": self.marges,
-                "seuil": self.seuils,
-                "actions": self.logs
-            }, f, indent=2, ensure_ascii=False)
+            json.dump(info, f, indent=2, ensure_ascii=False)
 
 
 class PlateformePetroliereRouge(PlateformePetroliere):

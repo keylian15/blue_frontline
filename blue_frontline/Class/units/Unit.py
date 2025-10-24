@@ -338,9 +338,10 @@ class Unit(pygame.sprite.Sprite):
             unit_type = getattr(self, 'unit_type', None)
 
             if self.team == "red" : 
-                self.game.hud.piece_green.count += 1 * self.game.hud.piece_green.multiplicateur
+                self.game.hud.piece_green.add_piece()
             else :
-                self.game.hud.piece_red.count += 1 * self.game.hud.piece_red.multiplicateur
+                self.game.hud.piece_red.add_piece()
+                
         self.kill()  # Retire l'unité du groupe pygame
         self.game.units.remove(self)  # Retire l'unité de la liste des unités
         

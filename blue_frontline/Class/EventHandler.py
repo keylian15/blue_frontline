@@ -77,7 +77,14 @@ class EventHandler:
         
         if event.key == pygame.K_ESCAPE:
             options_menu = OptionsMenu(self.game.screen)
-            options_menu.run()
+            retour = options_menu.run()
+            if type(retour) == tuple and len(retour) == 2:
+                changed, new_gameplay_settings = retour
+                if changed:
+                    # Appliquer les nouveaux paramètres de gameplay au jeu
+                    from Global import set_gameplay_setting
+                    set_gameplay_setting(new_gameplay_settings)
+            
             return True
 
         # Entrée via le HUD (bandeau bas) pour spawn l'unité sélectionnée (coût géré dans Game.spawn_unit)
@@ -96,7 +103,8 @@ class EventHandler:
                 return
             if self.check_cost(team_key, cost):
                 self.apply_cost(config_key, team_key, cost)
-                self.spawn_unit(config_key, team_key)
+                from Global import GAMEPLAY_SETTINGS
+                self.spawn_unit(config_key, team_key, GAMEPLAY_SETTINGS["AI_ACTIVATION"][config_key.capitalize()])
                 return True
 
         # Volume
@@ -273,7 +281,7 @@ class EventHandler:
             self.game.hud.petrole_green.count -= cost
         succes()
 
-    def spawn_unit(self, config_key: str, team_key: str, ):
+    def spawn_unit(self, config_key: str, team_key: str, is_ia: bool = True):
         """Génère une unité.
 
         Args:
@@ -309,5 +317,4 @@ class EventHandler:
         
         # On envoi la map a toutes les instances
         self.game.refresh_all_references(self.game)
-        print(f"Spawn de l'unité {config_key} de l'équipe {team_key}")
         return True
