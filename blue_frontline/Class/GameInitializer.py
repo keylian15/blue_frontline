@@ -13,6 +13,7 @@ from Class.Hud import Hud
 from Global import *
 from Utils import *
 from Class.PlateformePetroliere import PlateformePetroliere
+from Class.units.IA.IA_Eclaireur import SimpleGrid, make_grid_adapter_from_simplegrid
 
 class GameInitializer:
     """Gestionnaire d'initialisation des composants du jeu."""

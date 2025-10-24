@@ -14,6 +14,9 @@ from Class.Timer import Timer
 from Class.units import Unit
 from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
+from Class.units.IA.IA_Eclaireur import SimpleGrid, make_grid_adapter_from_simplegrid
+from Utils import point_in_many_polygons
+
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
@@ -96,6 +99,7 @@ class Game :
         # Zone quantiques
         self.quantique_area_name = []
         self.setQuantiqueArea()
+        self.build_nav_grid()
 
     # --- Utilitaire audio: notification post-quantique (ne change pas la logique de génération) ---
     def notify_quantum_audio(self):
@@ -254,6 +258,86 @@ class Game :
                 self.selected_unit = unit
         else:
             self.selected_unit = None
+
+    def build_nav_grid(self):
+        """
+        Construit/actualise la grille de navigation A* pour l'IA Éclaireur.
+
+        Règles :
+        - Cellule bloquée si :
+            * dans self.obstacles                (îles, récifs, terrain solide)
+            * dans self.quantique_area_hidden    (zone quantique PAS encore révélée)
+        - Sinon elle est navigable.
+        - Coût normal (1.0) en eau profonde
+        - Coût plus élevé (2.0) en eau peu profonde (ralentit les bateaux)
+        
+        Résultat :
+        - self.nav_grid_raw         -> SimpleGrid brut (walkable + costs)
+        - self.nav_grid_adapter     -> GridAdapter prêt pour l'IA (A*)
+        """
+
+        tile_size = 32  # la map.tmx est en tuiles 32x32
+        width_in_cells = self.map_width // tile_size
+        height_in_cells = self.map_height // tile_size
+
+        grid = SimpleGrid(width_in_cells, height_in_cells, cell_size=tile_size)
+
+        for cx in range(width_in_cells):
+            for cy in range(height_in_cells):
+                # On prend le centre monde de la cellule
+                world_x = cx * tile_size + tile_size * 0.5
+                world_y = cy * tile_size + tile_size * 0.5
+                p = (world_x, world_y)
+
+                walkable = True
+                cost = 1.0
+
+                # 1) Zones bloquantes dures : îles/récifs/etc.
+                if point_in_many_polygons(self.obstacles, p):
+                    walkable = False
+
+                # 2) Zones quantiques PAS encore révélées = interdit
+                elif point_in_many_polygons(self.quantique_area_hidden, p):
+                    walkable = False
+
+                else:
+                    # 3) Eau peu profonde => navigable mais plus cher
+                    if point_in_many_polygons(self.eau_peu_profondes, p):
+                        cost = 2.0
+                    else:
+                        cost = 1.0  # eau profonde, rapide
+
+                grid.walkable[cx][cy] = walkable
+                grid.costs[cx][cy] = cost
+
+        # Stocke la grille + l'adapter utilisable par l'IA
+        self.nav_grid_raw = grid
+        self.nav_grid_adapter = make_grid_adapter_from_simplegrid(grid)
+
+    def get_hidden_quantum_polygons(self):
+        """
+        Renvoie les polygones des zones quantiques NON révélées.
+        -> Ça correspond à ce que l'Éclaireur doit aller découvrir.
+        """
+        return self.quantique_area_hidden
+
+    def get_base_position(self, team: str):
+        """
+        Renvoie la position vers laquelle l'unité doit rentrer à la fin.
+        On utilise les plateformes pétrolières comme 'base'.
+
+        team : "red" ou "green"
+        """
+        # Les plateformes sont construites dans GameInitializer.init_game_systems()
+        # et stockées dans self.plateformes = {"red": plateforme_rouge, "green": plateforme_verte}
+        plateforme = self.plateformes.get(team)
+        if plateforme is None:
+            # fallback : si jamais l'équipe n'existe pas, on renvoie juste la rouge
+            plateforme = self.plateformes.get("red")
+
+        # PlateformePetroliere a déjà self.position = [x, y]
+        return (plateforme.position[0], plateforme.position[1])
+
 
     def on_platform_destroyed(self, platform: PlateformePetroliere):
         """Appelé quand une plateforme pétrolière est détruite.
