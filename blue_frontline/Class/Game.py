@@ -387,7 +387,7 @@ class Game :
         # S'assurer que la caméra est dans le nouveau groupe
         if hasattr(self, 'camera') and self.camera not in self.group.sprites():
             self.group.add(self.camera)
-    
+
     def restart_game(self):
         """Redémarre le jeu."""
         
