@@ -137,3 +137,15 @@ def get_types(obj: any):
         print([type(e).__name__ for e in obj])
     else:
         print(type(obj).__name__)
+
+def get_cost(nom: str) -> int:
+        """Fonction permettant d'avoir le coût d'une entité
+
+        Args:
+            nom (str): Le nom de l'entité. 
+
+        Returns:
+            coût (int): Le coût de l'entité
+        """
+        from Global import UNIT_CONFIGS
+        return UNIT_CONFIGS[nom]["cost"]
