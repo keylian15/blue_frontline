@@ -137,6 +137,7 @@ class Paquebot(Unit):
         goal_grid = pos_to_grid(goal)
 
         obstacles = set()
+        # Obstacles physiques existants
         for poly in getattr(self.game, "obstacles", []):
             min_x = min(p[0] for p in poly) // 32
             max_x = max(p[0] for p in poly) // 32
@@ -145,8 +146,19 @@ class Paquebot(Unit):
             for x in range(int(min_x), int(max_x) + 1):
                 for y in range(int(min_y), int(max_y) + 1):
                     obstacles.add((x, y))
+            
+        # Zones quantiques cachées actuelles
+        if hasattr(self.game, 'quantique_area'):
+            for poly in self.game.quantique_area:
+                min_x = min(p[0] for p in poly) // 32
+                max_x = max(p[0] for p in poly) // 32
+                min_y = min(p[1] for p in poly) // 32
+                max_y = max(p[1] for p in poly) // 32
+                for x in range(int(min_x), int(max_x) + 1):
+                    for y in range(int(min_y), int(max_y) + 1):
+                        obstacles.add((x, y))
 
-        neighbors = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        neighbors = [(0, 1), (1, 0), (0, -1), (-1, 0), (1, 1), (-1, -1), (1, -1), (-1, 1)]
 
         open_set = set([start_grid])
         came_from = {}
@@ -166,12 +178,12 @@ class Paquebot(Unit):
                 return path
 
             open_set.remove(current)
-
             for dx, dy in neighbors:
                 neighbor = (current[0] + dx, current[1] + dy)
                 if neighbor in obstacles:
                     continue
-                tentative_g_score = g_score[current] + 1
+                movement_cost = 1.4 if dx != 0 and dy != 0 else 1
+                tentative_g_score = g_score[current] + movement_cost
                 if tentative_g_score < g_score.get(neighbor, float("inf")):
                     came_from[neighbor] = current
                     g_score[neighbor] = tentative_g_score
@@ -179,6 +191,7 @@ class Paquebot(Unit):
                     open_set.add(neighbor)
 
         return None
+
 
     def heuristic(self, a, b):
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
