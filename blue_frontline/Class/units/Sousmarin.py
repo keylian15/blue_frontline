@@ -1192,11 +1192,11 @@ class SousMarin(Unit):
         # Si je suis leader, je vais gérer la route/attaque
         if self.is_leader:
             # Leader: suivre la cible comme en attaque (A* si nécessaire)
-            # Si le leader est proche, envoyer le signal d'attaque
+            # Si le leader est proche de la cible, envoyer le signal d'attaque
             attack_range = 180 if getattr(
                 target, 'unit_type', None) == 'paquebot' else 120
             if dist_to_target <= attack_range:
-                # Envoyer le signal d'attaque
+                # le signal d'attaque
                 print(
                     f"Leader groupe {self.group_id}: à portée de la cible ({int(dist_to_target)}px). Broadcast attaque !")
                 self.broadcast_attack_signal(all_units)
@@ -1598,10 +1598,21 @@ class SousMarin(Unit):
             nearby_scouts = self.find_nearby_scouts(
                 all_units, detection_range=320)
             if nearby_scouts:
+                # Il y a seulement des éclaireurs -> annuler le retour et attaquer
                 print(
                     f"⚔️ {self.team} sous-marin: ÉCLAIREUR DÉTECTÉ (pas de menace majeure) → Annulation du retour, passage en mode ATTACK")
                 self.ia_mode = "attack"
                 self.platform_position = None  # Réinitialiser la position de la plateforme
+                return
+            else:
+                # Plus aucune menace lourde ni éclaireur -> revenir en PATROL immédiatement
+                print(f"✅ {self.team} sous-marin: Aucune menace détectée pendant le retour → switch PATROL")
+                self.ia_mode = "patrol"
+                self.platform_position = None
+                # Réinitialiser le chemin si un calcul était en cours
+                self.current_path = []
+                self.path_index = 0
+                self.need_recalculate_path = False
                 return
 
         # Continuer le retour à la plateforme
