@@ -13,8 +13,7 @@ from Class.Piece import Piece
 from Class.Timer import Timer
 from Class.units import Unit
 from Class.AchievementNotification import AchievementNotificationManager
-from Class.units import PlateformePetroliere
-
+ 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
     
@@ -63,7 +62,7 @@ class Game :
         self.initializer.init_game_systems()
         self.initializer.init_ui()
         self.initializer.init_sound()
-
+        
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
         
