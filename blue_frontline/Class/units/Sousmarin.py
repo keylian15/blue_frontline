@@ -14,7 +14,7 @@ class SousMarin(Unit):
 
     """Classe unifiée pour les unités Sous-marin (Rouge et Vert)."""
 
-    def __init__(self, game, team: str, is_ia: bool = False):
+    def __init__(self, game, team: str, is_ia: bool = True):
         """Initialise une instance de SousMarin.
 
         Args:
@@ -324,7 +324,6 @@ class SousMarin(Unit):
                 a.group_target_unit = detected_target
                 a.is_leader = (a == leader)
                 a.formation_slot = slot if not a.is_leader else 0
-                if getattr(a, 'is_ia', True):
                     a.ia_mode = 'group_attack'
                 slot += 1
 

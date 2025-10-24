@@ -7,7 +7,7 @@ class Petrole:
     def __init__(self):
         """Fonction permettant d'initialiser le compteur de pétrole"""
     
-        self.count = 1000000000
+        self.count = 1000000
 
         # On crée un événement unique pour incrémenter le pétrole
         self.PETROLE_EVENT = PETROLE_EVENT
@@ -23,7 +23,8 @@ class Petrole:
         """
         
         if event.type == self.PETROLE_EVENT:
-            self.count += 1 + nbPompe
+            from Global import OIL_PER_SECOND
+            self.count += OIL_PER_SECOND + nbPompe
 
     def set_speed(self, speed: int):
         """Ajuste la vitesse d'auto-incrément. Si speed == 0, met en pause (désactive l'événement).
