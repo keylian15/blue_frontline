@@ -64,6 +64,7 @@ class SousMarin(Unit):
         # Nouvel état par défaut : défense de base
         self.ia_mode = "defense_base"  # Modes possibles: "defense_base", "patrol", "attack", "return_to_platform"
         self.previous_mode = "patrol"  # Pour suivre le mode précédent
+        self.is_ia = True
         self.platform_position = None  # Position de la plateforme pétrolière de l'équipe
 
         # ===== Défense de base =====
@@ -822,27 +823,6 @@ class SousMarin(Unit):
             self.path_index = 0
             self.patrol_movement()
     
-    def set_ia_mode(self, mode: str):
-        """Change le mode d'IA du sous-marin.
-        
-        Args:
-            mode (str): Le mode à activer ("fuite", "defense_base", "attaque", "normal")
-        """
-        if mode in ["fuite", "defense_base", "attaque", "normal"]:
-            self.previous_mode = self.ia_mode  # Sauvegarder le mode précédent
-            self.ia_mode = mode
-            print(f"🎯 {self.team} sous-marin: Mode IA changé de '{self.previous_mode}' en '{mode}'")
-        else:
-            print(f"⚠ Mode IA invalide: {mode}. Modes possibles: fuite, defense_base, attaque, normal")
-    
-
-        """Mode défense base: Le sous-marin patrouille autour de sa base et la protège.
-        
-        Args:
-            all_units (list[Unit]): Liste de toutes les unités du jeu
-        """
-        # TODO: Implémenter la logique de défense de base
-        pass
     
     def ia_mode_attaque(self, all_units):
         """Mode attaque: Le sous-marin poursuit activement les ennemis (éclaireurs).
@@ -913,26 +893,26 @@ class SousMarin(Unit):
 
         # MODE 0: DEFENSE_BASE - patrouille minière autour de la plateforme (activé au spawn)
         if self.ia_mode == "defense_base":
-            self.behavior_defense_base(all_units)
+            self.ia_behavior_defense_base(all_units)
             return
 
         # MODE 1: PATROL - Patrouille normale
         if self.ia_mode == "patrol":
-            self.behavior_patrol(all_units)
+            self.ia_behavior_patrol(all_units)
         
         # MODE 2: ATTACK - Attaque d'un éclaireur
         elif self.ia_mode == "attack":
-            self.behavior_attack(all_units)
+            self.ia_behavior_attack(all_units)
 
         # MODE 2b: GROUP_ATTACK - Attaque coordonnée
         elif self.ia_mode == "group_attack":
-            self.behavior_group_attack(all_units)
+            self.ia_behavior_group_attack(all_units)
         
         # MODE 3: RETURN_TO_PLATFORM - Retour à la plateforme
         elif self.ia_mode == "return_to_platform":
-            self.behavior_return_to_platform(all_units)
+            self.ia_behavior_return_to_platform(all_units)
     
-    def behavior_patrol(self, all_units):
+    def ia_behavior_patrol(self, all_units):
         """Comportement de patrouille normale.
         
         Cherche des chaloupes ennemies à 500px ou moins → passe en mode return_to_platform.
@@ -1111,7 +1091,7 @@ class SousMarin(Unit):
         print(f"✅ {self.team} sous-marin: {len(self.defense_mine_positions)} positions de mines (périmètre) générées pour défense")
 
 
-    def behavior_group_attack(self, all_units):
+    def ia_behavior_group_attack(self, all_units):
         """Comportement pour les sous-marins en mode 'group_attack'.
 
         - Le leader calcule la route vers la cible (A* ou direct) et la suit.
@@ -1232,7 +1212,7 @@ class SousMarin(Unit):
                     # essayer un point proche
                     self.find_alternative_path_to_target(fx, fy)
 
-    def behavior_defense_base(self, all_units):
+    def ia_behavior_defense_base(self, all_units):
         """Patrouille minière autour de la plateforme : pose jusqu'à `defense_max_mines` mines.
 
         Comportement :
@@ -1345,7 +1325,7 @@ class SousMarin(Unit):
                 self.find_alternative_path_to_target(target_pos[0], target_pos[1], avoid_platform=True)
 
     
-    def behavior_attack(self, all_units):
+    def ia_behavior_attack(self, all_units):
         """Comportement d'attaque d'un éclaireur.
         
         PRIORITÉ: Si chaloupe détectée à 500px → passe en mode return_to_platform.
@@ -1473,7 +1453,7 @@ class SousMarin(Unit):
                     # Si le chemin direct est bloqué, chercher une route alternative
                     self.find_alternative_path_to_target(target_scout.position[0], target_scout.position[1])
     
-    def behavior_return_to_platform(self, all_units):
+    def ia_behavior_return_to_platform(self, all_units):
         """Comportement de retour à la plateforme pétrolière.
         
         Retourne à une plateforme pétrolière alliée.
