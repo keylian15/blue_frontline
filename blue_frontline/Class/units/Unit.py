@@ -1,5 +1,4 @@
-import pygame, time, math
-import threading
+import pygame, time, math, threading
 from Global import *
 from Utils import load_tileset, point_in_many_polygons, random_point_in_polygon
 from Class.Perlin import Perlin
@@ -55,7 +54,7 @@ class Unit(pygame.sprite.Sprite):
             self.range_color = config.get("range_color", {}).get(team, (255, 0, 0, 50))
         else:
             self.range_color = (255, 0, 0, 50) if team == "red" else (0, 255, 0, 50)
-            
+        
         # Multithreading pour pathfinding
         self.path_thread = None
         self.path_found = False
@@ -576,18 +575,19 @@ class Unit(pygame.sprite.Sprite):
                 closest_enemy = enemy
                 
         return closest_enemy
-
+    
     def start_pathfinding_thread(self, function: callable):
-        """Va chercher le ou les thread qui vont faire les calcul
+        """Va chercher le ou les thread qui vont faire les calcul.
 
         Args:
             function (callable): La fonction de pathfinding à exécuter dans le thread.
         """
-        self.path_thread = threading.Thread(target=function,daemon=True)
+        self.path_thread = threading.Thread(target=function, daemon=True)
         self.path_thread.start()
-    
+        
     def recalculate_path(self, function: callable):
         """Signale qu'il faut recalculer le chemin.
+
         Args:
             function (callable): La fonction de pathfinding à exécuter dans le thread.
         """
