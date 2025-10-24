@@ -116,7 +116,7 @@ class SousMarin(Unit):
         """
 
         # Appeler l'IA de déplacement automatique
-        if all_units:
+        if all_units and getattr(self, 'is_ia', True):
             self.ia_mouvement(all_units)
 
         # Appeler la mise à jour de la classe parent
@@ -280,6 +280,9 @@ class SousMarin(Unit):
                 continue
             if getattr(u, 'team', None) != self.team:
                 continue
+            # Ne considérer que les alliés contrôlés par l'IA
+            if not getattr(u, 'is_ia', True):
+                continue
             if isinstance(u, SousMarin) or getattr(u, 'unit_type', None) == 'sousmarin':
                 allies.append(u)
 
@@ -321,13 +324,14 @@ class SousMarin(Unit):
                 a.group_target_unit = detected_target
                 a.is_leader = (a == leader)
                 a.formation_slot = slot if not a.is_leader else 0
-                a.ia_mode = 'group_attack'
+                    a.ia_mode = 'group_attack'
                 slot += 1
 
             leader.is_leader = True
             leader.group_id = group_id
             leader.group_target_unit = detected_target
-            leader.ia_mode = 'group_attack'
+            if getattr(leader, 'is_ia', True):
+                leader.ia_mode = 'group_attack'
 
             self._last_group_formed_time = now
             print(
@@ -347,14 +351,15 @@ class SousMarin(Unit):
             if getattr(ally, 'group_id', None) == self.group_id:
                 # Transmettre la cible
                 ally.group_target_unit = self.group_target_unit
-                # Autoriser l'attaque (changer de mode interne si besoin)
-                ally.ia_mode = 'group_attack'
-                # Demander une attaque immédiate (pour synchroniser)
-                try:
-                    ally.attack_target(self.group_target_unit)
-                except Exception:
-                    # ne pas faire planter si une unité n'implémente pas attack_target
-                    pass
+                # Autoriser l'attaque (changer de mode interne si besoin) uniquement si c'est une IA
+                if getattr(ally, 'is_ia', True):
+                    ally.ia_mode = 'group_attack'
+                    # Demander une attaque immédiate (pour synchroniser)
+                    try:
+                        ally.attack_target(self.group_target_unit)
+                    except Exception:
+                        # ne pas faire planter si une unité n'implémente pas attack_target
+                        pass
 
     def attack_target(self, target_unit):
         """Effectue l'attaque vers la target sans redétection (logique similaire à behavior_attack)."""
@@ -416,7 +421,8 @@ class SousMarin(Unit):
             return
         for ally in all_units:
             if getattr(ally, 'group_id', None) == self.group_id:
-                ally.ia_mode = 'return_to_platform'
+                if getattr(ally, 'is_ia', True):
+                    ally.ia_mode = 'return_to_platform'
                 # réinitialiser certains flags de groupe
                 ally.group_id = None
                 ally.is_leader = False

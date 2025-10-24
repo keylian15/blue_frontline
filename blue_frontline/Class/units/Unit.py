@@ -56,7 +56,7 @@ class Unit(pygame.sprite.Sprite):
             self.range_color = config.get("range_color", {}).get(team, (255, 0, 0, 50))
         else:
             self.range_color = (255, 0, 0, 50) if team == "red" else (0, 255, 0, 50)
-            
+        
         # Multithreading pour pathfinding
         self.path_thread = None
         self.path_found = False
