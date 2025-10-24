@@ -542,30 +542,39 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         data = self.liste[indice], self.team, get_cost(self.liste[indice])
         # Si on peux spawn l'unité.
         if self.event_handler.check_cost(data[1], data[2]):
-            # Si on est supérieur au seuil on passe a l'indice d'apres.
+            # Si on est supérieur au seuil on passe a l'indice d'apres, sauf si on a la derniere unité.
             if self.units_ally_dico[data[0]] >= self.seuils["active"][data[0]]:
-                self.ia_do_defense_forte(indice + 1)
-                # === Logs ===
-                self.ia_log_action('change_unit', self.current_scenario, 0, {
-                    'other': ('seuil atteint', data[0])})
+                if indice < len(self.liste) - 1:
+                    # === Logs ===
+                    self.ia_log_action('change_unit', self.current_scenario, 0, {
+                        'other': ('seuil atteint', data[0])})
+                    self.ia_do_defense_forte(indice + 1)
+                else:
+                    return False
 
             # On a 75% de chance de spawn l'unité.
             if random() < self.probabilites["defense_forte"]["can_spawn"]:
                 self.event_handler.apply_cost(data[0], data[1], data[2])
                 self.event_handler.spawn_unit(data[0], data[1])
                 # === Logs ===
-                self.ia_log_action('spawn', self.current_scenario, data[2], {'unit': data[0]})
+                self.ia_log_action(
+                    'spawn', self.current_scenario, data[2], {'unit': data[0]})
                 return True
             else:
                 # 25% de chance de passer a l'unité d'apres, si on a pas la derniere unité.
                 if indice < len(self.liste) - 1:
-                    self.ia_do_defense_forte(indice + 1)
                     # === Logs ===
                     self.ia_log_action('change_unit', self.current_scenario, 0, {
                         'other': ('proba', self.probabilites["attaque_forte"]["can_spawn"])})
+                    self.ia_do_defense_forte(indice + 1)
 
                 else:
-                    self.ia_do_defense_forte(indice)
+                    self.event_handler.apply_cost(data[0], data[1], data[2])
+                    self.event_handler.spawn_unit(data[0], data[1])
+                    # === Logs ===
+                    self.ia_log_action('spawn', self.current_scenario, data[2], {
+                        'unit_type': data[0]})
+                    return True
 
         else:
             # On a 50% d'attendre.
@@ -619,13 +628,15 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         data = self.liste[indice], self.team, get_cost(self.liste[indice])
         # Si on peux spawn l'unité.
         if self.event_handler.check_cost(data[1], data[2]):
-            # Si on est supérieur au seuil on passe a l'indice d'apres.
+            # Si on est supérieur au seuil on passe a l'indice d'apres, sauf si on a la derniere unité.
             if self.units_ally_dico[data[0]] >= self.seuils["active"][data[0]]:
-                self.ia_do_attack_forte(indice + 1)
-
-                # === Logs ===
-                self.ia_log_action('change_unit', self.current_scenario, 0, {
-                    'other': ('seuil atteint', data[0])})
+                if indice < len(self.liste) - 1:
+                    # === Logs ===
+                    self.ia_log_action('change_unit', self.current_scenario, 0, {
+                        'other': ('seuil atteint', data[0])})
+                    self.ia_do_attack_forte(indice + 1)
+                else:
+                    return False
 
             # On a 25% de chance de spawn l'unité.
             if random() < self.probabilites["attaque_forte"]["can_spawn"]:
@@ -639,13 +650,19 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             else:
                 # 75% de chance de passer a l'unité d'apres, sauf si on a la derniere unité.
                 if indice < len(self.liste) - 1:
-                    self.ia_do_attack_forte(indice + 1)
                     # === Logs ===
                     self.ia_log_action('change_unit', self.current_scenario, 0, {
                         'other': ('proba', self.probabilites["attaque_forte"]["can_spawn"])})
 
+                    self.ia_do_attack_forte(indice + 1)
+
                 else:
-                    self.ia_do_attack_forte(indice)
+                    self.event_handler.apply_cost(data[0], data[1], data[2])
+                    self.event_handler.spawn_unit(data[0], data[1])
+                    # === Logs ===
+                    self.ia_log_action('spawn', self.current_scenario, data[2], {
+                        'unit_type': data[0]})
+                    return True
 
         else:
             # On a 75% d'attendre.
