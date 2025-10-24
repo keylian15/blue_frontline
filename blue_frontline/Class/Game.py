@@ -12,7 +12,6 @@ from Class.Petrole import Petrole
 from Class.Piece import Piece
 from Class.Timer import Timer
 from Class.units import Unit
-from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
  
 class IslandSprite(pygame.sprite.Sprite):
@@ -373,6 +372,7 @@ class Game :
         self.input_manager.game = game
         self.renderer.game = game
         self.combat_system.game = game
+        self.overlay_menu.game = game
         
         # S'assurer que les unités sont dans le nouveau groupe
         if hasattr(self, 'units') and self.units:
