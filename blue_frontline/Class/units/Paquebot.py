@@ -40,7 +40,7 @@ class Paquebot(Unit):
         self.manual_override = False
 
         # Tick IA
-        self.ia_enabled = is_ia
+        self.is_ia = is_ia
         self._last_ia_tick = time.time()
         self._ia_tick_interval = 0.15
 
@@ -72,7 +72,7 @@ class Paquebot(Unit):
                     self.current_path_index = 0
 
         # Tick IA
-        if self.ia_enabled:
+        if self.is_ia:
             now_ia = time.time()
             if now_ia - self._last_ia_tick >= self._ia_tick_interval:
                 self._last_ia_tick = now_ia
