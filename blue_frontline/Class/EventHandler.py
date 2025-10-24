@@ -186,6 +186,126 @@ class EventHandler:
             self.game.hud.switch_team()
             return True
         
+        # === COMMANDES DEBUG Q-LEARNING ===
+        
+        # F1: Toggle Q-Learning pour toutes les chaloupes
+        if event.key == pygame.K_F1:
+            self._toggle_qlearning_all_chaloupes()
+            return True
+        
+        # F2: Toggle debug visuel pour toutes les chaloupes
+        if event.key == pygame.K_F2:
+            self._toggle_visual_debug_all_chaloupes()
+            return True
+        
+        # F3: Afficher les statistiques Q-Learning dans la console
+        if event.key == pygame.K_F3:
+            self._show_qlearning_stats()
+            return True
+        
+        # F4: Reset Q-Learning (efface la Q-table)
+        if event.key == pygame.K_F4:
+            self._reset_qlearning_all()
+            return True
+        
+        # F5: Sauvegarder le progrès Q-Learning de toutes les chaloupes
+        if event.key == pygame.K_F5:
+            self._save_qlearning_progress_all()
+            return True
+        
+        return True
+    
+    # ==========================================
+    # MÉTHODES Q-LEARNING DEBUG
+    # ==========================================
+    
+    def _toggle_qlearning_all_chaloupes(self):
+        """Active/désactive le Q-Learning pour toutes les chaloupes."""
+        chaloupes = [unit for unit in self.game.units if hasattr(unit, 'unit_type') and unit.unit_type == 'chaloupe']
+        
+        if not chaloupes:
+            print("[Q-Learning Debug] Aucune chaloupe trouvée")
+            return
+        
+        # Déterminer l'état actuel (on prend la première chaloupe comme référence)
+        current_state = chaloupes[0].is_qlearning_enabled() if chaloupes else False
+        new_state = not current_state
+        
+        for chaloupe in chaloupes:
+            chaloupe.toggle_qlearning(new_state)
+        
+        status = "activé" if new_state else "désactivé"
+        print(f"[Q-Learning Debug] Q-Learning {status} pour {len(chaloupes)} chaloupes")
+    
+    def _save_qlearning_progress_all(self):
+        """Sauvegarde le progrès Q-Learning de toutes les chaloupes."""
+        chaloupes = [unit for unit in self.game.units if hasattr(unit, 'unit_type') and unit.unit_type == 'chaloupe']
+        
+        saved_count = 0
+        for chaloupe in chaloupes:
+            if chaloupe.is_qlearning_enabled():
+                chaloupe.save_qlearning_progress()
+                saved_count += 1
+        
+        print(f"[Q-Learning Debug] Progrès sauvegardé pour {saved_count} chaloupes")
+    
+    def _show_qlearning_stats(self):
+        """Affiche les statistiques Q-Learning dans la console."""
+        chaloupes = [unit for unit in self.game.units if hasattr(unit, 'unit_type') and unit.unit_type == 'chaloupe']
+        
+        print("\n=== STATISTIQUES Q-LEARNING ===")
+        for i, chaloupe in enumerate(chaloupes):
+            stats = chaloupe.get_qlearning_stats()
+            if stats:
+                print(f"Chaloupe {chaloupe.team} #{i+1}:")
+                print(f"  - Épisodes: {stats['total_episodes']}")
+                print(f"  - Récompenses totales: {stats['total_rewards']:.1f}")
+                print(f"  - Récompense moyenne: {stats['avg_reward']:.2f}")
+                print(f"  - Epsilon (exploration): {stats['epsilon']:.3f}")
+                print(f"  - Taille Q-table: {stats['q_table_size']} états")
+                print(f"  - Dernière récompense: {stats['last_reward']:.1f}")
+            else:
+                print(f"Chaloupe {chaloupe.team} #{i+1}: Q-Learning désactivé")
+        print("=================================\n")
+    
+    def _reset_qlearning_all(self):
+        """Reset le Q-Learning pour toutes les chaloupes."""
+        chaloupes = [unit for unit in self.game.units if hasattr(unit, 'unit_type') and unit.unit_type == 'chaloupe']
+        
+        reset_count = 0
+        for chaloupe in chaloupes:
+            if chaloupe.is_qlearning_enabled() and chaloupe.ai_system and chaloupe.ai_system.qlearning_agent:
+                # Reset la Q-table
+                chaloupe.ai_system.qlearning_agent.q_table = {}
+                chaloupe.ai_system.qlearning_agent.total_episodes = 0
+                chaloupe.ai_system.qlearning_agent.total_rewards = 0
+                chaloupe.ai_system.qlearning_agent.epsilon = 0.2  # Reset exploration
+                reset_count += 1
+        
+        print(f"[Q-Learning Debug] Q-Learning reset pour {reset_count} chaloupes")
+
+    def _toggle_visual_debug_all_chaloupes(self):
+        """Active/désactive le debug visuel pour toutes les chaloupes."""
+        chaloupes = [unit for unit in self.game.units if hasattr(unit, 'unit_type') and unit.unit_type == 'chaloupe']
+        
+        if not chaloupes:
+            print("[Visual Debug] Aucune chaloupe trouvée")
+            return
+        
+        # Prendre l'état du premier pour toggle
+        first_chaloupe = chaloupes[0]
+        current_debug = getattr(first_chaloupe, 'visual_debug_enabled', False)
+        new_state = not current_debug
+        
+        debug_count = 0
+        for chaloupe in chaloupes:
+            if chaloupe.use_advanced_ai and chaloupe.ai_system:
+                chaloupe.visual_debug_enabled = new_state
+                debug_count += 1
+        
+        state_text = "activé" if new_state else "désactivé"
+        print(f"[Visual Debug] Debug visuel {state_text} pour {debug_count} chaloupes")
+        
         return True
     
     def handle_mouse_events(self, event: pygame.event):
@@ -208,9 +328,14 @@ class EventHandler:
 
             if clicked_unit:
                 self.game.select_unit(clicked_unit)
-            elif self.game.selected_unit and self.game.selected_unit.is_alive and hasattr(self.game.selected_unit, 'move_to_position'):
+            elif self.game.selected_unit and self.game.selected_unit.is_alive:
                 # Déplacer l'unité sélectionnée vers la position cliquée
-                self.game.selected_unit.move_to_position((world_x, world_y))
+                if hasattr(self.game.selected_unit, 'move_to_click'):
+                    # Utiliser le pathfinding pour les Chaloupes
+                    self.game.selected_unit.move_to_click((world_x, world_y))
+                elif hasattr(self.game.selected_unit, 'move_to_position'):
+                    # Déplacement direct pour les autres unités
+                    self.game.selected_unit.move_to_position((world_x, world_y))
             else:
                 self.game.select_unit(None)
 
