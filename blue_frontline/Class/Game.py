@@ -12,7 +12,6 @@ from Class.Petrole import Petrole
 from Class.Piece import Piece
 from Class.Timer import Timer
 from Class.units import Unit
-from Class.units.Sousmarin import SousMarinRouge
 from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
  
