@@ -1,5 +1,4 @@
-import pygame, time, math
-import threading
+import pygame, time, math, threading
 from Global import *
 from Utils import load_tileset, point_in_many_polygons, random_point_in_polygon
 from Class.Perlin import Perlin
@@ -578,7 +577,7 @@ class Unit(pygame.sprite.Sprite):
         return closest_enemy
     
     def start_pathfinding_thread(self, function: callable):
-        """Va chercher le ou les thread qui vont faire les calcul
+        """Va chercher le ou les thread qui vont faire les calcul.
 
         Args:
             function (callable): La fonction de pathfinding à exécuter dans le thread.
