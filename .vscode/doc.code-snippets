@@ -14,5 +14,13 @@
             "La différence de temps entre chaque frame."
         ], 
         "description": "Description de dt"
+    },
+    "Logs les actions":{
+        "prefix" : "#log",
+        "body": [
+            "# === Logs ===",
+            "self.ia_log_action('${1:action_type}', self.current_scenario, data[2], {'unit_type': data[0]})"
+        ],
+        "description": "Fait le los d'une action en paramétre."
     }
 }
