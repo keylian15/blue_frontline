@@ -30,5 +30,8 @@ Thumbs.db
 # --- Achivements --- 
 blue_frontline/data/achievements.json
 blue_frontline/data/keys.json
+# --- IA Logs ---
+blue_frontline/Class/units/IA/logs_ia_green.json
+blue_frontline/Class/units/IA/logs_ia_red.json
 # --- Exceptions ---
 !BlueFrontline.spec

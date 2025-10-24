@@ -12,8 +12,8 @@ from Class.Petrole import Petrole
 from Class.Piece import Piece
 from Class.Timer import Timer
 from Class.units import Unit
-from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
+from Class.units import PlateformePetroliere
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
@@ -226,7 +226,7 @@ class Game :
             distance = math.sqrt((unit.position[0] - world_x) ** 2 + (unit.position[1] - world_y) ** 2)
 
             # Tolérance différente si c’est une plateforme
-            tolerance = 60 if getattr(unit, 'is_platform', False) else 40
+            tolerance = 40 if getattr(unit, 'is_platform', False) else 20
 
             # Vérifie si l'unité est dans la zone de tolérance et plus proche
             if distance <= tolerance and distance < min_distance:
@@ -373,6 +373,7 @@ class Game :
         self.input_manager.game = game
         self.renderer.game = game
         self.combat_system.game = game
+        self.overlay_menu.game = game
         
         # S'assurer que les unités sont dans le nouveau groupe
         if hasattr(self, 'units') and self.units:
