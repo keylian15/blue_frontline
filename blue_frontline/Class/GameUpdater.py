@@ -76,17 +76,26 @@ class GameUpdater:
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
 
         for unit in self.game.units:
-            # --- UPDATE PHYSIQUE / VISUEL / COLLISIONS / ETC.
-            unit.update(
-                dt,
-                self.game.combat_system,
-                self.game.screen,
-                camera_offset,
-                self.game.units,
-            )
-
-            # Marque visuellement l'unité sélectionnée
-            if hasattr(unit, "is_selected"):
+            
+            # On vérifie si l'unité a l'attribut is_ia 
+            if hasattr(unit, 'is_ia'):
+                # Si l'unité est une IA, on met à jour si elle est ia
+                # On récuperera la valeur depuis les paramètres de gameplay
+                from Global import GAMEPLAY_SETTINGS
+                # Cas spécial pour les bases :
+                if unit.unit_type == "plateformePetroliere":
+                    if unit.team == "red" : 
+                        unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get("BaseRouge")
+                    elif unit.team == "green" :
+                        unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get("BaseVerte")
+                else:
+                    unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(unit.unit_type[0].upper() + unit.unit_type[1:])
+            
+            # Mettre à jour l'unité avec toutes les informations nécessaires
+            unit.update(dt, self.game.combat_system, self.game.screen, camera_offset, self.game.units)
+            
+            # Marquer l'unité comme sélectionnée si c'est l'unité active
+            if hasattr(unit, 'is_selected'):
                 unit.is_selected = (unit == self.game.selected_unit)
 
             # --- IA ---
