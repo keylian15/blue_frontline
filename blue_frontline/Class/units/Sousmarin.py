@@ -14,7 +14,7 @@ class SousMarin(Unit):
 
     """Classe unifiée pour les unités Sous-marin (Rouge et Vert)."""
 
-    def __init__(self, game, team: str, is_ia: bool = False):
+    def __init__(self, game, team: str, is_ia: bool = True):
         """Initialise une instance de SousMarin.
 
         Args:
@@ -72,9 +72,11 @@ class SousMarin(Unit):
         self.platform_position = None  # Position de la plateforme pétrolière de l'équipe
 
         # ===== Défense de base =====
-        # Rayon demi-côté du carré de défense en pixels (300px demandé)
+        # Rayon pour poser les mines autour de la plateforme (300px)
         self.defense_square_radius = 300
-        self.defense_max_mines = 40
+        # Rayon pour compter les mines existantes (400px)
+        self.defense_count_radius = 400
+        self.defense_max_mines = 30
         # espacement entre emplacements de mines (approx)
         self.defense_grid_spacing = 60
         self.defense_mine_positions = []  # positions planifiées pour poser des mines
@@ -152,8 +154,6 @@ class SousMarin(Unit):
                 self.game.combat_system.add_mine(mine)
                 self.last_shot_time = time.time()
                 self.mines_placed += 1
-                print(
-                    f"✓ Mine #{self.mines_placed} posée par {self.team} sous-marin à ({x}, {y})")
             # -- AUDIO : drop mine --
             try:
                 if hasattr(self.game, "sound") and self.game.sound:
@@ -163,8 +163,7 @@ class SousMarin(Unit):
                 pass
             return True
         else:
-            print(
-                f"⚠ Sous-marin {self.team} n'a pas la capacité 'mines' (actual: {self.special_ability})")
+            pass
         return False
 
     def is_position_valid(self, x, y, treat_platform_as_obstacle: bool = False):
@@ -295,9 +294,7 @@ class SousMarin(Unit):
         nearby_with_self = [self] + nearby
 
         # debug: afficher les comptes pour diagnostic
-        print(
-            f"[debug] tentative formation: alliés_detectes={len(nearby)}, total_avec_moi={len(nearby_with_self)}, min_req={min_members}")
-
+        
         if len(nearby_with_self) >= min_members:
             # Créer un id de groupe unique
             group_id = random.randint(1000, 9999)
@@ -335,13 +332,10 @@ class SousMarin(Unit):
                 leader.ia_mode = 'group_attack'
 
             self._last_group_formed_time = now
-            print(
-                f"Groupe {group_id} formé avec {len(nearby_with_self)} sous-marins (leader: {leader.team} #{id(leader)})")
+
             return True
 
-        # debug: formation non réalisée
-        print(
-            f"[debug] formation échouée: nearby_with_self={len(nearby_with_self)} < min_members={min_members}")
+
         return False
 
     def broadcast_attack_signal(self, all_units):
@@ -380,9 +374,6 @@ class SousMarin(Unit):
             if self.can_place_mine():
                 placed = self.place_mine(
                     int(self.position[0]), int(self.position[1]))
-                if placed:
-                    print(
-                        f"💣 Groupe {self.group_id}: {self.team} sous-marin a posé une mine lors de l'attaque")
             return
 
         # sinon, utiliser A* pour atteindre la cible (thread si possible)
@@ -429,7 +420,6 @@ class SousMarin(Unit):
                 ally.is_leader = False
                 ally.formation_slot = None
                 ally.group_target_unit = None
-        print(f"Groupe {self.group_id} en retraite vers la plateforme.")
 
     def find_nearby_paquebots(self, all_units, detection_range=600):
         """Trouve les paquebots ennemis à proximité.
@@ -683,12 +673,9 @@ class SousMarin(Unit):
         if path:
             self.new_path = path
             self.path_found = True
-            print(
-                f"🧵 {self.team} sous-marin: Chemin calculé en thread ({len(path)} points)")
         else:
             self.new_path = None
             self.path_found = False
-            print(f"⚠️ {self.team} sous-marin: Aucun chemin trouvé en thread")
 
         self.is_computing_path = False
 
@@ -704,11 +691,9 @@ class SousMarin(Unit):
         if path:
             self.new_path = path
             self.path_found = True
-            print(f"🧵 {self.team} sous-marin: Chemin vers cible calculé en thread ({len(path)} points)")
         else:
             self.new_path = None
             self.path_found = False
-            print(f"⚠️ {self.team} sous-marin: Aucun chemin trouvé vers la cible en thread")
 
         self.is_computing_path = False
 
@@ -720,7 +705,6 @@ class SousMarin(Unit):
             self.need_recalculate_path = False
             self.path_found = False
             self.new_path = None
-            print(f"✅ {self.team} sous-marin: Chemin mis à jour depuis le thread")
             return True
         return False
 
@@ -768,7 +752,6 @@ class SousMarin(Unit):
         Returns:
             tuple: Position (x, y) de la plateforme ou None si non trouvée
         """
-        print(f"🔍 {self.team} sous-marin: Recherche d'une plateforme pétrolière...")
 
         for unit in all_units:
             # Vérifier si c'est une plateforme de la même équipe
@@ -778,29 +761,19 @@ class SousMarin(Unit):
 
                 if hasattr(unit, 'is_platform') and unit.is_platform:
                     is_platform = True
-                    print(
-                        f"✅ {self.team} sous-marin: Plateforme trouvée via is_platform flag")
-
                 if hasattr(unit, 'unit_type'):
                     # Vérifier si c'est une plateforme par le type
                     if unit.unit_type in ["plateforme", "platform", "plateforme_petroliere", "PlateformePetroliere"]:
                         is_platform = True
-                        print(
-                            f"✅ {self.team} sous-marin: Plateforme trouvée via unit_type: {unit.unit_type}")
 
                 # Vérifier par le nom de classe
                 class_name = unit.__class__.__name__.lower()
                 if 'plateforme' in class_name or 'platform' in class_name:
                     is_platform = True
-                    print(
-                        f"✅ {self.team} sous-marin: Plateforme trouvée via class name: {unit.__class__.__name__}")
 
                 if is_platform:
-                    print(
-                        f"🛢️ {self.team} sous-marin: Plateforme pétrolière trouvée à position {unit.position}")
                     return unit.position
 
-        print(f"❌ {self.team} sous-marin: Aucune plateforme pétrolière trouvée!")
         return None
 
     def return_to_base(self, all_units):
@@ -822,8 +795,6 @@ class SousMarin(Unit):
 
             # Si on est proche de la plateforme (moins de 80 pixels), on arrête SANS faire de virage
             if distance_to_platform < 80:
-                print(
-                    f"🛢️ {self.team} sous-marin: Arrivé à la plateforme pétrolière!")
                 self.stop()
                 self.is_moving = False
                 self.target_position = None
@@ -832,14 +803,12 @@ class SousMarin(Unit):
 
                 # NE PAS faire tourner le bateau - le garder dans sa direction actuelle
                 # Le sous-marin garde son cap au lieu de faire un virage à 180°
-                print(
-                    f"✅ {self.team} sous-marin: Arrêt à la plateforme (angle actuel: {int(self.angle)}°)")
+
 
                 # Passer en mode patrol
                 self.ia_mode = "patrol"
                 # Réinitialiser pour chercher une nouvelle plateforme la prochaine fois
                 self.platform_position = None
-                print(f"✅ {self.team} sous-marin: Retour en mode PATROL!")
                 return
 
             # Calculer ou suivre le chemin A* en utilisant le thread centralisé
@@ -851,8 +820,6 @@ class SousMarin(Unit):
             elif self.need_recalculate_path or not self.current_path:
                 # Si aucun thread n'est en cours, en lancer un
                 if not getattr(self, 'path_thread', None) or not self.path_thread.is_alive():
-                    print(
-                        f"🧵 {self.team} sous-marin: Lancement du calcul A* en thread...")
                     # Démarrer la computation en arrière-plan via l'utilitaire Unit
                     # (start_pathfinding_thread stocke le Thread dans self.path_thread)
                     try:
@@ -860,19 +827,13 @@ class SousMarin(Unit):
                         self.start_pathfinding_thread(self.compute_path)
                     except Exception:
                         # En cas de problème avec le threading, retomber sur le calcul synchrone
-                        print(
-                            f"⚠️ {self.team} sous-marin: Échec du lancement du thread, calcul synchrone A*...")
                         path = self.a_star_search(
                             self.position, self.platform_position)
                         if path:
                             self.current_path = path
                             self.path_index = 0
                             self.need_recalculate_path = False
-                            print(
-                                f"✅ {self.team} sous-marin: Chemin A* trouvé ({len(path)} points)")
                         else:
-                            print(
-                                f"⚠️ {self.team} sous-marin: A* a échoué, utilisation du chemin direct")
                             if self.is_path_clear(self.platform_position[0], self.platform_position[1]):
                                 self.move_to_position(self.platform_position)
                             else:
@@ -882,8 +843,6 @@ class SousMarin(Unit):
 
                 # Si le thread est terminé mais n'a pas trouvé de chemin, retomber sur la méthode directe
                 if getattr(self, 'path_thread', None) and not self.path_thread.is_alive() and not self.path_found and not self.current_path:
-                    print(
-                        f"⚠️ {self.team} sous-marin: A* a échoué en thread, utilisation du chemin direct")
                     if self.is_path_clear(self.platform_position[0], self.platform_position[1]):
                         self.move_to_position(self.platform_position)
                     else:
@@ -899,12 +858,51 @@ class SousMarin(Unit):
                 self.need_recalculate_path = True
         else:
             # Si on ne trouve pas de plateforme, retour en mode patrol
-            print(
-                f"⚠️ {self.team} sous-marin: Plateforme non trouvée, retour en mode PATROL")
             self.ia_mode = "patrol"
             self.current_path = []
             self.path_index = 0
             self.patrol_movement()
+
+    def count_mines_around_platform(self, all_units):
+        """Compte le nombre de mines autour de la plateforme pétrolière de l'équipe.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
+            
+        Returns:
+            int: Nombre de mines autour de la plateforme
+        """
+        # Trouver la plateforme si on ne l'a pas encore
+        if self.platform_position is None:
+            self.platform_position = self.find_base_position(all_units)
+        
+        if not self.platform_position:
+            print(f"DEBUG: {self.team} sous-marin - Aucune plateforme trouvée")
+            return 0
+            
+        mine_count = 0
+        platform_x, platform_y = self.platform_position
+        print(f"DEBUG: {self.team} sous-marin - Plateforme trouvée à ({platform_x}, {platform_y})")
+        
+        # Vérifier s'il y a un système de combat avec des mines
+        if hasattr(self.game, 'combat_system') and self.game.combat_system:
+            if hasattr(self.game.combat_system, 'mines'):
+                print(f"DEBUG: {self.team} sous-marin - {len(self.game.combat_system.mines)} mines totales dans le jeu")
+                for mine in self.game.combat_system.mines:
+                    # Vérifier si la mine appartient à notre équipe
+                    if hasattr(mine, 'team') and mine.team == self.team:
+                        # Calculer la distance entre la mine et la plateforme
+                        dx = mine.position[0] - platform_x
+                        dy = mine.position[1] - platform_y
+                        distance = math.sqrt(dx**2 + dy**2)
+                        print(f"DEBUG: {self.team} sous-marin - Mine équipe à distance {distance:.1f} (rayon comptage: {self.defense_count_radius})")
+                        
+                        # Si la mine est dans le rayon de comptage, la compter
+                        if distance <= self.defense_count_radius:
+                            mine_count += 1
+        
+        print(f"DEBUG: {self.team} sous-marin - Mines comptées: {mine_count}")
+        return mine_count
 
     def ia_mouvement(self, all_units):
         """IA du sous-marin avec trois modes distincts : patrol, attack, return_to_platform.
@@ -947,7 +945,15 @@ class SousMarin(Unit):
         Détecte la plateforme alliée à 100px → fait un virage à 180°.
         Sinon, patrouille en ligne droite.
         """
-        # PRIORITÉ 1: Chercher des chaloupes ennemies à proximité (500 pixels)
+        # PRIORITÉ 1: Vérifier si moins de 15 mines autour de la plateforme
+        mine_count = self.count_mines_around_platform(all_units)
+        print(f"DEBUG: {self.team} sous-marin PATROL - mines: {mine_count}, mode actuel: {self.ia_mode}")
+        if mine_count < 15:
+            print(f"DEBUG: {self.team} sous-marin - Pas assez de mines ({mine_count}), passage en DEFENSE_BASE")
+            self.ia_mode = "defense_base"
+            return
+        
+        # PRIORITÉ 2: Chercher des chaloupes ennemies à proximité (500 pixels)
         nearby_chaloupes = self.find_nearby_chaloupes(
             all_units, detection_range=500)
 
@@ -958,13 +964,9 @@ class SousMarin(Unit):
                 formed = self.form_attack_group(
                     all_units, detected_target=nearby_chaloupes[0], radius=600, min_members=3)
                 if formed:
-                    print(
-                        f"⛵ {self.team} sous-marin: CHALOUPE détectée mais groupe formé -> group_attack")
                     self.ia_mode = 'group_attack'
                     return
             # Sinon, comportement original: fuir vers la plateforme
-            print(
-                f"⛵ {self.team} sous-marin: CHALOUPE DÉTECTÉE à 500px ou moins → Passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
 
@@ -979,12 +981,8 @@ class SousMarin(Unit):
                 formed = self.form_attack_group(
                     all_units, detected_target=nearby_bateaux[0], radius=600, min_members=3)
                 if formed:
-                    print(
-                        f"⛴️ {self.team} sous-marin: BATEAU détecté mais groupe formé -> group_attack")
                     self.ia_mode = 'group_attack'
                     return
-            print(
-                f"⛴️ {self.team} sous-marin: BATEAU DÉTECTÉ à 450px ou moins → Passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
 
@@ -999,12 +997,8 @@ class SousMarin(Unit):
                 formed = self.form_attack_group(
                     all_units, detected_target=nearby_paquebots[0], radius=600, min_members=3)
                 if formed:
-                    print(
-                        f"🚢 {self.team} sous-marin: PAQUEBOT détecté mais groupe formé -> group_attack")
                     self.ia_mode = 'group_attack'
                     return
-            print(
-                f"🚢 {self.team} sous-marin: PAQUEBOT DÉTECTÉ à 300px ou moins → Passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
 
@@ -1017,12 +1011,8 @@ class SousMarin(Unit):
             formed = self.form_attack_group(
                 all_units, detected_target=target, radius=600, min_members=2)
             if formed:
-                print(
-                    f"⚔️ {self.team} sous-marin: ÉCLAIREUR DÉTECTÉ → Groupe d'attaque formé (group_attack)")
                 self.ia_mode = 'group_attack'
             else:
-                print(
-                    f"⚔️ {self.team} sous-marin: ÉCLAIREUR DÉTECTÉ → Passage en mode ATTACK individuel")
                 self.ia_mode = "attack"
             return
 
@@ -1128,7 +1118,6 @@ class SousMarin(Unit):
         self.defense_mine_positions = positions[:self.defense_max_mines]
         self.defense_current_mine_index = 0
         self.defense_positions_generated = True
-        print(f"✅ {self.team} sous-marin: {len(self.defense_mine_positions)} positions de mines (périmètre) générées pour défense")
 
     def ia_behavior_group_attack(self, all_units):
         """Comportement pour les sous-marins en mode 'group_attack'.
@@ -1137,6 +1126,12 @@ class SousMarin(Unit):
         - Les suiveurs gardent une position en formation relative au leader.
         - Quand le leader est à portée suffisante, il broadcast le signal d'attaque.
         """
+        # PRIORITÉ 1: Vérifier si moins de 15 mines autour de la plateforme
+        mine_count = self.count_mines_around_platform(all_units)
+        if mine_count < 15:
+            self.ia_mode = "defense_base"
+            return
+        
         # Récupérer les membres du groupe
         if not self.group_id:
             # Pas de groupe, revenir en patrol
@@ -1166,8 +1161,6 @@ class SousMarin(Unit):
         target = self.group_target_unit
         if not target or not target.is_alive:
             # cible perdue -> fin du groupe
-            print(
-                f"Groupe {self.group_id}: cible perdue, dissolution du groupe")
             for m in members:
                 m.group_id = None
                 m.is_leader = False
@@ -1191,9 +1184,6 @@ class SousMarin(Unit):
             if self.can_place_mine():
                 placed = self.place_mine(
                     int(self.position[0]), int(self.position[1]))
-                if placed:
-                    print(
-                        f"💣 Groupe {self.group_id}: {self.team} sous-marin a posé une mine (distance: {int(dist_to_target)}px)")
             return
 
         # Si je suis leader, je vais gérer la route/attaque
@@ -1204,8 +1194,6 @@ class SousMarin(Unit):
                 target, 'unit_type', None) == 'paquebot' else 120
             if dist_to_target <= attack_range:
                 # le signal d'attaque
-                print(
-                    f"Leader groupe {self.group_id}: à portée de la cible ({int(dist_to_target)}px). Broadcast attaque !")
                 self.broadcast_attack_signal(all_units)
 
             # Se déplacer vers la cible en utilisant A* (thread si possible)
@@ -1300,12 +1288,8 @@ class SousMarin(Unit):
                 formed = self.form_attack_group(
                     all_units, detected_target=nearby_chaloupes[0], radius=600, min_members=3)
                 if formed:
-                    print(
-                        f"⛵ {self.team} sous-marin: CHALOUPE détectée pendant défense mais groupe formé -> group_attack")
                     self.ia_mode = 'group_attack'
                     return
-            print(
-                f"⛵ {self.team} sous-marin: CHALOUPE détectée pendant défense -> switch RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
 
@@ -1317,12 +1301,8 @@ class SousMarin(Unit):
                 formed = self.form_attack_group(
                     all_units, detected_target=nearby_bateaux[0], radius=600, min_members=3)
                 if formed:
-                    print(
-                        f"⛴️ {self.team} sous-marin: BATEAU détecté pendant défense mais groupe formé -> group_attack")
                     self.ia_mode = 'group_attack'
                     return
-            print(
-                f"⛴️ {self.team} sous-marin: BATEAU détecté pendant défense -> switch RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
 
@@ -1334,12 +1314,8 @@ class SousMarin(Unit):
                 formed = self.form_attack_group(
                     all_units, detected_target=nearby_paquebots[0], radius=600, min_members=3)
                 if formed:
-                    print(
-                        f"🚢 {self.team} sous-marin: PAQUEBOT détecté pendant défense mais groupe formé -> group_attack")
                     self.ia_mode = 'group_attack'
                     return
-            print(
-                f"🚢 {self.team} sous-marin: PAQUEBOT détecté pendant défense -> switch RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
 
@@ -1349,15 +1325,15 @@ class SousMarin(Unit):
 
         # Si aucune position générée -> fallback en patrol
         if not self.defense_mine_positions:
-            print(
-                f"⚠️ {self.team} sous-marin: Aucune position de défense générée -> fallback PATROL")
             self.ia_mode = "patrol"
             return
 
-        # Si on a déjà placé le nombre maximal, revenir en patrol
-        if self.mines_placed >= self.defense_max_mines:
-            print(
-                f"✅ {self.team} sous-marin: Défense terminée ({self.mines_placed} mines) -> retour en PATROL")
+        # Vérifier le nombre réel de mines autour de la plateforme
+        current_mine_count = self.count_mines_around_platform(all_units)
+        print(f"DEBUG: {self.team} sous-marin - mines actuelles: {current_mine_count}/{self.defense_max_mines}")
+        if current_mine_count >= self.defense_max_mines:
+            # On a assez de mines défensives, passer en patrol
+            print(f"DEBUG: {self.team} sous-marin - Assez de mines, passage en PATROL")
             self.ia_mode = "patrol"
             return
 
@@ -1385,11 +1361,8 @@ class SousMarin(Unit):
             if self.can_place_mine():
                 placed = self.place_mine(
                     int(self.position[0]), int(self.position[1]))
-                if placed:
-                    print(
-                        f"💣 {self.team} sous-marin: Mine posée en défense ({self.mines_placed}/{self.defense_max_mines})")
                     # Avancer à la position suivante
-                    self.defense_current_mine_index += 1
+                self.defense_current_mine_index += 1
             else:
                 # attendre cooldown
                 pass
@@ -1420,7 +1393,13 @@ class SousMarin(Unit):
         Poursuit l'éclaireur et pose une mine à proximité.
         Si plus d'éclaireur → passe en mode return_to_platform.
         """
-        # PRIORITÉ 1: Vérifier la présence de chaloupes à proximité (500 pixels)
+        # PRIORITÉ 1: Vérifier si moins de 15 mines autour de la plateforme
+        mine_count = self.count_mines_around_platform(all_units)
+        if mine_count < 15:
+            self.ia_mode = "defense_base"
+            return
+        
+        # PRIORITÉ 2: Vérifier la présence de chaloupes à proximité (500 pixels)
         nearby_chaloupes = self.find_nearby_chaloupes(
             all_units, detection_range=500)
 
@@ -1431,12 +1410,8 @@ class SousMarin(Unit):
                 formed = self.form_attack_group(
                     all_units, detected_target=nearby_chaloupes[0], radius=600, min_members=3)
                 if formed:
-                    print(
-                        f"⛵ {self.team} sous-marin: CHALOUPE détectée pendant l'attaque mais groupe formé -> group_attack")
                     self.ia_mode = 'group_attack'
                     return
-            print(
-                f"⛵ {self.team} sous-marin: CHALOUPE DÉTECTÉE pendant l'attaque → Annulation, passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
 
@@ -1450,12 +1425,8 @@ class SousMarin(Unit):
                 formed = self.form_attack_group(
                     all_units, detected_target=nearby_bateaux[0], radius=600, min_members=3)
                 if formed:
-                    print(
-                        f"⛴️ {self.team} sous-marin: BATEAU détecté pendant l'attaque mais groupe formé -> group_attack")
                     self.ia_mode = 'group_attack'
                     return
-            print(
-                f"⛴️ {self.team} sous-marin: BATEAU DÉTECTÉ pendant l'attaque → Annulation, passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
 
@@ -1469,12 +1440,8 @@ class SousMarin(Unit):
                 formed = self.form_attack_group(
                     all_units, detected_target=nearby_paquebots[0], radius=600, min_members=3)
                 if formed:
-                    print(
-                        f"🚢 {self.team} sous-marin: PAQUEBOT détecté pendant l'attaque mais groupe formé -> group_attack")
                     self.ia_mode = 'group_attack'
                     return
-            print(
-                f"🚢 {self.team} sous-marin: PAQUEBOT DÉTECTÉ pendant l'attaque → Annulation, passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
 
@@ -1483,8 +1450,6 @@ class SousMarin(Unit):
 
         if not nearby_scouts:
             # Plus d'éclaireur → passer en mode retour à la plateforme
-            print(
-                f"🛢️ {self.team} sous-marin: PLUS D'ÉCLAIREUR → Passage en mode RETURN_TO_PLATFORM")
             self.ia_mode = "return_to_platform"
             return
 
@@ -1500,13 +1465,9 @@ class SousMarin(Unit):
             # Distance de collision
             collision_distance = 30
 
-            print(
-                f"🔍 {self.team} sous-marin: Éclaireur à {int(distance_to_scout)}px (seuil: {collision_distance}px)")
 
             # Si on est en collision ou très proche, poser une mine
             if distance_to_scout <= collision_distance:
-                print(
-                    f"⚠️ {self.team} sous-marin: COLLISION! Distance: {int(distance_to_scout)}px")
 
                 # Arrêter le mouvement
                 self.stop()
@@ -1515,15 +1476,11 @@ class SousMarin(Unit):
 
                 # Poser une mine si le cooldown est passé
                 if self.can_place_mine():
-                    print(
-                        f"✅ {self.team} sous-marin: Cooldown OK, pose de mine...")
                     mine_placed = self.place_mine(
                         int(self.position[0]), int(self.position[1]))
-                    if mine_placed:
-                        print(
-                            f"💣 {self.team} sous-marin a posé une mine - Distance éclaireur: {int(distance_to_scout)}px")
                 else:
-                    print(f"⏳ {self.team} sous-marin: Cooldown en cours...")
+                    # attendre cooldown
+                    pass
                 return
 
             # Si l'éclaireur est plus loin, ajuster la trajectoire si nécessaire
@@ -1545,7 +1502,6 @@ class SousMarin(Unit):
 
             # Se déplacer vers l'éclaireur
             if not self.is_moving:
-                print(f"🎯 {self.team} sous-marin: Poursuite de l'éclaireur...")
                 # Calculer l'angle vers l'éclaireur
                 angle_to_scout = math.degrees(math.atan2(-dy, dx)) - 90
                 self.angle = angle_to_scout % 360
@@ -1585,7 +1541,13 @@ class SousMarin(Unit):
         Retourne à une plateforme pétrolière alliée.
         Arrivé à destination → tourne de 180° et repasse en mode patrol.
         """
-        # PRIORITÉ 1: Vérifier la présence de chaloupes, bateaux et paquebots (ne pas interrompre le retour)
+        # PRIORITÉ 1: Vérifier si moins de 15 mines autour de la plateforme
+        mine_count = self.count_mines_around_platform(all_units)
+        if mine_count < 15:
+            self.ia_mode = "defense_base"
+            return
+        
+        # PRIORITÉ 2: Vérifier la présence de chaloupes, bateaux et paquebots (ne pas interrompre le retour)
         nearby_chaloupes = self.find_nearby_chaloupes(
             all_units, detection_range=500)
         nearby_bateaux = self.find_nearby_bateaux(
@@ -1597,8 +1559,7 @@ class SousMarin(Unit):
             # Une menace est toujours présente, continuer le retour
             menace_type = "Chaloupe" if nearby_chaloupes else (
                 "Bateau" if nearby_bateaux else "Paquebot")
-            print(
-                f"🚢 {self.team} sous-marin: {menace_type} toujours détecté(e), continuation du retour à la plateforme")
+
 
         # PRIORITÉ 2: Si un éclaireur est détecté ET qu'il n'y a ni chaloupe, ni bateau, ni paquebot, annuler le retour
         if not nearby_chaloupes and not nearby_bateaux and not nearby_paquebots:
@@ -1606,14 +1567,11 @@ class SousMarin(Unit):
                 all_units, detection_range=320)
             if nearby_scouts:
                 # Il y a seulement des éclaireurs -> annuler le retour et attaquer
-                print(
-                    f"⚔️ {self.team} sous-marin: ÉCLAIREUR DÉTECTÉ (pas de menace majeure) → Annulation du retour, passage en mode ATTACK")
                 self.ia_mode = "attack"
                 self.platform_position = None  # Réinitialiser la position de la plateforme
                 return
             else:
                 # Plus aucune menace lourde ni éclaireur -> revenir en PATROL immédiatement
-                print(f"✅ {self.team} sous-marin: Aucune menace détectée pendant le retour → switch PATROL")
                 self.ia_mode = "patrol"
                 self.platform_position = None
                 # Réinitialiser le chemin si un calcul était en cours
