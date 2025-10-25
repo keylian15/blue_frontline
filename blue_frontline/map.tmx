@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="120" height="96" tilewidth="32" tileheight="32" infinite="0" nextlayerid="12" nextobjectid="101">
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="120" height="96" tilewidth="32" tileheight="32" infinite="0" nextlayerid="12" nextobjectid="104">
  <tileset firstgid="1" source="assets/miscellaneous/recif.tsx"/>
  <tileset firstgid="2" source="assets/entity/bullet.tsx"/>
  <tileset firstgid="3" source="assets/Green_team/Green_team_spritesheet.tsx"/>
@@ -638,7 +638,7 @@
   <object id="70" name="Eau_peu_profonde" x="2784" y="224">
    <polygon points="0,0 32,0 32,-32 64,-32 64,-64 128,-64 128,-96 224,-96 224,-128 576,-128 576,-96 640,-96 640,-64 704,-64 704,96 736,96 736,256 768,256 768,448 736,448 736,512 672,512 672,544 544,544 544,576 320,576 320,608 224,608 224,576 128,576 128,512 96,512 96,448 64,448 64,384 32,384 32,224 0,224"/>
   </object>
-  <object id="71" name="Eau_peu_profonde" x="352" y="256" visible="0">
+  <object id="71" name="Eau_peu_profonde" x="352" y="256">
    <polygon points="0,0 0,32 -64,32 -64,96 -96,96 -96,256 -64,256 -64,416 -32,416 -32,480 0,480 0,512 320,512 320,480 416,480 416,448 448,448 448,416 480,416 480,160 512,160 512,64 480,64 480,32 384,32 384,0"/>
   </object>
   <object id="72" name="Eau_peu_profonde" x="512" y="2432">
@@ -719,5 +719,7 @@
   <object id="100" name="Base_rouge" type="Base" x="256" y="1600">
    <polygon points="0,0 -224,0 -224,-224 0,-224"/>
   </object>
+  <object id="102" name="Spawn_base_rouge_pompe" x="32" y="1376" width="224" height="32"/>
+  <object id="103" name="Spawn_base_verte_pompe" x="3584" y="1376" width="224" height="32"/>
  </objectgroup>
 </map>
