@@ -185,6 +185,35 @@ class SousMarin(Unit):
             if point_in_many_polygons(self.game.quantique_area_hidden, world_pos):
                 return False
 
+        # Vérifier les obstacles dans les îles quantiques DÉCOUVERTES
+        if hasattr(self.game, 'quantique_area') and self.game.quantique_area:
+            result = point_in_many_polygons(self.game.quantique_area, world_pos)
+            if result:
+                # On a trouvé une île quantique, vérifier si elle est découverte
+                try:
+                    index = self.game.quantique_area.index(result[1])
+                    # Correction par rapport au nom des îles quantiques
+                    if index == 0:
+                        index = 4
+                    
+                    # Parcourir les îles graphiques pour retrouver la bonne île
+                    if hasattr(self.game, 'quantum_islands') and self.game.quantum_islands:
+                        for island in self.game.quantum_islands:
+                            # Vérifier qu'on a le bon index et le bon nom
+                            if hasattr(island, 'name') and island.name and index == int(island.name[-1]):
+                                # On récupère la matrice de Perlin
+                                if hasattr(island, 'matrix') and island.matrix:
+                                    from Class.Perlin import Perlin
+                                    num = Perlin.get_zone_type(x, y, island.matrix, island)
+                                    
+                                    # Si c'est une zone d'île (valeur 2), c'est un obstacle
+                                    if num == 2:
+                                        return False
+                                break
+                except (ValueError, IndexError, AttributeError):
+                    # En cas d'erreur, ignorer cette vérification
+                    pass
+
         # Vérifier s'il y a une autre unité mobile à cette position
         unit_at_pos = self.game.find_unit_at_position(x, y, self)
         if unit_at_pos:
@@ -554,6 +583,8 @@ class SousMarin(Unit):
 
     def a_star_search(self, start, goal):
         """Implémentation A* sur grille 32x32 pixels.
+        
+        Esquive toutes les îles quantiques (découvertes ou non).
 
         Args:
             start (tuple): (x, y) position départ
@@ -573,6 +604,8 @@ class SousMarin(Unit):
 
         # Construire l'ensemble des obstacles sur la grille
         obstacles = set()
+        
+        # Ajouter les obstacles normaux (îles principales)
         if hasattr(self.game, 'obstacles') and self.game.obstacles:
             for poly in self.game.obstacles:
                 min_x = min(p[0] for p in poly) // 32
@@ -583,7 +616,7 @@ class SousMarin(Unit):
                     for y in range(int(min_y), int(max_y)+1):
                         obstacles.add((x, y))
 
-        # Ajouter les zones quantiques cachées comme obstacles
+        # Ajouter les zones quantiques CACHÉES comme obstacles complets
         if hasattr(self.game, 'quantique_area_hidden') and self.game.quantique_area_hidden:
             for poly in self.game.quantique_area_hidden:
                 min_x = min(p[0] for p in poly) // 32
@@ -593,6 +626,34 @@ class SousMarin(Unit):
                 for x in range(int(min_x), int(max_x)+1):
                     for y in range(int(min_y), int(max_y)+1):
                         obstacles.add((x, y))
+        
+        # Ajouter les obstacles réels (parties terrestres) des îles quantiques DÉCOUVERTES
+        if hasattr(self.game, 'quantique_area') and self.game.quantique_area:
+            if hasattr(self.game, 'quantum_islands') and self.game.quantum_islands:
+                from Class.Perlin import Perlin
+                for island in self.game.quantum_islands:
+                    if hasattr(island, 'matrix') and island.matrix and hasattr(island, 'rect'):
+                        # Parcourir la zone de l'île découverte
+                        island_x_start = island.rect.x // 32
+                        island_y_start = island.rect.y // 32
+                        island_width = island.rect.width // 32
+                        island_height = island.rect.height // 32
+                        
+                        for gx in range(island_x_start, island_x_start + island_width + 1):
+                            for gy in range(island_y_start, island_y_start + island_height + 1):
+                                # Convertir en coordonnées monde
+                                world_x = gx * 32 + 16
+                                world_y = gy * 32 + 16
+                                
+                                # Vérifier le type de zone via la matrice de Perlin
+                                try:
+                                    zone_type = Perlin.get_zone_type(world_x, world_y, island.matrix, island)
+                                    # Si c'est une zone d'île (valeur 2), ajouter comme obstacle
+                                    if zone_type == 2:
+                                        obstacles.add((gx, gy))
+                                except:
+                                    # En cas d'erreur, ignorer cette tuile
+                                    pass
 
         # Directions de déplacement (4 directions: haut, bas, gauche, droite)
         neighbors = [(0, 1), (1, 0), (0, -1), (-1, 0)]
@@ -877,17 +938,14 @@ class SousMarin(Unit):
             self.platform_position = self.find_base_position(all_units)
         
         if not self.platform_position:
-            print(f"DEBUG: {self.team} sous-marin - Aucune plateforme trouvée")
             return 0
             
         mine_count = 0
         platform_x, platform_y = self.platform_position
-        print(f"DEBUG: {self.team} sous-marin - Plateforme trouvée à ({platform_x}, {platform_y})")
         
         # Vérifier s'il y a un système de combat avec des mines
         if hasattr(self.game, 'combat_system') and self.game.combat_system:
             if hasattr(self.game.combat_system, 'mines'):
-                print(f"DEBUG: {self.team} sous-marin - {len(self.game.combat_system.mines)} mines totales dans le jeu")
                 for mine in self.game.combat_system.mines:
                     # Vérifier si la mine appartient à notre équipe
                     if hasattr(mine, 'team') and mine.team == self.team:
@@ -895,13 +953,11 @@ class SousMarin(Unit):
                         dx = mine.position[0] - platform_x
                         dy = mine.position[1] - platform_y
                         distance = math.sqrt(dx**2 + dy**2)
-                        print(f"DEBUG: {self.team} sous-marin - Mine équipe à distance {distance:.1f} (rayon comptage: {self.defense_count_radius})")
                         
                         # Si la mine est dans le rayon de comptage, la compter
                         if distance <= self.defense_count_radius:
                             mine_count += 1
         
-        print(f"DEBUG: {self.team} sous-marin - Mines comptées: {mine_count}")
         return mine_count
 
     def ia_mouvement(self, all_units):
@@ -947,9 +1003,7 @@ class SousMarin(Unit):
         """
         # PRIORITÉ 1: Vérifier si moins de 15 mines autour de la plateforme
         mine_count = self.count_mines_around_platform(all_units)
-        print(f"DEBUG: {self.team} sous-marin PATROL - mines: {mine_count}, mode actuel: {self.ia_mode}")
         if mine_count < 15:
-            print(f"DEBUG: {self.team} sous-marin - Pas assez de mines ({mine_count}), passage en DEFENSE_BASE")
             self.ia_mode = "defense_base"
             return
         
@@ -1330,10 +1384,8 @@ class SousMarin(Unit):
 
         # Vérifier le nombre réel de mines autour de la plateforme
         current_mine_count = self.count_mines_around_platform(all_units)
-        print(f"DEBUG: {self.team} sous-marin - mines actuelles: {current_mine_count}/{self.defense_max_mines}")
         if current_mine_count >= self.defense_max_mines:
             # On a assez de mines défensives, passer en patrol
-            print(f"DEBUG: {self.team} sous-marin - Assez de mines, passage en PATROL")
             self.ia_mode = "patrol"
             return
 
