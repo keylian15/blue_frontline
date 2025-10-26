@@ -54,7 +54,7 @@ class Chaloupe(Unit):
         self.path_to_follow = []
         self.current_path_index = 0
 
-                # Pour détection blocage
+        # Pour détection blocage
         self._last_positions = []
         self._block_check_interval = 1.0
         self._last_block_check_time = time.time()
@@ -96,9 +96,6 @@ class Chaloupe(Unit):
             self.ai_system = None
             self.use_advanced_ai = False
             self.visual_debug_enabled = False
-
-        # Ne pas aller automatiquement vers la base au spawn
-        # L'IA cherchera d'abord des unités ennemies
         
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list[Unit] = None):
         """Met à jour l'unité en fonction de son état actuel.
@@ -127,7 +124,7 @@ class Chaloupe(Unit):
                 # Utiliser le système de base
                 self.check_for_enemies(all_units)
 
-        # === COMPORTEMENT DE BASE (utilisé si IA avancée désactivée) ===
+        # === COMPORTEMENT DE BASE === (utilisé si IA avancée désactivée)
         if not self.use_advanced_ai:
             # Suivi direct de la cible (chaque frame pour fluidité maximale)
             if self.target_enemy and self.target_enemy.is_alive:
@@ -271,7 +268,7 @@ class Chaloupe(Unit):
             self.last_pathfinding_time = current_time
             self.direct_follow_mode = False
             self.start_pathfinding_thread(lambda: self.compute_path_to_target(current_target_position))
-            return  # IMPORTANT: Arrêter ici, ne PAS continuer avec le mouvement direct!
+            return  # Arrêter ici, ne PAS continuer avec le mouvement direct!
         elif need_pathfinding:
             # Il y a des obstacles mais le cooldown n'est pas écoulé - ne pas bouger directement !
             return
@@ -302,7 +299,7 @@ class Chaloupe(Unit):
             if self.is_point_in_fog(check_x, check_y):
                 return True
             
-            # IMPORTANT : Vérifier si ce point est dans une île quantique
+            # Vérifier si ce point est dans une île quantique
             if self.is_point_in_quantum_island(check_x, check_y):
                 return True
                 
@@ -524,7 +521,6 @@ class Chaloupe(Unit):
         Args:
             target_function: Fonction à exécuter dans le thread
         """
-        # CORRECTION : Ne pas lancer de nouveau thread si un est déjà en cours
         if self.path_thread and self.path_thread.is_alive():
             return  # Un calcul est déjà en cours, ne pas perturber
         
@@ -599,7 +595,6 @@ class Chaloupe(Unit):
             for island in self.game.quantum_islands:
                 if hasattr(island, 'matrix') and hasattr(island, 'rect'):
                     # Utiliser la matrice de l'île pour déterminer les obstacles
-                    # CORRECTION : Utiliser rect.topleft qui est déjà aligné sur la grille
                     start_x = int(island.rect.x // 32)
                     start_y = int(island.rect.y // 32)
                     
@@ -962,7 +957,6 @@ class Chaloupe(Unit):
                                      (target_screen_x, target_screen_y), enemy_range, 1)
         
         except Exception as e:
-            # En cas d'erreur, ne pas crasher le jeu
             print(f"Erreur debug IA: {e}")
             pass
     

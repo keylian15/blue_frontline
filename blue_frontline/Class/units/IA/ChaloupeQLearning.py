@@ -1,6 +1,3 @@
-# ChaloupeQLearning.py
-# Agent Q-Learning pour IA chaloupe - Blue Frontline
-
 import random
 import pickle
 import math
@@ -142,11 +139,9 @@ class QLearningAgent:
         # Exploration vs exploitation
         if random.random() < self.epsilon or state not in self.q_table:
             action = random.choice(self.actions)
-            # Message de debug supprimé pour réduire le spam
         else:
             # Choisir la meilleure action
             action = max(self.q_table[state], key=self.q_table[state].get)
-            # Message de debug supprimé pour réduire le spam
         
         return action
 
@@ -175,9 +170,7 @@ class QLearningAgent:
         # Statistiques
         self.total_rewards += reward
         self.last_reward = reward
-        
-        # Message de debug supprimé pour réduire le spam
-        
+                
         # Décroissance de epsilon
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
@@ -305,7 +298,6 @@ class QLearningAgent:
 
     def _obstacle_near(self, chaloupe) -> bool:
         """Détecte s'il y a un obstacle proche (simplifié pour l'instant)."""
-        # TODO: Implémenter la détection d'obstacles basée sur la carte
         return False
 
     def get_stats(self) -> Dict[str, Any]:
@@ -332,7 +324,7 @@ CHALOUPE_ACTIONS = [
 
 # Exemple d'utilisation et tests
 if __name__ == "__main__":
-    print("=== Test de l'agent Q-Learning pour Chaloupe ===")
+    print("=== Test Q-Learning pour Chaloupe ===")
     
     # Créer l'agent
     agent = QLearningAgent(CHALOUPE_ACTIONS, alpha=0.1, gamma=0.9, epsilon=0.3)

@@ -63,12 +63,7 @@ class ChaloupeAI:
         self.previous_state = None
         self.current_action = None
         self.last_qlearning_update = time.time()
-        self.qlearning_update_interval = 2.0  # Mise à jour Q-Learning toutes les 2s (au lieu de 0.5s)
-        
-        # Q-Learning désactivé par défaut, sera activé avec F1 si nécessaire
-        # if self.qlearning_enabled:
-        #     # Initialiser l'agent Q-Learning
-        #     self.qlearning_agent = QLearningAgent(...)
+        self.qlearning_update_interval = 2.0  # Mise à jour Q-Learning toutes les 2s
         
         # Système de positionnement dynamique
         self.current_orbit_angle = 0        # Angle actuel autour de la cible
@@ -77,7 +72,6 @@ class ChaloupeAI:
         self.last_enemy_position = None     # Dernière position de l'ennemi
         
         # Portées de tir des unités ennemies (depuis Global.py, en pixels)
-        # Note: Dans Global.py, les portées sont en "tiles", il faut multiplier par 32
         self.enemy_ranges = {
             "paquebot": 8 * 32,   # 8 tiles = 256 pixels
             "bateau": 6 * 32,     # 6 tiles = 192 pixels  
@@ -277,8 +271,8 @@ class ChaloupeAI:
             self.log_decision(f"Retraite en cours ({retreat_duration:.1f}s)")
             self._dynamic_retreat()
     
+
     # === MÉTHODES UTILITAIRES ===
-    
     def _find_best_target(self, all_units):
         """Trouve la meilleure cible ennemie selon les priorités."""
         if not all_units:
@@ -424,7 +418,6 @@ class ChaloupeAI:
         if not self.target:
             return
         
-        # CORRECTION : Ne pas changer de destination si un pathfinding est en cours ou un chemin est suivi
         if self._is_unit_busy_with_pathfinding():
             return  # Attendre que le mouvement actuel se termine
         
@@ -441,7 +434,6 @@ class ChaloupeAI:
         evasive_pos = (evasive_x, evasive_y)
         self.log_decision(f"Évasion -> ({int(evasive_x)}, {int(evasive_y)})")
         
-        # CORRECTION : Vérifier si pathfinding nécessaire avant de bouger
         # Respecter le cooldown pour éviter les recalculs constants
         if self.unit.need_pathfinding_to_target(evasive_pos):
             current_time = time.time()
@@ -451,13 +443,11 @@ class ChaloupeAI:
                 self.unit.start_pathfinding_thread(
                     lambda: self.unit.compute_path_to_target(evasive_pos)
                 )
-            # Sinon, ne rien faire et attendre que le pathfinding actuel se termine
         else:
             self.unit.move_directly_to_target(evasive_pos)
     
     def _dynamic_orbit(self):
         """Orbite dynamique qui change constamment de position."""
-        # CORRECTION : Ne pas changer de destination si un pathfinding est en cours ou un chemin est suivi
         if self._is_unit_busy_with_pathfinding():
             return  # Attendre que le mouvement actuel se termine
         
@@ -472,7 +462,6 @@ class ChaloupeAI:
         orbit_pos = self._calculate_orbit_position()
         self.log_decision(f"Orbite dynamique -> ({int(orbit_pos[0])}, {int(orbit_pos[1])})")
         
-        # CORRECTION : Vérifier si pathfinding nécessaire avant de bouger
         # Respecter le cooldown pour éviter les recalculs constants
         if self.unit.need_pathfinding_to_target(orbit_pos):
             current_time = time.time()
@@ -482,7 +471,6 @@ class ChaloupeAI:
                 self.unit.start_pathfinding_thread(
                     lambda: self.unit.compute_path_to_target(orbit_pos)
                 )
-            # Sinon, ne rien faire et attendre que le pathfinding actuel se termine
         else:
             self.unit.move_directly_to_target(orbit_pos)
     
@@ -504,7 +492,6 @@ class ChaloupeAI:
         if not self.target:
             return
         
-        # CORRECTION : Ne pas changer de destination si un pathfinding est en cours ou un chemin est suivi
         if self._is_unit_busy_with_pathfinding():
             return  # Attendre que le mouvement actuel se termine
         
@@ -529,7 +516,6 @@ class ChaloupeAI:
             retreat_pos = (retreat_x, retreat_y)
             self.log_decision(f"Retraite dynamique -> ({int(retreat_x)}, {int(retreat_y)})")
             
-            # CORRECTION : Vérifier si pathfinding nécessaire avant de bouger
             # Respecter le cooldown pour éviter les recalculs constants
             if self.unit.need_pathfinding_to_target(retreat_pos):
                 current_time = time.time()
@@ -539,7 +525,6 @@ class ChaloupeAI:
                     self.unit.start_pathfinding_thread(
                         lambda: self.unit.compute_path_to_target(retreat_pos)
                     )
-                # Sinon, ne rien faire et attendre que le pathfinding actuel se termine
             else:
                 self.unit.move_directly_to_target(retreat_pos)
     
@@ -577,7 +562,6 @@ class ChaloupeAI:
     
     def _move_to_safe_position(self):
         """Se déplace vers une position de sécurité."""
-        # CORRECTION : Ne pas changer de destination si un pathfinding est en cours ou un chemin est suivi
         if self._is_unit_busy_with_pathfinding():
             return  # Attendre que le mouvement actuel se termine
         
@@ -594,7 +578,6 @@ class ChaloupeAI:
                 self.unit.start_pathfinding_thread(
                     lambda: self.unit.compute_path_to_target(safe_pos)
                 )
-            # Sinon, ne rien faire et attendre que le pathfinding actuel se termine
         else:
             self.unit.move_directly_to_target(safe_pos)
     
@@ -603,15 +586,13 @@ class ChaloupeAI:
         if not self.target:
             return
         
-        # CORRECTION : Ne pas changer de destination si un pathfinding est en cours ou un chemin est suivi
         if self._is_unit_busy_with_pathfinding():
             return  # Attendre que le mouvement actuel se termine
         
         target_pos = self.target.position
         self.log_decision(f"Fonce vers {self.target.unit_type} -> ({int(target_pos[0])}, {int(target_pos[1])})")
         
-        # CORRECTION : Vérifier si pathfinding nécessaire même pendant l'attaque
-        # Si une île quantique bloque le chemin, la contourner !
+        # Si une île quantique bloque le chemin, la contourner
         # Respecter le cooldown pour éviter les recalculs constants
         if self.unit.need_pathfinding_to_target(target_pos):
             current_time = time.time()
@@ -621,7 +602,6 @@ class ChaloupeAI:
                 self.unit.start_pathfinding_thread(
                     lambda: self.unit.compute_path_to_target(target_pos)
                 )
-            # Sinon, ne rien faire et attendre que le pathfinding actuel se termine
         else:
             # Mouvement direct si chemin libre
             self.unit.move_directly_to_target(target_pos)
@@ -739,8 +719,6 @@ class ChaloupeAI:
     def _apply_qlearning_action(self, action: str, all_units):
         """Applique l'action suggérée par Q-Learning."""
         try:
-            # NE PAS INTERROMPRE les états critiques (STRIKE et RETREAT)
-            # Le Q-Learning doit influencer UNIQUEMENT pendant SEARCHING et POSITIONING
             if self.state in [ChaloupeState.STRIKE, ChaloupeState.RETREAT]:
                 self.log_decision(f"Q-Learning: Action {action} ignorée (état {self.state.value} prioritaire)")
                 return

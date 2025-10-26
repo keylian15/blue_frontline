@@ -222,11 +222,11 @@ def run_all_tests():
         test_stats_and_monitoring()
         
         elapsed = time.time() - start_time
-        print(f"🎉 TOUS LES TESTS RÉUSSIS en {elapsed:.2f}s")
+        print(f"TOUS LES TESTS RÉUSSIS en {elapsed:.2f}s")
         return True
         
     except Exception as e:
-        print(f"❌ ÉCHEC DES TESTS: {e}")
+        print(f"ÉCHEC DES TESTS: {e}")
         import traceback
         traceback.print_exc()
         return False
