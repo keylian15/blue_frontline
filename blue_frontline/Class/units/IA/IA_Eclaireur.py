@@ -260,27 +260,7 @@ def make_grid_adapter_from_simplegrid(grid: SimpleGrid) -> GridAdapter:
 # ---------------------------------------------------------------------------
 class ScoutAI:
     """
-    Cerveau de l'éclaireur:
-      - choisit une zone cachée (quantique_area_hidden)
-      - essaie A* pour l'approcher
-      - si A* échoue et que la zone est proche -> va tout droit vers la zone
-      - sinon -> PATROUILLE
-            * garde une direction persistante (wander_dir)
-            * avance droit devant
-            * si bloqué -> tourne sa direction et continue
-      - dès qu'une zone devient proche -> stop patrouille, va vers elle
-
-    L'unité doit fournir :
-        self.position : (x,y)
-        self.move_to_position((x,y))
-        self.stop()
-        self.team : "red"/"green"
-        self.target_position : (x,y) ou None
-
-    Game doit fournir :
-        get_hidden_quantum_polygons() -> liste zones cachées
-        get_base_position(team) -> (x,y)
-        nav_grid_adapter
+    IA d'éclaireur.
     """
 
     is_ia: bool = True  # convention
@@ -291,9 +271,11 @@ class ScoutAI:
         grid: GridAdapter,
         get_hidden_quantum_polygons: Callable[[], Sequence[object]],
         get_base_pos: Callable[[str], Vec2],
-        return_to_base_when_done: bool = True,
+        return_to_base_when_done: bool = False,   # <= on force à rester en patrouille
         replan_interval: float = 1.0,
         proximity_epsilon: float = 8.0,
+        world_width_px: float = 4096.0,
+        world_height_px: float = 4096.0,
     ) -> None:
         self.unit = unit
         self.grid = grid
@@ -302,6 +284,10 @@ class ScoutAI:
         self.return_to_base_when_done = return_to_base_when_done
         self.replan_interval = replan_interval
         self.proximity_epsilon = proximity_epsilon
+
+        # bornes monde pour clamp
+        self.world_w = float(world_width_px)
+        self.world_h = float(world_height_px)
 
         self.astar = AStar(
             grid.is_walkable,
@@ -322,18 +308,20 @@ class ScoutAI:
         self._last_debug_tick: float = 0.0
 
         # --- PATROUILLE DIRECTIONNELLE ---
-        # direction courante (vecteur unitaire environ)
-        # None = pas en mode patrouille
+        # direction persistante (dx,dy) normalisée environ, ou None si pas en patrouille
         self._wander_dir: Optional[Vec2] = None
 
-        # pour limiter la taille du segment qu'on pousse en patrouille
-        self._wander_step_dist: float = 600.0  # pixels devant
+        # distance "devant" pour poser un waypoint de patrouille
+        self._wander_step_dist: float = 600.0  # pixels
 
-        # anti blocage
+        # anti-blocage
         self._last_pos_for_block: Vec2 = self.unit.position
         self._block_timer: float = 0.0
         self._BLOCK_THRESHOLD_SEC = 1.0
-        self._BLOCK_MIN_MOVE = 5.0
+        self._BLOCK_MIN_MOVE = 5.0  # si on bouge < 5 px on considère pas de progrès
+
+        # petit timer pour éviter "je viens de poser un WP et je dis déjà que je suis arrivé"
+        self._just_assigned_wp_timer: float = 0.0
 
         self.enabled: bool = True
 
@@ -344,13 +332,16 @@ class ScoutAI:
         if not self.enabled:
             return
 
+        # timers internes
         self._accum += dt
         self._block_timer += dt
+        if self._just_assigned_wp_timer > 0.0:
+            self._just_assigned_wp_timer = max(0.0, self._just_assigned_wp_timer - dt)
 
-        # Avancer / donner les ordres movement vers le waypoint courant
+        # avancer vers le WP courant
         self._follow_waypoints(dt)
 
-        # Régulièrement (ou si pas de chemin) :
+        # replan régulier ou si on n'a plus de chemin
         need_plan = (self._accum >= self.replan_interval) or (not self._path_world)
         if need_plan:
             self._accum = 0.0
@@ -375,20 +366,19 @@ class ScoutAI:
             self.unit.stop()
 
     # ------------------------------------------------------------------
-    # PLANIFICATION / OBJECTIF
+    # PLANIF / OBJECTIF
     # ------------------------------------------------------------------
     def _ensure_objective_and_path(self) -> None:
         """
-        Choisit une cible globale:
-          - zone cachée la plus proche
-          - sinon base si tout est scouté
-        Puis essaie A*. Si A* pas possible:
-          - soit on va direct si la zone est proche
-          - soit on passe en mode patrouille dirigée
+        Choisit une cible (zone cachée la plus proche, sinon on CONTINUE LA PATROUILLE)
+        Puis essaie A*. Si A* échoue :
+           - si la cible est proche -> on va tout droit
+           - sinon -> patrouille
         """
+
         hidden = self.get_hidden_quantum_polygons()
 
-        # debug inventaire des zones cachées
+        # debug inventaire zones cachées
         if hidden:
             logger.info("ScoutAI DEBUG: %d zones cachées reçues par l'IA", len(hidden))
             for i, poly in enumerate(hidden):
@@ -396,61 +386,57 @@ class ScoutAI:
                 if c:
                     logger.info("  -> zone[%d] centroïde vu=(%.1f, %.1f)", i, c[0], c[1])
 
-        # Choisir la zone cachée la plus proche
+        # cible = zone cachée la plus proche
+        target: Optional[Vec2] = None
         if hidden:
             target = self._pick_best_hidden_zone(hidden)
-        else:
-            # aucune zone cachée => retour base ?
-            if self.return_to_base_when_done:
-                target = self.get_base_pos(getattr(self.unit, "team", "red"))
+
+        # S'il n'y a plus de zones cachées:
+        # ancien comportement = rentrer à la base.
+        # maintenant : NON, on reste en patrouille.
+        if target is None:
+            logger.info("ScoutAI: aucune zone cachée -> rester en patrouille.")
+            self.current_goal_world = None
+            # si on est déjà en patrouille, juste s'assurer qu'on a un WP
+            if self._wander_dir is None:
+                # lance patrouille si pas déjà dedans
+                self._enter_or_update_patrol()
             else:
-                target = None
+                # si pas de WP actif -> régénère
+                if not self._path_world:
+                    self._enter_or_update_patrol()
+            return
 
         self.current_goal_world = target
 
-        if target is None:
-            # plus rien à faire => stop
-            self._wander_dir = None
-            self._clear_path()
-            self.unit.stop()
-            return
-
-        # Essayons de créer un chemin A* local
+        # tenter de planifier un chemin local (A*)
         got_path = self._plan_local_path_to(target)
-
         if got_path:
-            # Puisqu'on a un vrai chemin A*, on n'est plus en patrouille libre
+            # on quitte le mode patrouille libre
             self._wander_dir = None
             return
 
-        # Pas de chemin A*!
-        # On regarde la distance jusqu'à la cible: proche -> direct tout droit
+        # pas de chemin A*
         ux, uy = self.unit.position
         tx, ty = target
         dist = math.hypot(tx - ux, ty - uy)
 
         if dist < 1200.0:
-            # mode "direct tout droit"
+            # "je fonce tout droit vers la cible"
             self._wander_dir = None
             self._path_world = [(tx, ty)]
+            self._just_assigned_wp_timer = 0.5
             logger.warning(
                 "ScoutAI: aucun chemin local vers (%.1f, %.1f) -> je vais TOUT DROIT (dist=%.1f).",
-                tx,
-                ty,
-                dist,
+                tx, ty, dist,
             )
             self._push_move_order_if_any()
             return
 
-        # Trop loin et pas de chemin => Patrouille directionnelle
+        # trop loin ET pas de chemin -> patrouille
         self._enter_or_update_patrol()
 
     def _compute_centroid_from_polygon_like(self, poly: object) -> Optional[Vec2]:
-        """
-        poly peut être:
-         - un objet shapely-like avec poly.centroid.x/y
-         - une liste de points [(x,y), ...]
-        """
         c = getattr(poly, "centroid", None)
         if c is not None and hasattr(c, "x") and hasattr(c, "y"):
             try:
@@ -476,10 +462,6 @@ class ScoutAI:
         return None
 
     def _pick_best_hidden_zone(self, hidden: Sequence[object]) -> Optional[Vec2]:
-        """
-        Choisit la zone cachée la plus proche du bateau
-        (distance euclidienne).
-        """
         ux, uy = self.unit.position
         best_goal: Optional[Vec2] = None
         best_d2: float = float("inf")
@@ -506,24 +488,16 @@ class ScoutAI:
         return best_goal
 
     # ------------------------------------------------------------------
-    # PATHFINDING LOCAL
+    # PATHFIND LOCAL
     # ------------------------------------------------------------------
     def _plan_local_path_to(self, world_goal: Vec2) -> bool:
-        """
-        Essaie d'obtenir un chemin A* entre la cellule courante
-        et la cellule but (ou proche du but).
-        Si trouvé:
-          - stocke les waypoints monde dans self._path_world
-          - envoie immédiatement un ordre de move_to_position()
-        Retourne True si succès.
-        """
         start_cell = self.grid.world_to_cell(self.unit.position)
         goal_cell = self.grid.world_to_cell(world_goal)
 
-        # Tentative directe
+        # tentative directe
         path_cells = self.astar.find_path(start_cell, goal_cell, max_expansions=1000)
 
-        # sinon on cherche une cellule 'atteignable' autour du but
+        # sinon chercher une cellule atteignable proche du but
         if not path_cells:
             alt_cell = self._find_reachable_cell_near(start_cell, goal_cell)
             if alt_cell is not None:
@@ -540,8 +514,9 @@ class ScoutAI:
             )
             return False
 
-        # conversion en waypoints monde
+        # convertit en points monde
         self._path_world = [self.grid.cell_to_world(c) for c in path_cells]
+
         if self._path_world:
             logger.info(
                 "ScoutAI: chemin LOCAL planifié (%d steps), 1er WP=(%.1f, %.1f)",
@@ -550,12 +525,12 @@ class ScoutAI:
                 self._path_world[0][1],
             )
 
-        # quitte le mode patrouille libre si on en avait un
+        # on n'est plus en patrouille aveugle
         self._wander_dir = None
 
-        # On pousse un move immédiat
+        # pousser le mouvement
+        self._just_assigned_wp_timer = 0.5
         self._push_move_order_if_any()
-
         return True
 
     def _find_reachable_cell_near(
@@ -564,18 +539,13 @@ class ScoutAI:
         goal_cell: Cell,
         search_radius_cells: int = 6,
     ) -> Optional[Cell]:
-        """
-        Si la cellule du but est injouable, on essaye autour.
-        On teste rapidement la faisabilité avec un A* limité.
-        """
+
         gx, gy = goal_cell
         candidates: List[Tuple[float, Cell]] = []
 
         for dx in range(-search_radius_cells, search_radius_cells + 1):
             for dy in range(-search_radius_cells, search_radius_cells + 1):
-                cx = gx + dx
-                cy = gy + dy
-                cand = (cx, cy)
+                cand = (gx + dx, gy + dy)
                 if not self.grid.is_walkable(cand):
                     continue
                 dist2 = dx * dx + dy * dy
@@ -598,27 +568,25 @@ class ScoutAI:
         return None
 
     # ------------------------------------------------------------------
-    # PATROUILLE DIRECTIONNELLE ("wander")
+    # PATROUILLE DIRECTIONNELLE
     # ------------------------------------------------------------------
     def _enter_or_update_patrol(self) -> None:
         """
-        Active / met à jour le mode patrouille dirigée.
-        - Si on n'a pas encore de direction => on en choisit une (aléatoire).
-        - On génère un seul waypoint loin devant dans cette direction.
-        - self._path_world = [ce waypoint]
+        Active / met à jour le mode patrouille.
+        - si pas encore de direction => on choisit une direction random
+        - on génère 1 waypoint devant nous dans cette direction
         """
-        # si pas encore de direction persistante, on en crée une
         if self._wander_dir is None:
             self._wander_dir = self._pick_new_wander_dir()
             logger.info(
-                "ScoutAI: patrouille activée. direction initiale = (%.2f, %.2f)",
+                "ScoutAI: patrouille activée. direction=(%.2f, %.2f)",
                 self._wander_dir[0],
                 self._wander_dir[1],
             )
 
-        # On pousse un waypoint "droit devant"
         wp = self._make_forward_waypoint(self._wander_dir)
         self._path_world = [wp]
+        self._just_assigned_wp_timer = 0.5
         logger.info(
             "ScoutAI: patrouille -> WP=(%.1f, %.1f) (1 step).",
             wp[0],
@@ -627,18 +595,10 @@ class ScoutAI:
         self._push_move_order_if_any()
 
     def _pick_new_wander_dir(self) -> Vec2:
-        """
-        Choisit une direction initiale pour la patrouille.
-        On part d'un angle aléatoire.
-        """
         ang = random.uniform(0.0, math.tau)
         return (math.cos(ang), math.sin(ang))
 
     def _rotate_wander_dir(self, cur: Vec2, max_angle_deg: float = 70.0) -> Vec2:
-        """
-        Quand on est bloqué, on change de cap en tournant la direction
-        actuelle d'un angle +/- max_angle_deg.
-        """
         (dx, dy) = cur
         base_ang = math.atan2(dy, dx)
         delta = math.radians(random.uniform(-max_angle_deg, max_angle_deg))
@@ -647,12 +607,14 @@ class ScoutAI:
 
     def _make_forward_waypoint(self, direction: Vec2) -> Vec2:
         """
-        Fabrique un waypoint à self._wander_step_dist pixels
-        dans 'direction' à partir de la position actuelle du bateau.
+        Génère un WP devant nous le long de `direction`,
+        clampé dans la carte, et en essayant de garder une cellule walkable.
         """
+
         ux, uy = self.unit.position
         dx, dy = direction
-        # normaliser un peu au cas où
+
+        # normalise
         n = math.hypot(dx, dy)
         if n < 1e-5:
             dx, dy = 1.0, 0.0
@@ -660,102 +622,193 @@ class ScoutAI:
         dx /= n
         dy /= n
 
-        return (
-            ux + dx * self._wander_step_dist,
-            uy + dy * self._wander_step_dist,
+        max_dist = self._wander_step_dist
+
+        def clamp_to_map(xf: float, yf: float) -> Tuple[float, float]:
+            cx = min(max(xf, 0.0), self.world_w - 1.0)
+            cy = min(max(yf, 0.0), self.world_h - 1.0)
+            return (cx, cy)
+
+        # distances qu'on essaye devant nous
+        for frac in (1.0, 0.7, 0.4, 0.2):
+            trial_x = ux + dx * (max_dist * frac)
+            trial_y = uy + dy * (max_dist * frac)
+
+            trial_x, trial_y = clamp_to_map(trial_x, trial_y)
+
+            cell = self.grid.world_to_cell((trial_x, trial_y))
+            if self.grid.is_walkable(cell):
+                return (trial_x, trial_y)
+
+        # fallback : rester sur place
+        return (ux, uy)
+
+    def _try_make_safe_patrol_wp(self, direction: Vec2) -> Optional[Vec2]:
+        """
+        Cherche un bon waypoint d'esquive après blocage.
+        """
+
+        ux, uy = self.unit.position
+        dx, dy = direction
+
+        # normalise
+        n = math.hypot(dx, dy)
+        if n < 1e-5:
+            return None
+        dx /= n
+        dy /= n
+
+        def clamp_to_map(xx: float, yy: float) -> Tuple[float, float]:
+            cx = min(max(xx, 0.0), self.world_w - 1.0)
+            cy = min(max(yy, 0.0), self.world_h - 1.0)
+            return (cx, cy)
+
+        # on teste plusieurs distances "courtes" pour contourner l'obstacle
+        for dist_try in (200.0, 350.0, 500.0):
+            tx = ux + dx * dist_try
+            ty = uy + dy * dist_try
+            tx, ty = clamp_to_map(tx, ty)
+
+            # éviter les points trop proches
+            if (tx - ux) ** 2 + (ty - uy) ** 2 < (50.0 ** 2):
+                continue
+
+            cell = self.grid.world_to_cell((tx, ty))
+            if self.grid.is_walkable(cell):
+                return (tx, ty)
+
+        return None
+
+    def _reorient_patrol_after_block(self) -> None:
+        """
+        Quand on est bloqué en patrouille :
+        - on tourne la direction
+        - on tente un waypoint safe
+        """
+
+        if self._wander_dir is None:
+            # si pour une raison quelconque on n'a pas de direction -> relance patrouille
+            self._enter_or_update_patrol()
+            return
+
+        # Essai 1 : petite rotation
+        for angle_deg in (70.0, 140.0, 210.0, 300.0):
+            new_dir = self._rotate_wander_dir(self._wander_dir, max_angle_deg=angle_deg)
+            wp = self._try_make_safe_patrol_wp(new_dir)
+            if wp is not None:
+                self._wander_dir = new_dir
+                self._path_world = [wp]
+                self._just_assigned_wp_timer = 0.5
+                logger.info(
+                    "ScoutAI: blocage -> nouvelle dir=(%.2f, %.2f), nouveau WP=(%.1f, %.1f)",
+                    self._wander_dir[0],
+                    self._wander_dir[1],
+                    wp[0],
+                    wp[1],
+                )
+                return
+
+        # si rien trouvé -> au moins rester dans la carte
+        wp_fallback = self._make_forward_waypoint(self._wander_dir)
+        self._path_world = [wp_fallback]
+        self._just_assigned_wp_timer = 0.5
+        logger.info(
+            "ScoutAI: blocage -> fallback patrouille WP=(%.1f, %.1f)",
+            wp_fallback[0],
+            wp_fallback[1],
         )
 
     # ------------------------------------------------------------------
     # SUIVI DES WAYPOINTS / ANTI-BLOCAGE
     # ------------------------------------------------------------------
     def _follow_waypoints(self, dt: float) -> None:
-        """
-        Chaque tick IA :
-        - si on est arrivé au WP courant -> on passe au suivant
-        - si bloqué depuis trop longtemps -> on skip le WP courant
-          et si on est en patrouille => on change de direction
-        - envoie les ordres move_to_position() continuellement
-        """
-
         if not self._path_world:
             return
 
-        # WP courant
         wx, wy = self._path_world[0]
         ux, uy = self.unit.position
 
-        # check si atteint
-        dist_sq = (ux - wx) ** 2 + (uy - wy) ** 2
-        if dist_sq <= (self.proximity_epsilon ** 2):
-            # WP atteint : on le consomme
-            self._path_world.pop(0)
-            self._after_waypoint_reached()
-            return
+        # 1) check arrivée (sauf juste après avoir posé le point)
+        if self._just_assigned_wp_timer <= 0.0:
+            dist_sq = (ux - wx) ** 2 + (uy - wy) ** 2
+            if dist_sq <= (self.proximity_epsilon ** 2):
+                self._path_world.pop(0)
+                self._after_waypoint_reached()
+                return
 
-        # pas encore atteint -> on pousse l'ordre de bouger vers ce WP
+        # 2) pousser ordre de mouvement
         self._push_move_order_if_any()
 
-        # anti-blocage
-        moved_dist = math.hypot(ux - self._last_pos_for_block[0], uy - self._last_pos_for_block[1])
-        if moved_dist > self._BLOCK_MIN_MOVE:
-            # ok on a bougé, reset timer blocage
+        # 3) détection de blocage
+        moved_dist = math.hypot(
+            ux - self._last_pos_for_block[0],
+            uy - self._last_pos_for_block[1],
+        )
+        has_progress = moved_dist > self._BLOCK_MIN_MOVE
+
+        close_but_not_entering = (
+            (ux - wx) ** 2 + (uy - wy) ** 2 < (64.0 ** 2)
+            and not has_progress
+        )
+
+        time_blocked_enough = (self._block_timer >= self._BLOCK_THRESHOLD_SEC)
+
+        if has_progress:
+            # reset blocage
             self._last_pos_for_block = (ux, uy)
             self._block_timer = 0.0
+            return
+
+        # pas de progrès -> on accumule le blocage
+        self._block_timer += dt
+
+        if not time_blocked_enough and not close_but_not_entering:
+            return  # pas encore déclaré bloqué
+
+        # BLOQUÉ
+        logger.warning(
+            "ScoutAI: unité bloquée sur WP (%.1f, %.1f) depuis %.2fs -> réorientation.",
+            wx,
+            wy,
+            self._block_timer,
+        )
+
+        # retire le WP actuel
+        if self._path_world:
+            self._path_world.pop(0)
+
+        # reset blocage
+        self._last_pos_for_block = (ux, uy)
+        self._block_timer = 0.0
+
+        # si on est en mode patrouille : on pivote pour contourner
+        if self._wander_dir is not None:
+            self._reorient_patrol_after_block()
         else:
-            # on n'a pas assez bougé
-            if self._block_timer >= self._BLOCK_THRESHOLD_SEC:
-                # considéré bloqué
-                logger.warning(
-                    "ScoutAI: unité bloquée sur WP (%.1f, %.1f), je skip ce waypoint.",
-                    wx,
-                    wy,
-                )
-                self._path_world.pop(0)
-                self._last_pos_for_block = (ux, uy)
-                self._block_timer = 0.0
+            # sinon juste stop temporairement
+            self.unit.stop()
 
-                # si on est en mode patrouille (wander_dir actif)
-                if self._wander_dir is not None:
-                    # tourne un peu la direction
-                    self._wander_dir = self._rotate_wander_dir(self._wander_dir)
-                    # nouveau waypoint droit devant
-                    new_wp = self._make_forward_waypoint(self._wander_dir)
-                    self._path_world = [new_wp]
-                    logger.info(
-                        "ScoutAI: réorientation patrouille -> nouvelle dir=(%.2f, %.2f), WP=(%.1f, %.1f)",
-                        self._wander_dir[0],
-                        self._wander_dir[1],
-                        new_wp[0],
-                        new_wp[1],
-                    )
-
-                # pousse le move sur le WP suivant (si il y en a encore)
-                self._push_move_order_if_any()
+        # pousse move sur le nouveau WP si dispo
+        self._push_move_order_if_any()
 
     def _after_waypoint_reached(self) -> None:
-        """
-        Appelé quand on vient d'atteindre un waypoint.
-        - Si on a encore d'autres waypoints (chemin A* long), on continue.
-        - Si on était en patrouille (wander_dir != None) et qu'on a bouffé
-          le seul waypoint de patrouille :
-            -> on regénère UN autre waypoint dans la même direction.
-        """
         ux, uy = self.unit.position
 
         # reset blocage pour le prochain segment
         self._last_pos_for_block = (ux, uy)
         self._block_timer = 0.0
 
-        # si on avait encore des waypoints (cas chemin A* long), basta :
         if self._path_world:
+            # encore des WPs (genre chemin A*)
             self._push_move_order_if_any()
             return
 
-        # plus de wp
+        # plus de WPs
         if self._wander_dir is not None:
-            # on continue d'avancer tout droit: nouveau WP
+            # on continue de patrouiller : génère un nouveau point droit devant
             wp = self._make_forward_waypoint(self._wander_dir)
             self._path_world = [wp]
+            self._just_assigned_wp_timer = 0.5
             logger.debug(
                 "ScoutAI: patrouille continue -> nouveau WP=(%.1f, %.1f)",
                 wp[0],
@@ -763,14 +816,9 @@ class ScoutAI:
             )
             self._push_move_order_if_any()
         else:
-            # pas en patrouille: stoppe
             self.unit.stop()
 
     def _push_move_order_if_any(self) -> None:
-        """
-        Donne un ordre move_to_position() vers le premier waypoint restant.
-        On évite le spam si la target_position actuelle est quasi identique.
-        """
         if not self._path_world:
             self.unit.stop()
             return
@@ -794,6 +842,87 @@ class ScoutAI:
     def _clear_path(self) -> None:
         self._path_world = []
         self.unit.stop()
+
+# =====================================================================
+# RUNTIME GLOBAL POUR LES ECLAIREURS
+# (Ces fonctions sont appelées depuis GameUpdater, mais restent définies
+#  ici pour isoler toute la logique IA dans le fichier de l'éclaireur)
+# =====================================================================
+def _rebuild_nav_if_needed(game: "Game") -> None:
+    """
+    Met à jour les obstacles + nav_grid SEULEMENT si nécessaire
+    (ex: changement de marée).
+
+    On fait ça ici (dans l'IA éclaireur) pour éviter de toucher
+    au moteur global et de casser les autres unités.
+    """
+    hud = getattr(game, "hud", None)
+    if hud is None or not hasattr(hud, "timer"):
+        return
+
+    timer = hud.timer
+
+    # si rien n'a changé, on ne touche à rien
+    if not getattr(timer, "maree_changed", False):
+        return
+
+    # sinon on met à jour les obstacles et la grille de nav
+    if hasattr(game, "setObstacles"):
+        game.setObstacles()
+
+    if hasattr(game, "build_nav_grid"):
+        game.build_nav_grid()
+
+    # très important : reset pour ne pas rebuild chaque frame
+    timer.maree_changed = False
+
+
+def update_all_scout_ai(game, dt: float):
+    """
+    Met à jour toutes les IA d'éclaireurs du jeu pour cette frame.
+
+    - Rebuild la nav_grid si la marée a changé (donc obstacles changent)
+    - Appelle ia_tick(dt) UNIQUEMENT pour les unités qui sont des éclaireurs
+      et qui utilisent ScoutAI.
+
+    Args:
+        game: instance de Game
+        dt (float): delta time
+    """
+
+    # 1. mettre à jour la grille nav si besoin
+    _rebuild_nav_if_needed(game)
+
+    # 2. mettre à jour SEULEMENT les éclaireurs
+    for unit in list(game.units):
+        # ignorer les unités mortes
+        if not getattr(unit, "is_alive", True):
+            continue
+
+        # on veut seulement nos éclaireurs
+        if getattr(unit, "type", None) != "eclaireur":
+            continue
+
+        ai_controller = getattr(unit, "ai", None)
+        if ai_controller is None:
+            continue
+
+        # l'IA doit respecter la convention d'équipe :
+        #   - ai.is_ia == True
+        #   - ai.ia_tick(dt)
+        if not getattr(ai_controller, "is_ia", False):
+            continue
+        if not hasattr(ai_controller, "ia_tick"):
+            continue
+
+        try:
+            ai_controller.ia_tick(dt)
+        except Exception as e:
+            ux, uy = getattr(unit, "position", (None, None))
+            logger.error(
+                "Erreur ia_tick sur %s (pos=%s,%s) : %s",
+                unit, ux, uy, e
+            )
 
 
 # ---------------------------------------------------------------------------

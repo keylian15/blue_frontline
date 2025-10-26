@@ -1,6 +1,6 @@
 import logging
-
 import pyscroll
+from Class.units.IA.IA_Eclaireur import update_all_scout_ai
 
 LOGGER_AI = logging.getLogger("EclaireurAI")
 
@@ -20,7 +20,7 @@ class GameUpdater:
         Met à jour tous les systèmes du jeu grâce à la partie en cours.
 
         Args:
-            dt (float): La différence de temps entre chaque frame.
+            dt (float): Delta time frame.
             game (Game): Référence au jeu.
         """
 
@@ -30,7 +30,7 @@ class GameUpdater:
         # 2. Caméra
         self.game.camera.update()
 
-        # 3. Audio (position listener dépend de la caméra donc après update caméra)
+        # 3. Audio (listener = caméra donc après update caméra)
         try:
             if hasattr(self.game, "sound") and self.game.sound:
                 self.game.sound.update()
@@ -44,35 +44,7 @@ class GameUpdater:
         # 5. Sync combat_system <-> unités (ajouter nouvelles unités vivantes)
         self.sync_units_with_combat_system()
 
-        # 6. Marée : si elle a changé on doit :
-        #    - mettre à jour les collisions
-        #    - rebuild la nav_grid_adapter
-        #    - recoller cette nouvelle grille dans les IA actives
-        if hasattr(self.game.hud, "timer") and self.game.hud.timer.maree_changed:
-            # Recalcule obstacles (zones navigables vs zones bloquées)
-            self.game.setObstacles()
-
-            # Reconstruit la grille de navigation A*
-            self.game.build_nav_grid()
-
-            # IMPORTANT :
-            # on met à jour la grid que les IA utilisent,
-            # sinon elles continueront à calculer avec l'ancienne carte
-            if hasattr(self.game, "nav_grid_adapter"):
-                for u in self.game.units:
-                    if hasattr(u, "ai") and u.ai is not None:
-                        try:
-                            u.ai.grid = self.game.nav_grid_adapter
-                            # si l'astar interne dépend de grid, on le regénère
-                            if hasattr(u.ai, "astar"):
-                                u.ai.astar = u.ai._make_astar_from_grid()
-                        except Exception as e:
-                            LOGGER_AI.warning(
-                                "Impossible de réinjecter la nouvelle grille nav dans %s : %s",
-                                u, e
-                            )
-
-        # 7. Mise à jour des unités + IA
+        # 6. Mettre à jour les unités (déplacement, tir, collisions, HUD...)
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
 
         for unit in self.game.units:
@@ -89,27 +61,9 @@ class GameUpdater:
             if hasattr(unit, "is_selected"):
                 unit.is_selected = (unit == self.game.selected_unit)
 
-            # --- IA ---
-            # Convention du projet:
-            # - unit.ai existe
-            # - unit.ai.is_ia == True
-            # - unit.ai.ia_tick(dt) doit être appelée CHAQUE frame
-            if hasattr(unit, "ai") and unit.ai is not None:
-                ai_controller = unit.ai
-                if getattr(ai_controller, "is_ia", False):
-                    try:
-                        ai_controller.ia_tick(dt)
-                    except Exception as e:
-                        # on log mais on ne casse pas la boucle de jeu
-                        try:
-                            ux, uy = getattr(unit, "position", (None, None))
-                        except Exception:
-                            ux, uy = (None, None)
-
-                        LOGGER_AI.error(
-                            "Erreur ia_tick sur %s (pos=%s,%s) : %s",
-                            unit, ux, uy, e
-                        )
+        # 7. Mettre à jour l'IA des éclaireurs UNIQUEMENT
+        # (gère aussi le rebuild nav_grid en cas de marée)
+        update_all_scout_ai(self.game, dt)
 
         # 8. Combat system (verrouillage / tir / dégâts / mort)
         if hasattr(self.game, "combat_system"):
