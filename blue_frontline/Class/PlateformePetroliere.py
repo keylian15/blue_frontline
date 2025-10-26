@@ -91,6 +91,26 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                     if hasattr(target, 'take_damage'):
                         target.take_damage(self.damage, killer=self)
                 self.last_shot_time = current_time
+
+        # === Partie IA ===
+        if self.is_ia:
+            self.ia_update()                    # On met a jour les données de l'IA
+            if self.ia_check_wait():            # Si on doit attendre
+                return
+            # On note le scénario courant s'il existe.
+            if self.current_scenario:
+                scenario = self.current_scenario
+            else:
+                self.ia_scenarios()                 # On applique les scenarios de l'IA
+                scenario = self.ia_get_scenario()   # On récupére le scénario de l'IA
+                self.current_scenario = scenario    # On note le scénario courant
+
+            # On fait le scénario de l'IA
+            self.ia_do_scenario(scenario)
+
+            # Si le scénario est terminé ou a échoué, on le remet à None
+            if self.wait is False:
+                self.current_scenario = None
         
     def take_damage(self, damage: int , killer: str = None):
         """Inflige des dégâts à la plateforme.
