@@ -12,8 +12,10 @@ from Class.Petrole import Petrole
 from Class.Piece import Piece
 from Class.Timer import Timer
 from Class.units import Unit
-from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
+from Class.units.IA.IA_Eclaireur import SimpleGrid, make_grid_adapter_from_simplegrid
+from Utils import point_in_many_polygons
+
 
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
@@ -63,7 +65,7 @@ class Game :
         self.initializer.init_game_systems()
         self.initializer.init_ui()
         self.initializer.init_sound()
-
+        
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
         
@@ -96,6 +98,7 @@ class Game :
         # Zone quantiques
         self.quantique_area_name = []
         self.setQuantiqueArea()
+        self.build_nav_grid()
 
     # --- Utilitaire audio: notification post-quantique (ne change pas la logique de génération) ---
     def notify_quantum_audio(self):
@@ -226,7 +229,7 @@ class Game :
             distance = math.sqrt((unit.position[0] - world_x) ** 2 + (unit.position[1] - world_y) ** 2)
 
             # Tolérance différente si c’est une plateforme
-            tolerance = 60 if getattr(unit, 'is_platform', False) else 40
+            tolerance = 40 if getattr(unit, 'is_platform', False) else 20
 
             # Vérifie si l'unité est dans la zone de tolérance et plus proche
             if distance <= tolerance and distance < min_distance:
@@ -254,6 +257,78 @@ class Game :
                 self.selected_unit = unit
         else:
             self.selected_unit = None
+
+    def build_nav_grid(self):
+        """
+        Construit/actualise la grille de navigation IA (A*).
+            Remplit:
+                self.nav_grid_raw      : SimpleGrid (walkable + coûts)
+                self.nav_grid_adapter  : GridAdapter prêt pour ScoutAI
+        """
+
+        tile_size = 32  # adapte si vos tiles sont différentes
+        width_in_cells = self.map_width // tile_size
+        height_in_cells = self.map_height // tile_size
+
+        grid = SimpleGrid(width_in_cells, height_in_cells, cell_size=tile_size)
+
+        for cx in range(width_in_cells):
+            for cy in range(height_in_cells):
+                world_x = cx * tile_size + tile_size * 0.5
+                world_y = cy * tile_size + tile_size * 0.5
+                p = (world_x, world_y)
+
+                walkable = True
+                cost = 1.0
+
+                # 1. Si c'est un rocher / île / terre ferme => interdit
+                if point_in_many_polygons(self.obstacles, p):
+                    walkable = False
+
+                else:
+                    # 2. Eau peu profonde = navigable mais lent
+                    if point_in_many_polygons(self.eau_peu_profondes, p):
+                        cost = 2.0
+                    else:
+                        cost = 1.0
+
+                    # 3. Zone quantique cachée:
+                    #    -> DOIT rester traversable car l'éclaireur doit aller dedans.
+                    #    On pourrait même la rendre "prioritaire" en baissant le coût.
+                    if point_in_many_polygons(self.quantique_area_hidden, p):
+                        # On encourage l'IA à y aller, coût un peu plus bas.
+                        cost = 0.5
+
+                grid.walkable[cx][cy] = walkable
+                grid.costs[cx][cy] = cost
+
+        self.nav_grid_raw = grid
+        self.nav_grid_adapter = make_grid_adapter_from_simplegrid(grid)
+
+    def get_hidden_quantum_polygons(self):
+        """
+        Renvoie les polygones des zones quantiques NON révélées.
+        -> Ça correspond à ce que l'Éclaireur doit aller découvrir.
+        """
+        return self.quantique_area_hidden
+
+    def get_base_position(self, team: str):
+        """
+        Renvoie la position vers laquelle l'unité doit rentrer à la fin.
+        On utilise les plateformes pétrolières comme 'base'.
+
+        team : "red" ou "green"
+        """
+        # Les plateformes sont construites dans GameInitializer.init_game_systems()
+        # et stockées dans self.plateformes = {"red": plateforme_rouge, "green": plateforme_verte}
+        plateforme = self.plateformes.get(team)
+        if plateforme is None:
+            # fallback : si jamais l'équipe n'existe pas, on renvoie juste la rouge
+            plateforme = self.plateformes.get("red")
+
+        # PlateformePetroliere a déjà self.position = [x, y]
+        return (plateforme.position[0], plateforme.position[1])
+
 
     def on_platform_destroyed(self, platform: PlateformePetroliere):
         """Appelé quand une plateforme pétrolière est détruite.
@@ -373,6 +448,7 @@ class Game :
         self.input_manager.game = game
         self.renderer.game = game
         self.combat_system.game = game
+        self.overlay_menu.game = game
         
         # S'assurer que les unités sont dans le nouveau groupe
         if hasattr(self, 'units') and self.units:

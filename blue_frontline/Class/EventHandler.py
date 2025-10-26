@@ -77,7 +77,14 @@ class EventHandler:
         
         if event.key == pygame.K_ESCAPE:
             options_menu = OptionsMenu(self.game.screen)
-            options_menu.run()
+            retour = options_menu.run()
+            if type(retour) == tuple and len(retour) == 2:
+                changed, new_gameplay_settings = retour
+                if changed:
+                    # Appliquer les nouveaux paramètres de gameplay au jeu
+                    from Global import set_gameplay_setting
+                    set_gameplay_setting(new_gameplay_settings)
+            
             return True
 
         # Entrée via le HUD (bandeau bas) pour spawn l'unité sélectionnée (coût géré dans Game.spawn_unit)
@@ -94,63 +101,11 @@ class EventHandler:
             cost = UNIT_CONFIGS.get(config_key, {}).get('cost')
             if not cost:
                 return
-            
-            def succes():
-                """Fonction interne pour gérer les succès liés aux unités créées."""
-
-                # Suivre les statistiques pour les succès
-                if self.game.achievements_system:
-                    self.game.achievements_system.track_unit_created(config_key, cost)
-                    # Mettre à jour le nombre maximum d'unités vivantes
-                    alive_units = len([u for u in self.game.units if u.is_alive and hasattr(u, 'unit_type')])
-                    self.game.achievements_system.update_max_units_alive(alive_units)
-                
-                # Marquer le type d'unité comme créé dans cette partie
-                self.game.units_created_this_game.add(config_key)
-
-            # S'il n'y a pas assez de pétrole.
-            if team_key == "red"  :
-                if self.game.hud.petrole_red.count < cost:
-                    return None
-                else : 
-                    self.game.hud.petrole_red.count -= cost
-                    succes()
-            else : 
-                if self.game.hud.petrole_green.count < cost: 
-                    return None
-                else :
-                    self.game.hud.petrole_green.count -= cost
-                    succes()
-            
-            # Créer l'unité
-            # Mapping type + équipe -> classe
-            class_map = {
-                'chaloupe': {'red': ChaloupeRouge, 'green': ChaloupeVerte},
-                'bateau': {'red': BateauRouge, 'green': BateauVert},
-                'paquebot': {'red': PaquebotRouge, 'green': PaquebotVert},
-                'eclaireur': {'red': EclaireurRouge, 'green': EclaireurVert},
-                'sousmarin': {'red': SousMarinRouge, 'green': SousMarinVert},
-                'pompe_petroliere': {'red': PompePetroliereRouge, 'green': PompePetroliereVert},
-            }
-            unit_class = class_map.get(config_key)[team_key]
-            
-            # On instancie l'unité
-            unit = unit_class(self.game)
-            
-            if config_key == "pompe_petroliere" :
-                if team_key == "red" : 
-                    self.game.nbPompePetroliereRouge += 1
-                else : 
-                    self.game.nbPompePetroliereVert += 1
-            
-            # Ajouter au système de combat et au groupe de sprites
-            self.game.combat_system.add_unit(unit)
-            self.game.units.append(unit)
-            self.game.group.add(unit)
-            
-            # On envoi la map a toutes les instances
-            self.game.refresh_all_references(self.game)
-            return True
+            if self.check_cost(team_key, cost):
+                self.apply_cost(config_key, team_key, cost)
+                from Global import GAMEPLAY_SETTINGS
+                self.spawn_unit(config_key, team_key, GAMEPLAY_SETTINGS["AI_ACTIVATION"][config_key.capitalize()])
+                return True
 
         # Volume
         if event.key == get_action_key("VOLUME_UP"):
@@ -184,6 +139,7 @@ class EventHandler:
             # Changer d'équipe dans le HUD:
             self.game.hud.toggle_popup_team()
             self.game.hud.switch_team()
+            self.game.overlay_menu.switch_team()
             return True
         
         # === COMMANDES DEBUG Q-LEARNING ===
@@ -306,6 +262,9 @@ class EventHandler:
         state_text = "activé" if new_state else "désactivé"
         print(f"[Visual Debug] Debug visuel {state_text} pour {debug_count} chaloupes")
         
+        if event.key == pygame.K_m : 
+            self.game.plateformes["red"].ia_save_log()
+            self.game.plateformes["green"].ia_save_log()
         return True
     
     def handle_mouse_events(self, event: pygame.event):
@@ -319,6 +278,9 @@ class EventHandler:
         if self.game.game_won and event.button == 1:
             self.game.handle_victory_click(pygame.mouse.get_pos())
             return
+        
+        # Gérer les clics sur le menu superposé
+        self.game.overlay_menu.handle_event(event)
         
         # Clic gauche
         if event.button == get_action_key("SELECT_MOVE"):  # Clic gauche
@@ -390,3 +352,96 @@ class EventHandler:
         world_y = camera_center[1] + offset_y
         
         return world_x, world_y
+    
+    def check_cost(self, team_key: str, cost: int ):
+        """Fonction permettant de vérifier le coût d'une unité.
+        
+        Args:
+            team_key (str): Clé de l'équipe.
+            cost (int): Coût de l'unité.
+        
+        Returns:
+            bool: True si le coût est valide, False sinon.
+        """
+        
+        # S'il n'y a pas assez de pétrole.
+        if team_key == "red"  :
+            if self.game.hud.petrole_red.count < cost:
+                return False
+            else : 
+                # self.game.hud.petrole_red.count -= cost
+                # succes()
+                return True
+        else : 
+            if self.game.hud.petrole_green.count < cost: 
+                return False
+            else :
+                # self.game.hud.petrole_green.count -= cost
+                # succes()
+                return True
+        
+    def apply_cost(self, config_key: str, team_key: str, cost:int):
+        """Applique le coût de l'unité.
+
+        Args:
+            config_key (str): Clé de configuration de l'unité.
+            team_key (str): Clé de l'équipe.
+            cost (int): Coût de l'unité.
+        """
+        
+        def succes():
+            """Fonction interne pour gérer les succès liés aux unités créées."""
+
+            # Suivre les statistiques pour les succès
+            if self.game.achievements_system:
+                self.game.achievements_system.track_unit_created(config_key, cost)
+                # Mettre à jour le nombre maximum d'unités vivantes
+                alive_units = len([u for u in self.game.units if u.is_alive and hasattr(u, 'unit_type')])
+                self.game.achievements_system.update_max_units_alive(alive_units)
+            
+            # Marquer le type d'unité comme créé dans cette partie
+            self.game.units_created_this_game.add(config_key)
+
+        if team_key == "red"  :
+            self.game.hud.petrole_red.count -= cost
+        else : 
+            self.game.hud.petrole_green.count -= cost
+        succes()
+
+    def spawn_unit(self, config_key: str, team_key: str, is_ia: bool = True):
+        """Génère une unité.
+
+        Args:
+            config_key (str): Clé de configuration de l'unité.
+            team_key (str): Clé de l'équipe.
+        """
+    
+        # Créer l'unité
+        # Mapping type + équipe -> classe
+        class_map = {
+            'chaloupe': {'red': ChaloupeRouge, 'green': ChaloupeVerte},
+            'bateau': {'red': BateauRouge, 'green': BateauVert},
+            'paquebot': {'red': PaquebotRouge, 'green': PaquebotVert},
+            'eclaireur': {'red': EclaireurRouge, 'green': EclaireurVert},
+            'sousmarin': {'red': SousMarinRouge, 'green': SousMarinVert},
+            'pompe_petroliere': {'red': PompePetroliereRouge, 'green': PompePetroliereVert},
+        }
+        unit_class = class_map.get(config_key)[team_key]
+        
+        # On instancie l'unité
+        unit = unit_class(self.game)
+        
+        if config_key == "pompe_petroliere" :
+            if team_key == "red" : 
+                self.game.nbPompePetroliereRouge += 1
+            else : 
+                self.game.nbPompePetroliereVert += 1
+        
+        # Ajouter au système de combat et au groupe de sprites
+        self.game.combat_system.add_unit(unit)
+        self.game.units.append(unit)
+        self.game.group.add(unit)
+        
+        # On envoi la map a toutes les instances
+        self.game.refresh_all_references(self.game)
+        return True

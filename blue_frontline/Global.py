@@ -1,15 +1,20 @@
 # Fichier des variables globales (Chemin, variables, etc.)
 import json
-import os, pygame
-from Utils import resource_path, user_data_path  
+import os
+import pygame
+from Utils import resource_path, user_data_path
 
 # Chemin du dossier courant
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# === Temps === 
+# === Temps ===
 FPS = 60
-TIME_STEP = 1000 # en ms => 1 seconde
+TIME_STEP = 1000  # en ms => 1 seconde
 TIME_MAREE = 180
+
+# === Économie ===
+PIECE_PER_KILL = 1
+OIL_PER_SECOND = 1
 
 # === Achivements ===
 ACHIVEMENTS_PATH = user_data_path("data/achievements.json")
@@ -20,10 +25,11 @@ TIME_SPEEDS = [1, 2, 4, 8, 10, 20, 0.5]
 # === MAP ===
 MAP_PATH = resource_path("map.tmx")
 ISLAND_TILESET_PATH = resource_path('assets/island/png/island_spritesheet.png')
-DEEP_WATER_TILESET_PATH = resource_path('assets/deep_water/png/deep_water_spritesheet.png')
+DEEP_WATER_TILESET_PATH = resource_path(
+    'assets/deep_water/png/deep_water_spritesheet.png')
 WATER_TILESET_PATH = resource_path('assets/water/png/water_spritesheet.png')
 
-# === HUD === 
+# === HUD ===
 PIECE_IMAGE_PATH = resource_path('assets/HUD/piece.png')
 PETROLE_IMAGE_PATH = resource_path('assets/HUD/petrole.png')
 MAREE_HAUTE_IMAGE_PATH = resource_path('assets/HUD/maree_haute.png')
@@ -47,49 +53,60 @@ MASTER_VOL_STEP = 0.1
 
 # === SONS – nouveau système spatial ===
 # Musique / beds / one-shots / drops (tout en .mp3)
-MUSIC_GAME           = resource_path('blue_frontline_sounds/son_jeu.mp3')             # musique de fond
-ISLAND_BED           = resource_path('blue_frontline_sounds/son_iles.mp3')            # ambiance îles "normales" (bed)
-SEA_BED              = resource_path('blue_frontline_sounds/sea-waves-169411.mp3')    # ambiance mer (bed)
-BASE_BED             = resource_path('blue_frontline_sounds/son_base.mp3')            # son court base (one-shot ~3s)
-APPARITION_QUANTIQUE = resource_path('blue_frontline_sounds/apparition_ile_quantique.mp3')
-DROP_MINE          = resource_path('blue_frontline_sounds/drop_mine.mp3')
-DROP_COIN          = resource_path('blue_frontline_sounds/drop_coin.mp3')
-EXPLOSION_MINE     = resource_path('blue_frontline_sounds/explosion_mine.mp3')
-DROP_ECLAIREURS    = resource_path('blue_frontline_sounds/drop_eclaireurs.mp3')
+MUSIC_GAME = resource_path(
+    'blue_frontline_sounds/son_jeu.mp3')             # musique de fond
+# ambiance îles "normales" (bed)
+ISLAND_BED = resource_path('blue_frontline_sounds/son_iles.mp3')
+# ambiance mer (bed)
+SEA_BED = resource_path('blue_frontline_sounds/sea-waves-169411.mp3')
+# son court base (one-shot ~3s)
+BASE_BED = resource_path('blue_frontline_sounds/son_base.mp3')
+APPARITION_QUANTIQUE = resource_path(
+    'blue_frontline_sounds/apparition_ile_quantique.mp3')
+DROP_MINE = resource_path('blue_frontline_sounds/drop_mine.mp3')
+DROP_COIN = resource_path('blue_frontline_sounds/drop_coin.mp3')
+EXPLOSION_MINE = resource_path('blue_frontline_sounds/explosion_mine.mp3')
+DROP_ECLAIREURS = resource_path('blue_frontline_sounds/drop_eclaireurs.mp3')
 
 # Drops unités
-DROP_CHALOUPe        = resource_path('blue_frontline_sounds/drop_chaloupe.mp3')       # (nom d'origine conservé)
-DROP_CHALOUPE        = DROP_CHALOUPe                                                  # alias propre, pour compatibilité
-DROP_BATEAU          = resource_path('blue_frontline_sounds/drop_bateau.mp3')
-DROP_PAQUEBOT        = resource_path('blue_frontline_sounds/drop_paquebot.mp3')
-DROP_SOUSMARIN       = resource_path('blue_frontline_sounds/drop_sous_marin.mp3')
+# (nom d'origine conservé)
+DROP_CHALOUPe = resource_path('blue_frontline_sounds/drop_chaloupe.mp3')
+# alias propre, pour compatibilité
+DROP_CHALOUPE = DROP_CHALOUPe
+DROP_BATEAU = resource_path('blue_frontline_sounds/drop_bateau.mp3')
+DROP_PAQUEBOT = resource_path('blue_frontline_sounds/drop_paquebot.mp3')
+DROP_SOUSMARIN = resource_path('blue_frontline_sounds/drop_sous_marin.mp3')
 
 # Volumes (0.0–1.0)
-VOL_MUSIC  = VOLUME_SOUND  # volume nominal de la musique (capé par la règle zoom -> 0)
+# volume nominal de la musique (capé par la règle zoom -> 0)
+VOL_MUSIC = VOLUME_SOUND
 VOL_ISLAND = 0.8
-VOL_BASE   = 0.8
-VOL_SEA    = 0.2
-VOL_DROPS  = 0.8
+VOL_BASE = 0.8
+VOL_SEA = 0.2
+VOL_DROPS = 0.8
 
 # === MIXAGE CONTEXTUEL / COMPORTEMENTS ===
 # La musique est gérée dans Sound.py pour faire : 0% zoom -> 90% ; 100% zoom -> 0%
-SEA_ON_ISLAND_FACTOR   = 0.0     # part de mer qui reste quand on est sur une île/base (0.0 = coupée)
-ISLAND_BASE_CURVE      = "smooth" # "linear" ou "smooth" (smoothstep) pour la montée/descente de focus
+# part de mer qui reste quand on est sur une île/base (0.0 = coupée)
+SEA_ON_ISLAND_FACTOR = 0.0
+# "linear" ou "smooth" (smoothstep) pour la montée/descente de focus
+ISLAND_BASE_CURVE = "smooth"
 
 # Zones d'influence (agrandies)
-FOCUS_RADIUS_MULT      = 1.6     # >1.0 = la "bulle" d'influence des ÎLES est plus large
+FOCUS_RADIUS_MULT = 1.6     # >1.0 = la "bulle" d'influence des ÎLES est plus large
 BASE_FOCUS_RADIUS_MULT = 1.6     # idem pour les BASES
 
 # Déclenchement du one-shot de BASE
-BASE_TRIGGER_THRESHOLD = 0.5     # 0..1 : seuil de focus où on déclenche le son de base
-BASE_COOLDOWN_MS       = 2500    # anti-spam : temps mini entre 2 déclenchements
-BASE_ONE_SHOT_VOL      = 0.9     # volume de base pour le one-shot (avant pan)
+# 0..1 : seuil de focus où on déclenche le son de base
+BASE_TRIGGER_THRESHOLD = 0.5
+BASE_COOLDOWN_MS = 2500    # anti-spam : temps mini entre 2 déclenchements
+BASE_ONE_SHOT_VOL = 0.9     # volume de base pour le one-shot (avant pan)
 
 # Les images de mapping font 512 pixels par 512 pixels
 # Chaque tuile fait 32 pixels par 32 pixels
 # Nous avons laissé de la place pour d'autres tuiles au cas ou.
 # Pour le mapping se referer au fichier "tile_bitmask.xlsx"
-MAPPING = {    
+MAPPING = {
     "corner_top_left": 0,
     "edge_top": 1,
     "corner_top_right": 2,
@@ -102,7 +119,7 @@ MAPPING = {
     "missing_corner_top_right": 9,
     # Passage a la ligne 2
     "edge_left": 16,
-    "full" : 17,
+    "full": 17,
     "edge_right": 18,
     "edge_vertical": 19,
     "d_shape_top_left": 20,
@@ -130,7 +147,7 @@ MAPPING = {
     "edge_top_corner_bottom_right": 55,
     "edge_left_corner": 56,
     "edge_top_corner": 57,
-    # Passage a la ligne 5  
+    # Passage a la ligne 5
     "l_shape_top_right": 64,
     "l_shape_top_left": 65,
     "t_shape_top": 66,
@@ -147,58 +164,59 @@ MAPPING = {
 MASK_MAPPING = {
     # Centre (aucun voisin de transition)
     0: MAPPING["full"],
-    128 : MAPPING["l_shape_bottom_right"],
-    64 : MAPPING["l_shape_bottom_left"],
-    64 + 128 : MAPPING["t_shape_bottom"],
-    32 : MAPPING["l_shape_top_right"],
-    32 + 128 : MAPPING["t_shape_right"],
-    32 + 64 : MAPPING["d_shape_top_left"],
-    32 + 64 + 128 : MAPPING["missing_corner_top_left"],
-    16 : MAPPING["l_shape_top_left"],
-    16 + 128 : MAPPING["d_shape_top_right"],
-    16 + 64 : MAPPING["t_shape_left"],
-    16 + 64 + 128 : MAPPING["missing_corner_top_right"],
-    16 + 32 : MAPPING["t_shape_top"],
-    16 + 32 + 128 : MAPPING["missing_corner_bottom_left"],
-    16 + 32 + 64 : MAPPING["missing_corner_bottom_right"],
-    16 + 32 + 64 + 128 : MAPPING["les_avengers"],
+    128: MAPPING["l_shape_bottom_right"],
+    64: MAPPING["l_shape_bottom_left"],
+    64 + 128: MAPPING["t_shape_bottom"],
+    32: MAPPING["l_shape_top_right"],
+    32 + 128: MAPPING["t_shape_right"],
+    32 + 64: MAPPING["d_shape_top_left"],
+    32 + 64 + 128: MAPPING["missing_corner_top_left"],
+    16: MAPPING["l_shape_top_left"],
+    16 + 128: MAPPING["d_shape_top_right"],
+    16 + 64: MAPPING["t_shape_left"],
+    16 + 64 + 128: MAPPING["missing_corner_top_right"],
+    16 + 32: MAPPING["t_shape_top"],
+    16 + 32 + 128: MAPPING["missing_corner_bottom_left"],
+    16 + 32 + 64: MAPPING["missing_corner_bottom_right"],
+    16 + 32 + 64 + 128: MAPPING["les_avengers"],
     8: MAPPING["edge_left"],
-    8 + 128 : MAPPING["edge_left_corner_bottom_right"],
-    8 + 32 : MAPPING["edge_left_corner_top_right"],
-    8 + 32 + 128 : MAPPING["edge_left_corner"],
+    8 + 128: MAPPING["edge_left_corner_bottom_right"],
+    8 + 32: MAPPING["edge_left_corner_top_right"],
+    8 + 32 + 128: MAPPING["edge_left_corner"],
     4: MAPPING["edge_bottom"],
-    4 + 32 : MAPPING["edge_bottom_corner_top_right"],
-    4 + 16 : MAPPING["edge_bottom_corner_top_left"],
-    4 + 16 + 32 : MAPPING["edge_bottom_corner"],
-    4 + 8 : MAPPING["corner_bottom_left"],
-    4 + 8 + 32 : MAPPING["corner_bottom_left_l_shape_top_right"],
+    4 + 32: MAPPING["edge_bottom_corner_top_right"],
+    4 + 16: MAPPING["edge_bottom_corner_top_left"],
+    4 + 16 + 32: MAPPING["edge_bottom_corner"],
+    4 + 8: MAPPING["corner_bottom_left"],
+    4 + 8 + 32: MAPPING["corner_bottom_left_l_shape_top_right"],
     2: MAPPING["edge_right"],
-    2 + 64 : MAPPING["edge_right_corner_bottom_left"],
-    2 + 16 : MAPPING["edge_right_corner_top_left"],
-    2 + 16 + 64 : MAPPING["edge_right_corner"],
-    2 + 8 : MAPPING["edge_vertical"],
-    2 + 4 : MAPPING["corner_bottom_right"],
-    2 + 4 + 16 : MAPPING["corner_bottom_right_l_shape_top_left"],
-    2 + 4 + 8 : MAPPING["end_bottom"],
+    2 + 64: MAPPING["edge_right_corner_bottom_left"],
+    2 + 16: MAPPING["edge_right_corner_top_left"],
+    2 + 16 + 64: MAPPING["edge_right_corner"],
+    2 + 8: MAPPING["edge_vertical"],
+    2 + 4: MAPPING["corner_bottom_right"],
+    2 + 4 + 16: MAPPING["corner_bottom_right_l_shape_top_left"],
+    2 + 4 + 8: MAPPING["end_bottom"],
     1: MAPPING["edge_top"],
-    1 + 128 : MAPPING["edge_top_corner_bottom_right"],
-    1 + 64 : MAPPING["edge_top_corner_bottom_left"],
-    1 + 64 + 128 : MAPPING["edge_top_corner"],
+    1 + 128: MAPPING["edge_top_corner_bottom_right"],
+    1 + 64: MAPPING["edge_top_corner_bottom_left"],
+    1 + 64 + 128: MAPPING["edge_top_corner"],
     1 + 8: MAPPING["corner_top_left"],
     1 + 8 + 128: MAPPING["corner_top_left_l_shape_bottom_right"],
-    1 + 4 : MAPPING["edge_horizontal"],
-    1 + 4 + 8 : MAPPING["end_left"],
-    1 + 2 : MAPPING["corner_top_right"],
-    1 + 2 + 64 : MAPPING["corner_top_right_l_shape_bottom_left"],
-    1 + 2 + 8 : MAPPING["end_top"],
-    1 + 2 + 4 : MAPPING["end_right"],
-    1 + 2 + 4 + 8 : MAPPING["center"],
-    }
+    1 + 4: MAPPING["edge_horizontal"],
+    1 + 4 + 8: MAPPING["end_left"],
+    1 + 2: MAPPING["corner_top_right"],
+    1 + 2 + 64: MAPPING["corner_top_right_l_shape_bottom_left"],
+    1 + 2 + 8: MAPPING["end_top"],
+    1 + 2 + 4: MAPPING["end_right"],
+    1 + 2 + 4 + 8: MAPPING["center"],
+}
 
 # === Unités ===
 
 RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
-GREEN_TEAM_PATH = resource_path('assets/Green_team/png/Green_team_spritesheet.png')
+GREEN_TEAM_PATH = resource_path(
+    'assets/Green_team/png/Green_team_spritesheet.png')
 
 # === BASE ===
 RED_BASE_TEAM_PATH = resource_path('assets/Red_team/png/red_base.png')
@@ -331,7 +349,7 @@ UNIT_CONFIGS = {
             "red": (255, 0, 0, 50),
             "green": (0, 255, 0, 50)
         }
-    }, 
+    },
     "pompe_petroliere": {
         "cost": 500,
         "max_speed": 0,
@@ -384,10 +402,12 @@ ANCHOR_PATH = resource_path('assets/menu/NotoV1Anchor.png')
 # Utilisation de user_data_path comme pour les achievements
 KEYS_PATH = user_data_path("data/keys.json")
 
+
 def load_keys(path):
     """Charge le fichier keys.json depuis le chemin donné."""
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
 
 def get_pygame_key(key_str):
     """Convertit la chaîne en constante pygame (ex: "K_e" -> pygame.K_e) ou retourne directement si c'est déjà un entier"""
@@ -402,6 +422,7 @@ def get_pygame_key(key_str):
             return getattr(pygame, key_str)
     return key_str  # Pour les boutons souris ou autres
 
+
 def load_controls_runtime():
     """Charge les contrôles depuis keys.json à chaque appel et retourne un dict
     avec les valeurs des touches converties en constantes pygame."""
@@ -413,6 +434,7 @@ def load_controls_runtime():
         }
         for action, data in raw.items()
     }
+
 
 def get_action_key(action):
     """Retourne la valeur pygame de la touche pour une action en lisant keys.json.
@@ -426,8 +448,10 @@ def get_action_key(action):
         print(f"Erreur lors du chargement de la touche pour '{action}': {e}")
         return None
 
+
 # Variable CONTROLS_KEYS - initialisée à None, sera chargée au premier appel
 CONTROLS_KEYS = None
+
 
 def get_controls_keys():
     """Retourne le dictionnaire CONTROLS_KEYS, en le chargeant si nécessaire."""
@@ -439,3 +463,32 @@ def get_controls_keys():
             print(f"Erreur lors du chargement des contrôles: {e}")
             CONTROLS_KEYS = {}
     return CONTROLS_KEYS
+
+
+GAMEPLAY_SETTINGS = {
+    "AI_ACTIVATION": {
+        "BaseRouge": True,
+        "BaseVerte": True,
+        "Chaloupe": True,
+        "Bateau": True,
+        "Paquebot": True,
+        "Eclaireur": True,
+        "Sousmarin": True,
+    },
+    "TIME_MAREE": TIME_MAREE,
+    "OIL_PER_SECOND": OIL_PER_SECOND,
+    "PIECE_PER_KILL": PIECE_PER_KILL
+}
+
+
+def get_gameplay_settings():
+    return GAMEPLAY_SETTINGS
+
+
+def set_gameplay_setting(dico_settings):
+    global GAMEPLAY_SETTINGS, TIME_MAREE, OIL_PER_SECOND, PIECE_PER_KILL
+
+    GAMEPLAY_SETTINGS = dico_settings
+    TIME_MAREE = dico_settings["TIME_MAREE"]
+    OIL_PER_SECOND = dico_settings["OIL_PER_SECOND"]
+    PIECE_PER_KILL = dico_settings["PIECE_PER_KILL"]
