@@ -24,7 +24,9 @@ class Unit(pygame.sprite.Sprite):
         
         # Position et mouvement
         base_spawn = self.game.red_platform_zone if team == "red" else self.game.green_platform_zone
-            
+        if self.type == "pompe_petroliere" : 
+            base_spawn = self.game.red_pompe_zone if team == "red" else self.game.green_pompe_zone
+        
         self.position = random_point_in_polygon(base_spawn)
         self.speed_x = 0  # Vitesse en pixels par seconde sur l'axe X
         self.speed_y = 0  # Vitesse en pixels par seconde sur l'axe Y
@@ -171,7 +173,6 @@ class Unit(pygame.sprite.Sprite):
                 index = self.game.quantique_area.index(result[1])
                 if index == 0:  # L'ile quantique n°4 est l'index 0 car la plus haute sur Tiled.
                     index = 4
-                    print("ici")
                 
                 self.game.initializer.toggle_layer('fog' + str(index), False)  # On enléve le calque de brouillard
                 self.game.quantique_area_hidden.remove(result[1])  # On enlève l'ile de la liste des iles cachées
@@ -343,10 +344,12 @@ class Unit(pygame.sprite.Sprite):
             unit_type = getattr(self, 'unit_type', None)
 
             if self.team == "red" : 
-                self.game.hud.piece_green.count += 1
+                self.game.hud.piece_green.add_piece()
             else :
-                self.game.hud.piece_red.count += 1
+                self.game.hud.piece_red.add_piece()
+                
         self.kill()  # Retire l'unité du groupe pygame
+        self.game.units.remove(self)  # Retire l'unité de la liste des unités
         
     def get_health_percentage(self):
         """Retourne le pourcentage de vie restante."""
