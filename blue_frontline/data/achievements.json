@@ -1,6 +1,5 @@
 {
   "unlocked_achievements": [
-    "platform_buster",
     "first_unit"
   ],
   "stats": {
@@ -9,7 +8,7 @@
       "bateau": 2,
       "eclaireur": 0,
       "paquebot": 0,
-      "sousmarin": 0
+      "sousmarin": 1
     },
     "units_killed": {
       "chaloupe": 0,
@@ -20,18 +19,18 @@
     },
     "games_won": 0,
     "games_lost": 0,
-    "total_petrole_spent": 120,
+    "total_petrole_spent": 180,
     "total_coins_earned": 0,
-    "platforms_destroyed": 1,
-    "bullets_fired": 168,
-    "quantum_islands_activated": 1,
-    "total_playtime_seconds": 0.1931389999999699,
+    "platforms_destroyed": 0,
+    "bullets_fired": 0,
+    "quantum_islands_activated": 0,
+    "total_playtime_seconds": 0.003117000000000001,
     "units_created_same_game": [
-      "bateau"
+      "sousmarin"
     ],
-    "max_units_alive": 3,
+    "max_units_alive": 0,
     "different_unit_types_created": [
-      "bateau"
+      "sousmarin"
     ]
   }
 }
