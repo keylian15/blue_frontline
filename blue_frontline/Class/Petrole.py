@@ -7,7 +7,7 @@ class Petrole:
     def __init__(self):
         """Fonction permettant d'initialiser le compteur de pétrole"""
     
-        self.count = 1000000
+        self.count = 0
 
         # On crée un événement unique pour incrémenter le pétrole
         self.PETROLE_EVENT = PETROLE_EVENT

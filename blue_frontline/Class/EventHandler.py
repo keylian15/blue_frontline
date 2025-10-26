@@ -142,6 +142,10 @@ class EventHandler:
             self.game.overlay_menu.switch_team()
             return True
         
+        if event.key == pygame.K_m : 
+            self.game.plateformes["red"].ia_save_log()
+            self.game.plateformes["green"].ia_save_log()
+        
         # === COMMANDES DEBUG Q-LEARNING ===
         
         # F1: Toggle Q-Learning pour toutes les chaloupes
@@ -262,9 +266,7 @@ class EventHandler:
         state_text = "activé" if new_state else "désactivé"
         print(f"[Visual Debug] Debug visuel {state_text} pour {debug_count} chaloupes")
         
-        if event.key == pygame.K_m : 
-            self.game.plateformes["red"].ia_save_log()
-            self.game.plateformes["green"].ia_save_log()
+
         return True
     
     def handle_mouse_events(self, event: pygame.event):

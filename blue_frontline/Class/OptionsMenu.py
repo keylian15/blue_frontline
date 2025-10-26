@@ -371,9 +371,9 @@ class OptionsMenu:
         for unit, active in ia_settings.items():
             # Griser l'éclaireur
             text_color = WHITE
-            if unit == "Eclaireur":
+            if unit == "Eclaireur" or unit == "Chaloupe":
                 text_color = (120, 120, 120)
-                active = False
+                active = True
 
             # Texte
             text_surf = self.font.render(f"IA {unit}", True, text_color)

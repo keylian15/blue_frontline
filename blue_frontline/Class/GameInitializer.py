@@ -6,7 +6,6 @@ import pytmx
 from Class.Camera import Camera
 from Class.Combat import CombatSystem
 from Class.Hud import Hud
-from Class.PlateformePetroliere import PlateformePetroliere
 from Class.SoundAPI import Sound  # <-- API publique son
 from Class.units.Bateau import BateauRouge, BateauVert
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
