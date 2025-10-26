@@ -49,7 +49,7 @@ class Bateau(Unit):
         self.is_moving = False
         self.target_position = None
 
-        # === Pathfinding A* (inspiré du Paquebot) ===
+        # === Pathfinding A* ===
         self.path_to_follow = []
         self.current_path_index = 0
 
@@ -78,8 +78,6 @@ class Bateau(Unit):
         # Ennemi actuel ciblé
         self._current_target = None
 
-        # Gestion prise en main manuelle
-        self.manual_override = False
 
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None,
                camera_offset: tuple[float, float] = (0, 0), all_units: list[Unit] = None):
@@ -95,7 +93,7 @@ class Bateau(Unit):
         # Logique IA
         if self.is_ia and all_units:
             # Suivi du déplacement sur chemin A*
-            if self.path_to_follow and not self.manual_override:
+            if self.path_to_follow :
                 if not self.is_moving:
                     self.current_path_index += 1
                     if self.current_path_index < len(self.path_to_follow):
@@ -125,10 +123,6 @@ class Bateau(Unit):
                         self.path_to_follow = []
                         self.current_path_index = 0
 
-            # Reprise après déplacement manuel
-            if self.manual_override and not self.is_moving:
-                self.manual_override = False
-                self.current_state = "chercher_but"
 
             self.IA_execute_logic(combat_system, all_units)
 
@@ -151,9 +145,8 @@ class Bateau(Unit):
                 if self.IA_is_paquebot(enemy):
                     # PAQUEBOT = OUI -> BUT = fuite
                     self.current_state = "fuite"
-                    if self.current_goal_type != "base_alliee":
-                        self.current_goal_type = "base_alliee"
-                        self.IA_flee_to_ally_base()
+                    self.current_goal_type = "base_alliee"
+                    self.IA_flee_to_ally_base()
                 else:
                     # PAQUEBOT = NON -> BUT = attaque ennemie
                     self.current_state = "attaquer"
@@ -166,15 +159,13 @@ class Bateau(Unit):
                 if ally_scout:
                     # ÉCLAIREUR ALLIÉ = OUI -> BUT = suivre éclaireur allié
                     self.current_state = "suivre_eclaireur"
-                    if self.current_goal_type != "suivre_eclaireur":
-                        self.current_goal_type = "suivre_eclaireur"
-                        self.IA_follow_scout(ally_scout)
+                    self.current_goal_type = "suivre_eclaireur"
+                    self.IA_follow_scout(ally_scout)
                 else:
                     # ÉCLAIREUR ALLIÉ = NON -> BUT = fuite (base alliée)
                     self.current_state = "fuite"
-                    if self.current_goal_type != "base_alliee":
-                        self.current_goal_type = "base_alliee"
-                        self.IA_flee_to_ally_base()
+                    self.current_goal_type = "base_alliee"
+                    self.IA_flee_to_ally_base()
         else:
             # ENNEMI PROCHE = NON
             self.current_state = "pas_ennemi"
@@ -183,9 +174,8 @@ class Bateau(Unit):
             if health_percentage > 0.5:
                 # PV > 50% sans ennemi -> BUT = base ennemie
                 self.current_state = "avancer"
-                if self.current_goal_type != "base_ennemie":
-                    self.current_goal_type = "base_ennemie"
-                    self.IA_advance_to_enemy_base()
+                self.current_goal_type = "base_ennemie"
+                self.IA_advance_to_enemy_base()
             else:
                 # PV <= 50% sans ennemi -> vérifier éclaireur
                 ally_scout = self.IA_find_ally_scout(all_units)
@@ -193,15 +183,13 @@ class Bateau(Unit):
                 if ally_scout:
                     # ÉCLAIREUR ALLIÉ = OUI
                     self.current_state = "suivre_eclaireur"
-                    if self.current_goal_type != "suivre_eclaireur":
-                        self.current_goal_type = "suivre_eclaireur"
-                        self.IA_follow_scout(ally_scout)
+                    self.current_goal_type = "suivre_eclaireur"
+                    self.IA_follow_scout(ally_scout)
                 else:
                     # ÉCLAIREUR ALLIÉ = NON -> BUT = base alliée
                     self.current_state = "avancer"
-                    if self.current_goal_type != "base_allier":
-                        self.current_goal_type = "base_allier"
-                        self.IA_flee_to_ally_base()
+                    self.current_goal_type = "base_alliee"
+                    self.IA_flee_to_ally_base()
 
         # ÉTAPE 2: Gérer l'action selon l'état
         if self.current_state == "attaquer":
@@ -278,10 +266,27 @@ class Bateau(Unit):
         Args:
             scout (Unit): L'unité éclaireur alliée à suivre.
         """
-        if scout and hasattr(scout, 'position'):
-            scout_pos = tuple(scout.position)
-            if self.current_goal != scout_pos:
-                self.IA_calculate_path_to_goal(scout_pos)
+        if not scout or not hasattr(scout, 'position'):
+            return
+
+        # Initialiser un timer de recalcul s’il n’existe pas
+        if not hasattr(self, "_last_follow_update"):
+            self._last_follow_update = 0
+
+        # Recalcule au maximum toutes les 1.5 secondes
+        now = time.time()
+        if now - self._last_follow_update < 1.5:
+            return  
+
+        scout_pos = tuple(scout.position)
+        dx = scout_pos[0] - self.position[0]
+        dy = scout_pos[1] - self.position[1]
+        distance_to_scout = math.sqrt(dx * dx + dy * dy)
+
+        # Recalcule seulement si l’éclaireur s’est éloigné significativement
+        if self.current_goal != scout_pos or distance_to_scout > 128:
+            self.IA_calculate_path_to_goal(scout_pos)
+            self._last_follow_update = now
 
     def IA_flee_to_ally_base(self):
         """Déclenche une fuite vers la base alliée en calculant un chemin optimal.
@@ -437,7 +442,7 @@ class Bateau(Unit):
         for p in self.game.plateformes.values():
             if p.team != self.team:
                 return p
-        return None
+        return 
 
     def IA_get_ally_base(self):
         """Renvoie la base alliée."""
