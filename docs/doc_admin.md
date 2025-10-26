@@ -131,15 +131,15 @@ Pour faire la documentation du projet :
 pip install -r docs/requirements.txt
 ```
 
-Pour faire un .exe du porjet : 
+Pour faire un .exe du projet : 
 ```text
-pip install -r requirements_dev.txt
+pip install -r requirements-dev.txt
 ```
 
 
 #### Étape 4 : Vérification de l'installation
 ```bash
-python main.py
+python .\blue_frontline\main.py
 ```
 
 ### 3.3 Erreurs courantes d'installation
