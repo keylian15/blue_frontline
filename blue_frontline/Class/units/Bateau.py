@@ -284,7 +284,7 @@ class Bateau(Unit):
         distance_to_scout = math.sqrt(dx * dx + dy * dy)
 
         # Recalcule seulement si l’éclaireur s’est éloigné significativement
-        if self.current_goal != scout_pos or distance_to_scout > 128:
+        if self.current_goal != scout_pos:
             self.IA_calculate_path_to_goal(scout_pos)
             self._last_follow_update = now
 
@@ -415,7 +415,7 @@ class Bateau(Unit):
                 # Base cost = 1, shallow water adds penalty
                 movement_cost = 1.0
                 if is_in_shallow_water(neighbor):
-                    movement_cost = 3.0  # 🚩 Plus lent dans l’eau peu profonde
+                    movement_cost = 3.0  # Plus lent dans l’eau peu profonde
 
                 tentative_g_score = g_score[current] + movement_cost
 
