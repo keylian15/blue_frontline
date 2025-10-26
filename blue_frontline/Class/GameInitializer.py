@@ -16,9 +16,10 @@ from Class.units.IA.IA_Eclaireur import (SimpleGrid,
                                          make_grid_adapter_from_simplegrid)
 from Class.units.Paquebot import PaquebotRouge, PaquebotVert
 from Class.units.Sousmarin import SousMarinRouge, SousMarinVert
+from Class.Hud import Hud
+from Class.OverlayMenu import OverlayMenu
 from Global import *
 from Utils import *
-
 
 class GameInitializer:
     """Gestionnaire d'initialisation des composants du jeu.
@@ -119,42 +120,21 @@ class GameInitializer:
             elif obj.name == "Spawn_base_verte":
                 self.game.green_platform_zone = obj.points
             elif obj.name == "Spawn_base_rouge":
-                self.game.red_platform_zone = obj.points
+                self.game.red_platform_zone = obj.points  # Récupérer les points du polygone
+            elif obj.name == "Spawn_base_verte_pompe" : 
+                self.game.green_pompe_zone = obj.as_points
+            elif obj.name == "Spawn_base_rouge_pompe" : 
+                self.game.red_pompe_zone = obj.as_points
+        
+        # Créer les plateformes à partir des positions Tiled
+        from Class.units.PlateformePetroliere import PlateformePetroliereRouge, PlateformePetroliereVerte
+        plateforme_rouge = PlateformePetroliereRouge(self.game, red_platform_obj)
+        plateforme_verte = PlateformePetroliereVerte(self.game, green_platform_obj)
 
-        # Sécurité: si la map est mal définie on évite un crash silencieux
-        if red_platform_obj is None or green_platform_obj is None:
-            raise RuntimeError(
-                "[GameInitializer] Impossible de trouver les plateformes 'Base_rouge' / 'Base_verte' dans la map Tiled."
-            )
-
-        # Instancier les plateformes pétrolières comme unités (elles héritent d'Unit)
-        plateforme_rouge = PlateformePetroliere(
-            red_platform_obj.x,
-            red_platform_obj.y,
-            "red",
-            1000,
-            red_platform_obj,
-        )
-        plateforme_verte = PlateformePetroliere(
-            green_platform_obj.x,
-            green_platform_obj.y,
-            "green",
-            1000,
-            green_platform_obj,
-        )
-
-        # Leur donner une référence au jeu
-        plateforme_rouge.game = self.game
-        plateforme_verte.game = self.game
-
-        # Stocker ces plateformes dans l'état global du jeu
-        self.game.plateformes = {
-            "red": plateforme_rouge,
-            "green": plateforme_verte,
-        }
-
-        # Ajouter les plateformes dans la liste globale d'unités,
-        # pour que le système de combat les voie comme cibles potentielles.
+        # Stocker les plateformes
+        self.game.plateformes = {"red": plateforme_rouge, "green": plateforme_verte}
+        
+        # Ajouter les plateformes à la liste des unités pour la détection/tir/dégâts
         self.game.units.append(plateforme_rouge)
         self.game.units.append(plateforme_verte)
 
@@ -165,10 +145,9 @@ class GameInitializer:
         # Ajouter au groupe de rendu
         self.game.group.add(plateforme_rouge)
         self.game.group.add(plateforme_verte)
-
-        # === Positions ponctuelles utiles pour le son, etc. ===
-        # (tu pourras mettre ici des coords simples si tu veux les passer
-        #  au moteur son pour spatialisation)
+        
+        # === Positions ponctuelles pour l'audio (bases) ===
+        # On fournit explicitement des tuples (x,y) au moteur audio
         # self.game.red_platform_spawn   = (platform_rouge_x, platform_rouge_y)
         # self.game.green_platform_spawn = (platform_verte_x, platform_verte_y)
 
@@ -203,7 +182,8 @@ class GameInitializer:
 
         # Interface HUD (timer marée, vie bases, etc.)
         self.game.hud = Hud(self.game.screen)
-
+        self.game.overlay_menu = OverlayMenu(self.game.screen, self.game)
+        
     def init_sound(self):
         """Initialise le système sonore (via l'API publique Sound)."""
         # Sound va gérer l'init du mixer et les canaux

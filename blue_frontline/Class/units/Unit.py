@@ -1,4 +1,4 @@
-import pygame, time, math
+import pygame, time, math, threading
 from Global import *
 from Utils import load_tileset, point_in_many_polygons, random_point_in_polygon
 from Class.Perlin import Perlin
@@ -24,7 +24,9 @@ class Unit(pygame.sprite.Sprite):
         
         # Position et mouvement
         base_spawn = self.game.red_platform_zone if team == "red" else self.game.green_platform_zone
-            
+        if self.type == "pompe_petroliere" : 
+            base_spawn = self.game.red_pompe_zone if team == "red" else self.game.green_pompe_zone
+        
         self.position = random_point_in_polygon(base_spawn)
         self.speed_x = 0  # Vitesse en pixels par seconde sur l'axe X
         self.speed_y = 0  # Vitesse en pixels par seconde sur l'axe Y
@@ -54,6 +56,12 @@ class Unit(pygame.sprite.Sprite):
             self.range_color = config.get("range_color", {}).get(team, (255, 0, 0, 50))
         else:
             self.range_color = (255, 0, 0, 50) if team == "red" else (0, 255, 0, 50)
+        
+        # Multithreading pour pathfinding
+        self.path_thread = None
+        self.path_found = False
+        self.new_path = []
+        self.need_recalculate_path = False
 
     # Chaque unité peut avoir sa propre tuile, pour chaque équipe, et tout est configurable
     def load_sprite_from_tileset(self, team: str, unit_type: str):
@@ -184,6 +192,9 @@ class Unit(pygame.sprite.Sprite):
         if result:
             # Récupérer l'index de self.game.quantique_area correspondant à l'île
             index = self.game.quantique_area.index(result[1])
+            # Correction par rapport au nom des iles quantiques
+            if index == 0: 
+                index = 4
 
             # On parcours les îles graphiques pour retrouver la bonne île
             for island in self.game.quantum_islands:
@@ -333,10 +344,12 @@ class Unit(pygame.sprite.Sprite):
             unit_type = getattr(self, 'unit_type', None)
 
             if self.team == "red" : 
-                self.game.hud.piece_green.count += 1
+                self.game.hud.piece_green.add_piece()
             else :
-                self.game.hud.piece_red.count += 1
+                self.game.hud.piece_red.add_piece()
+                
         self.kill()  # Retire l'unité du groupe pygame
+        self.game.units.remove(self)  # Retire l'unité de la liste des unités
         
     def get_health_percentage(self):
         """Retourne le pourcentage de vie restante."""
@@ -565,3 +578,22 @@ class Unit(pygame.sprite.Sprite):
                 closest_enemy = enemy
                 
         return closest_enemy
+    
+    def start_pathfinding_thread(self, function: callable):
+        """Va chercher le ou les thread qui vont faire les calcul.
+
+        Args:
+            function (callable): La fonction de pathfinding à exécuter dans le thread.
+        """
+        self.path_thread = threading.Thread(target=function, daemon=True)
+        self.path_thread.start()
+        
+    def recalculate_path(self, function: callable):
+        """Signale qu'il faut recalculer le chemin.
+
+        Args:
+            function (callable): La fonction de pathfinding à exécuter dans le thread.
+        """
+        if not self.need_recalculate_path:
+            self.need_recalculate_path = True
+            self.start_pathfinding_thread(function)

@@ -1,5 +1,5 @@
 import pygame
-from Global import TIME_MAREE, TIME_STEP, TIMER_EVENT, TIME_SPEEDS
+from Global import TIME_STEP, TIMER_EVENT, TIME_SPEEDS
 
 class Timer:
     """Classe pour gérer le temps et les événements de marée."""
@@ -24,7 +24,7 @@ class Timer:
         
         if event.type == self.TIMER_EVENT:
             self.count += 1
-            
+            from Global import TIME_MAREE
             if self.count % TIME_MAREE == 0:
                 # Basculer l'état de la marée
                 old_state = self.maree_haute
