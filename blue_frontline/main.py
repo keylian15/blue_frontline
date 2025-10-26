@@ -1,6 +1,6 @@
+import Global
 import pygame
 from Class.menu import *
-import Global
 
 if __name__ == "__main__":
     pygame.init()
