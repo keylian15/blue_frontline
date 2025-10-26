@@ -80,7 +80,7 @@ class Chaloupe(Unit):
         self.target_last_position = None
         self.direct_follow_mode = False  # Mode suivi direct sans pathfinding
         self.last_pathfinding_time = 0
-        self.pathfinding_cooldown = 1.0  # Pathfinding maximum 1 fois par seconde
+        self.pathfinding_cooldown = 0.5  # Pathfinding maximum 2 fois par seconde (réduit de 1.0 à 0.5)
 
         # Debug path
         self.debug_path = False
@@ -286,8 +286,8 @@ class Chaloupe(Unit):
         start_x, start_y = self.position
         end_x, end_y = target_position
         
-        # Vérifier quelques points sur la ligne
-        steps = 5
+        # Vérifier plusieurs points sur la ligne (augmenté pour mieux détecter les îles quantiques)
+        steps = 10  # Augmenté de 5 à 10 pour plus de précision
         for i in range(1, steps):
             t = i / steps
             check_x = start_x + (end_x - start_x) * t
@@ -302,7 +302,7 @@ class Chaloupe(Unit):
             if self.is_point_in_fog(check_x, check_y):
                 return True
             
-            # Vérifier si ce point est dans une île quantique
+            # IMPORTANT : Vérifier si ce point est dans une île quantique
             if self.is_point_in_quantum_island(check_x, check_y):
                 return True
                 
@@ -324,22 +324,24 @@ class Chaloupe(Unit):
         for island in self.game.quantum_islands:
             if hasattr(island, 'matrix') and hasattr(island, 'rect'):
                 # Vérifier si le point est dans les limites de l'île
-                if (island.rect.x <= x <= island.rect.right and 
-                    island.rect.y <= y <= island.rect.bottom):
+                if (island.rect.x <= x < island.rect.right and 
+                    island.rect.y <= y < island.rect.bottom):
                     
                     # Convertir en coordonnées locales de l'île
-                    local_x = x - island.rect.x
-                    local_y = y - island.rect.y
+                    local_x = int(x - island.rect.x)
+                    local_y = int(y - island.rect.y)
                     
-                    # Convertir en coordonnées de grille
-                    grid_x = int(local_x // 32)
-                    grid_y = int(local_y // 32)
+                    # Convertir en coordonnées de grille (32x32 pixels par cellule)
+                    grid_x = local_x // 32
+                    grid_y = local_y // 32
                     
                     # Vérifier les limites de la matrice
                     if (0 <= grid_y < len(island.matrix) and 
                         0 <= grid_x < len(island.matrix[grid_y])):
-                        # Type 2 = île solide
-                        if island.matrix[grid_y][grid_x] == 2:
+                        # Type 2 = île solide, Type 1 = eau peu profonde
+                        # On considère les deux comme obstacles pour la chaloupe
+                        cell_type = island.matrix[grid_y][grid_x]
+                        if cell_type >= 1:  # 1 = eau peu profonde, 2 = île
                             return True
         
         return False
@@ -522,6 +524,10 @@ class Chaloupe(Unit):
         Args:
             target_function: Fonction à exécuter dans le thread
         """
+        # CORRECTION : Ne pas lancer de nouveau thread si un est déjà en cours
+        if self.path_thread and self.path_thread.is_alive():
+            return  # Un calcul est déjà en cours, ne pas perturber
+        
         self.path_thread = threading.Thread(target=target_function)
         self.path_thread.daemon = True  # Thread daemon pour éviter les blocages
         self.path_thread.start()
@@ -590,17 +596,24 @@ class Chaloupe(Unit):
         
         # Ajouter les îles quantiques comme obstacles
         if hasattr(self.game, 'quantum_islands'):
-            quantum_obstacles = 0
             for island in self.game.quantum_islands:
-                if hasattr(island, 'matrix'):
+                if hasattr(island, 'matrix') and hasattr(island, 'rect'):
                     # Utiliser la matrice de l'île pour déterminer les obstacles
-                    start_x = island.rect.x // 32
-                    start_y = island.rect.y // 32
+                    # CORRECTION : Utiliser rect.topleft qui est déjà aligné sur la grille
+                    start_x = int(island.rect.x // 32)
+                    start_y = int(island.rect.y // 32)
+                    
+                    quantum_obstacles_per_island = 0
+                    
+                    # Parcourir toute la matrice de l'île
                     for y, row in enumerate(island.matrix):
                         for x, cell in enumerate(row):
+                            # Type 2 = île solide, Type 1 = eau peu profonde (peut aussi être obstacle selon config)
                             if cell == 2:  # Cellule d'île (obstacle)
-                                obstacles.add((start_x + x, start_y + y))
-                                quantum_obstacles += 1
+                                grid_x = start_x + x
+                                grid_y = start_y + y
+                                obstacles.add((grid_x, grid_y))
+                                quantum_obstacles_per_island += 1
 
         # Ajouter les zones de brouillard comme obstacles pour les Chaloupes
         # Utiliser les zones de brouillard cachées (quantique_area_hidden)
