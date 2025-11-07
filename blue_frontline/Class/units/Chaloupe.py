@@ -15,12 +15,13 @@ except ImportError:
 class Chaloupe(Unit):
     """Classe unifiée pour les unités Chaloupe (Rouge et Verte)."""
     
-    def __init__(self, game: "Game", team: str):
+    def __init__(self, game: "Game", team: str, is_ia: bool = True):
         """Initialise une instance de Chaloupe.
 
         Args:
             game (Game): Instance du jeu.
             team (str): Équipe de l'unité.
+            is_ia (bool): Active ou désactive l'IA pour cette chaloupe.
         """
         # Récupérer la configuration depuis Global.py
         config = UNIT_CONFIGS["chaloupe"]
@@ -71,6 +72,9 @@ class Chaloupe(Unit):
         # IA activée par défaut
         self.ia_enabled = True
         
+        # Paramètre pour activer/désactiver l'IA
+        self.is_ia = is_ia
+        
         # Cible ennemie actuelle
         self.target_enemy = None
         self.last_enemy_check = 0
@@ -86,8 +90,8 @@ class Chaloupe(Unit):
         self.debug_path = False
 
         # === SYSTÈME D'IA AVANCÉE ===
-        # Initialiser l'IA d'attaque éclair si disponible
-        if AI_AVAILABLE:
+        # Initialiser l'IA d'attaque éclair si disponible et si l'IA est activée
+        if AI_AVAILABLE and self.is_ia:
             self.ai_system = ChaloupeAI(self)
             self.use_advanced_ai = True
             self.visual_debug_enabled = True  # Debug visuel activé par défaut
@@ -96,6 +100,8 @@ class Chaloupe(Unit):
             self.ai_system = None
             self.use_advanced_ai = False
             self.visual_debug_enabled = False
+            if not self.is_ia:
+                print(f"Chaloupe {self.team} : IA désactivée")
         
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list[Unit] = None):
         """Met à jour l'unité en fonction de son état actuel.
@@ -110,6 +116,10 @@ class Chaloupe(Unit):
 
         # Appeler la mise à jour de la classe parent
         super().update(dt, combat_system, screen, camera_offset, all_units)
+        
+        # Si l'IA est désactivée, ne pas exécuter le comportement d'IA
+        if not self.is_ia:
+            return
 
         # Vérification périodique des unités ennemies
         now = time.time()
@@ -987,9 +997,9 @@ class Chaloupe(Unit):
         return False
 
 class ChaloupeRouge(Chaloupe):
-    def __init__(self, game):
-        super().__init__(game, team="red")
+    def __init__(self, game, is_ia: bool = True):
+        super().__init__(game, team="red", is_ia=is_ia)
 
 class ChaloupeVerte(Chaloupe):
-    def __init__(self, game):
-        super().__init__(game, team="green")
+    def __init__(self, game, is_ia: bool = True):
+        super().__init__(game, team="green", is_ia=is_ia)
