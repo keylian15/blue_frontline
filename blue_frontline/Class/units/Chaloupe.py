@@ -116,29 +116,26 @@ class Chaloupe(Unit):
 
         # Appeler la mise à jour de la classe parent
         super().update(dt, combat_system, screen, camera_offset, all_units)
-        
-        # Si l'IA est désactivée, ne pas exécuter le comportement d'IA
-        if not self.is_ia:
-            return
 
-        # Vérification périodique des unités ennemies
-        now = time.time()
-        if now - self.last_enemy_check > self.enemy_check_interval:
-            self.last_enemy_check = now
-            
-            # === SYSTÈME D'IA AVANCÉE ===
-            if self.use_advanced_ai and self.ai_system:
-                # Utiliser l'IA avancée d'attaque éclair
-                self.ai_system.update(dt, all_units)
-            else:
-                # Utiliser le système de base
-                self.check_for_enemies(all_units)
+        # Logique IA uniquement si activée
+        if self.is_ia:
+            # Vérification périodique des unités ennemies
+            now = time.time()
+            if now - self.last_enemy_check > self.enemy_check_interval:
+                self.last_enemy_check = now
+                # === SYSTÈME D'IA AVANCÉE ===
+                if self.use_advanced_ai and self.ai_system:
+                    # Utiliser l'IA avancée d'attaque éclair
+                    self.ai_system.update(dt, all_units)
+                else:
+                    # Utiliser le système de base
+                    self.check_for_enemies(all_units)
 
-        # === COMPORTEMENT DE BASE === (utilisé si IA avancée désactivée)
-        if not self.use_advanced_ai:
-            # Suivi direct de la cible (chaque frame pour fluidité maximale)
-            if self.target_enemy and self.target_enemy.is_alive:
-                self.direct_follow_target()
+            # === COMPORTEMENT DE BASE === (utilisé si IA avancée désactivée)
+            if not self.use_advanced_ai:
+                # Suivi direct de la cible (chaque frame pour fluidité maximale)
+                if self.target_enemy and self.target_enemy.is_alive:
+                    self.direct_follow_target()
 
         # Suivi du chemin pathfinding dans le thread
         if self.path_thread and self.path_thread.is_alive():
