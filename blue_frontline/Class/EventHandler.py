@@ -104,7 +104,7 @@ class EventHandler:
             if self.check_cost(team_key, cost):
                 self.apply_cost(config_key, team_key, cost)
                 from Global import GAMEPLAY_SETTINGS
-                self.spawn_unit(config_key, team_key, GAMEPLAY_SETTINGS["AI_ACTIVATION"][config_key.capitalize()])
+                self.spawn_unit(config_key, team_key, GAMEPLAY_SETTINGS["AI_ACTIVATION"][config_key.capitalize() + team_key.capitalize()])
                 return True
 
         # Volume
