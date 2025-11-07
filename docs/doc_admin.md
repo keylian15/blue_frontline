@@ -1,4 +1,4 @@
-# MANUEL ADMINISTRATEUR
+# Manuel Administrateur
 ## Blue Frontline - Jeu Naval Stratégique
 
 ---
@@ -8,7 +8,9 @@
 **Auteur :** CHAMPY Thomas  
 **Destinataires :** Professeurs, Administrateurs système, DevOps, Développeurs
 
+ [🧩 **Documentation Technique (Fonctions)** ](https://blue-frontline.readthedocs.io/fr/latest/doc_technique)
 ---
+
 
 ## TABLE DES MATIÈRES
 
@@ -84,15 +86,16 @@ Utilisateur → Interface Menu → Game Engine → Rendu Pygame → Écran
 
 ### 3.1 Prérequis système
 
-**Configuration minimale :**
-- OS : Windows 10+ / Linux Ubuntu 18.04+ / macOS 10.14+
-- Python : 3.8+
-- RAM : 2 GB minimum
-- Espace disque : 500 MB
-- Résolution : 1024x768 minimum
+**Configuration minimale :**  
+- OS : Windows 10+ / Linux Ubuntu 18.04+ / macOS 10.14+  
+- Python : 3.11  
+- RAM : 2 GB minimum  
+- Espace disque : 500 MB  
+- Résolution : 1024x768 minimum  
+- Outils : [PIP, Installation si nécessaire ](https://pip.pypa.io/en/stable/installation)
 
 **Configuration recommandée :**
-- Python : 3.10+
+- Python : 3.11
 - RAM : 4 GB ou plus
 
 ### 3.2 Procédure d'installation
@@ -128,15 +131,15 @@ Pour faire la documentation du projet :
 pip install -r docs/requirements.txt
 ```
 
-Pour faire un .exe du porjet : 
+Pour faire un .exe du projet : 
 ```text
-pip install -r requirements_dev.txt
+pip install -r requirements-dev.txt
 ```
 
 
 #### Étape 4 : Vérification de l'installation
 ```bash
-python main.py
+python .\blue_frontline\main.py
 ```
 
 ### 3.3 Erreurs courantes d'installation

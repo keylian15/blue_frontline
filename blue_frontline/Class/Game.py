@@ -12,9 +12,12 @@ from Class.Petrole import Petrole
 from Class.Piece import Piece
 from Class.Timer import Timer
 from Class.units import Unit
-from Class import PlateformePetroliere
 from Class.AchievementNotification import AchievementNotificationManager
- 
+from Class.units.IA.IA_Eclaireur import SimpleGrid, make_grid_adapter_from_simplegrid
+from Utils import point_in_many_polygons
+from Class.units import PlateformePetroliere
+
+
 class IslandSprite(pygame.sprite.Sprite):
     """Sprite pour représenter une île générée."""
     
@@ -96,6 +99,7 @@ class Game :
         # Zone quantiques
         self.quantique_area_name = []
         self.setQuantiqueArea()
+        self.build_nav_grid()
 
     # --- Utilitaire audio: notification post-quantique (ne change pas la logique de génération) ---
     def notify_quantum_audio(self):
@@ -255,6 +259,147 @@ class Game :
         else:
             self.selected_unit = None
 
+    def build_nav_grid(self):
+        """
+        Construit/actualise la grille de navigation IA (A*).
+        
+        Remplit:
+            self.nav_grid_raw      : SimpleGrid (walkable + coûts)
+            self.nav_grid_adapter  : GridAdapter prêt pour ScoutAI
+        
+        OPTIMISATION : Utilise des bounding boxes au lieu de point_in_polygon
+        sur chaque cellule, ce qui réduit drastiquement le temps de calcul.
+        """
+        import time
+        start_time = time.time()
+        
+        tile_size = 32  # Taille d'une cellule en pixels
+        width_in_cells = self.map_width // tile_size
+        height_in_cells = self.map_height // tile_size
+
+        # Créer la grille vide (tout est navigable par défaut)
+        grid = SimpleGrid(width_in_cells, height_in_cells, cell_size=tile_size)
+
+        # ========================================================================
+        # ÉTAPE 1 : Marquer les OBSTACLES (îles, rochers, etc.)
+        # ========================================================================
+        obstacle_count = 0
+        for obstacle_poly in self.obstacles:
+            if not obstacle_poly or len(obstacle_poly) == 0:
+                continue
+            
+            # Calculer la bounding box du polygone
+            try:
+                min_x = int(min(p[0] for p in obstacle_poly) // tile_size)
+                max_x = int(max(p[0] for p in obstacle_poly) // tile_size)
+                min_y = int(min(p[1] for p in obstacle_poly) // tile_size)
+                max_y = int(max(p[1] for p in obstacle_poly) // tile_size)
+            except (ValueError, TypeError):
+                continue  # Polygone invalide, on skip
+            
+            # Clamper aux limites de la grille
+            min_x = max(0, min_x)
+            max_x = min(width_in_cells - 1, max_x)
+            min_y = max(0, min_y)
+            max_y = min(height_in_cells - 1, max_y)
+            
+            # Marquer toutes les cellules dans la bounding box comme non-navigables
+            for cx in range(min_x, max_x + 1):
+                for cy in range(min_y, max_y + 1):
+                    grid.walkable[cx][cy] = False
+                    grid.costs[cx][cy] = float('inf')
+            
+            obstacle_count += 1
+
+        # ========================================================================
+        # ÉTAPE 2 : Marquer les EAUX PEU PROFONDES (navigable mais lent)
+        # ========================================================================
+        shallow_count = 0
+        for eau_poly in self.eau_peu_profondes:
+            if not eau_poly or len(eau_poly) == 0:
+                continue
+            
+            try:
+                min_x = int(min(p[0] for p in eau_poly) // tile_size)
+                max_x = int(max(p[0] for p in eau_poly) // tile_size)
+                min_y = int(min(p[1] for p in eau_poly) // tile_size)
+                max_y = int(max(p[1] for p in eau_poly) // tile_size)
+            except (ValueError, TypeError):
+                continue
+            
+            min_x = max(0, min_x)
+            max_x = min(width_in_cells - 1, max_x)
+            min_y = max(0, min_y)
+            max_y = min(height_in_cells - 1, max_y)
+            
+            for cx in range(min_x, max_x + 1):
+                for cy in range(min_y, max_y + 1):
+                    # Seulement si la cellule n'est pas déjà bloquée par un obstacle
+                    if grid.walkable[cx][cy]:
+                        grid.costs[cx][cy] = 2.0  # Coût élevé (ralentissement)
+            
+            shallow_count += 1
+
+        # ========================================================================
+        # ÉTAPE 3 : Marquer les ZONES QUANTIQUES CACHÉES (prioritaires pour l'IA)
+        # ========================================================================
+        quantum_count = 0
+        for quant_poly in self.quantique_area_hidden:
+            if not quant_poly or len(quant_poly) == 0:
+                continue
+            
+            try:
+                min_x = int(min(p[0] for p in quant_poly) // tile_size)
+                max_x = int(max(p[0] for p in quant_poly) // tile_size)
+                min_y = int(min(p[1] for p in quant_poly) // tile_size)
+                max_y = int(max(p[1] for p in quant_poly) // tile_size)
+            except (ValueError, TypeError):
+                continue
+            
+            min_x = max(0, min_x)
+            max_x = min(width_in_cells - 1, max_x)
+            min_y = max(0, min_y)
+            max_y = min(height_in_cells - 1, max_y)
+            
+            for cx in range(min_x, max_x + 1):
+                for cy in range(min_y, max_y + 1):
+                    # Seulement si navigable
+                    if grid.walkable[cx][cy]:
+                        grid.costs[cx][cy] = 0.5  # Coût faible (encourage l'exploration)
+            
+            quantum_count += 1
+
+        # ========================================================================
+        # FINALISATION
+        # ========================================================================
+        self.nav_grid_raw = grid
+        self.nav_grid_adapter = make_grid_adapter_from_simplegrid(grid)
+
+    def get_hidden_quantum_polygons(self):
+        """
+        Renvoie les polygones des zones quantiques NON révélées.
+        -> Ça correspond à ce que l'Éclaireur doit aller découvrir.
+        """
+        return self.quantique_area_hidden
+
+    def get_base_position(self, team: str):
+        """
+        Renvoie la position vers laquelle l'unité doit rentrer à la fin.
+        On utilise les plateformes pétrolières comme 'base'.
+
+        team : "red" ou "green"
+        """
+        # Les plateformes sont construites dans GameInitializer.init_game_systems()
+        # et stockées dans self.plateformes = {"red": plateforme_rouge, "green": plateforme_verte}
+        plateforme = self.plateformes.get(team)
+        if plateforme is None:
+            # fallback : si jamais l'équipe n'existe pas, on renvoie juste la rouge
+            plateforme = self.plateformes.get("red")
+
+        # PlateformePetroliere a déjà self.position = [x, y]
+        return (plateforme.position[0], plateforme.position[1])
+
+
     def on_platform_destroyed(self, platform: PlateformePetroliere):
         """Appelé quand une plateforme pétrolière est détruite.
 
@@ -373,6 +518,7 @@ class Game :
         self.input_manager.game = game
         self.renderer.game = game
         self.combat_system.game = game
+        self.overlay_menu.game = game
         
         # S'assurer que les unités sont dans le nouveau groupe
         if hasattr(self, 'units') and self.units:
@@ -386,7 +532,7 @@ class Game :
         # S'assurer que la caméra est dans le nouveau groupe
         if hasattr(self, 'camera') and self.camera not in self.group.sprites():
             self.group.add(self.camera)
-    
+
     def restart_game(self):
         """Redémarre le jeu."""
         
