@@ -52,7 +52,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
         # Pour compatibilité avec la logique d'unités
         from Global import UNIT_CONFIGS
-        self.range = 30
+        self.range = 15
         self.damage_pourcentage = 10
         self.damage = UNIT_CONFIGS["chaloupe"]["max_health"] * \
             self.damage_pourcentage / 100
