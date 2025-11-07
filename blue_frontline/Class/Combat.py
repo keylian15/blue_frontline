@@ -3,6 +3,104 @@ from Class.units.Unit import Unit
 from Utils import resource_path
 from Global import RED_TEAM_PATH, GREEN_TEAM_PATH
 from Utils import load_tileset
+
+
+class Explosion(pygame.sprite.Sprite):
+    """Classe pour gérer les animations d'explosion."""
+    
+    def __init__(self, x: int, y: int, size: int = 64):
+        """Initialise une explosion animée.
+        
+        Args:
+            x (int): Position x de l'explosion.
+            y (int): Position y de l'explosion.
+            size (int): Taille de l'explosion en pixels. Defaults to 64.
+        """
+        super().__init__()
+        
+        self.position = [float(x), float(y)]
+        self.size = size
+        self.is_active = True
+        
+        # Animation
+        self.animation_frames = []
+        self.current_frame = 0
+        self.animation_speed = 0.15  # Durée de chaque frame en secondes
+        self.elapsed_time = 0
+        self.total_frames = 8
+        
+        # Créer les frames d'animation
+        self.create_animation_frames()
+        
+        # Image initiale
+        self.image = self.animation_frames[0]
+        self.rect = self.image.get_rect()
+        self.rect.center = (int(x), int(y))
+    
+    def create_animation_frames(self):
+        """Crée les frames d'animation de l'explosion."""
+        colors = [
+            (255, 255, 100),  # Jaune clair
+            (255, 200, 0),    # Orange clair
+            (255, 150, 0),    # Orange
+            (255, 100, 0),    # Orange foncé
+            (200, 50, 0),     # Rouge-orange
+            (150, 30, 0),     # Rouge foncé
+            (100, 20, 0),     # Marron-rouge
+            (50, 10, 0),      # Presque noir
+        ]
+        
+        for i, color in enumerate(colors):
+            # Créer une surface transparente
+            surface = pygame.Surface((self.size, self.size), pygame.SRCALPHA)
+            
+            # Calculer la taille du cercle (expansion puis contraction)
+            if i < 4:
+                # Expansion
+                radius = int(self.size * (i + 1) / 8)
+            else:
+                # Contraction
+                radius = int(self.size * (8 - i) / 8)
+            
+            # Dessiner plusieurs cercles pour un effet de gradient
+            center = (self.size // 2, self.size // 2)
+            for j in range(3):
+                alpha = 255 - (j * 60)
+                r = radius - (j * (radius // 4))
+                if r > 0:
+                    col_with_alpha = (*color, max(0, alpha))
+                    pygame.draw.circle(surface, col_with_alpha, center, r)
+            
+            self.animation_frames.append(surface)
+    
+    def update(self, dt: float):
+        """Met à jour l'animation de l'explosion.
+        
+        Args:
+            dt (float): Delta time en secondes.
+        """
+        if not self.is_active:
+            return
+        
+        self.elapsed_time += dt
+        
+        # Passer à la frame suivante
+        if self.elapsed_time >= self.animation_speed:
+            self.elapsed_time = 0
+            self.current_frame += 1
+            
+            # Si l'animation est terminée
+            if self.current_frame >= len(self.animation_frames):
+                self.destroy()
+            else:
+                self.image = self.animation_frames[self.current_frame]
+    
+    def destroy(self):
+        """Détruit l'explosion."""
+        self.is_active = False
+        self.kill()
+
+
 class Projectile(pygame.sprite.Sprite):
     """Classe pour gérer les projectiles tirés par les unités."""
     
@@ -168,7 +266,7 @@ class Projectile(pygame.sprite.Sprite):
 class Mine(pygame.sprite.Sprite):
     """Classe pour gérer les mines posées par les sous-marins."""
 
-    def __init__(self, x: int, y: int, team: str, damage: int = 18):
+    def __init__(self, x: int, y: int, team: str, damage: int = 18, combat_system=None):
         """Initialise une mine.
 
         Args:
@@ -176,6 +274,7 @@ class Mine(pygame.sprite.Sprite):
             y (int): Position y de la mine.
             team (str): Équipe qui a posé la mine ("red" ou "green").
             damage (int): Dégâts infligés par la mine. Defaults to 18.
+            combat_system: Référence au système de combat pour créer l'explosion.
         """
         super().__init__()
 
@@ -184,6 +283,7 @@ class Mine(pygame.sprite.Sprite):
         self.team = team
         self.damage = damage
         self.is_active = True
+        self.combat_system = combat_system
 
         # Charger l'image de la mine
         self.load_image()
@@ -259,6 +359,11 @@ class Mine(pygame.sprite.Sprite):
 
     def explode(self):
         """Fait exploser la mine."""
+        # Créer une explosion visuelle si le combat_system est disponible
+        if self.combat_system and hasattr(self.combat_system, 'add_explosion'):
+            explosion = Explosion(int(self.position[0]), int(self.position[1]), size=48)
+            self.combat_system.add_explosion(explosion)
+        
         self.is_active = False
         self.kill()  # Retire la mine du groupe de sprites
 
@@ -289,6 +394,7 @@ class CombatSystem:
         self.projectiles = pygame.sprite.Group()
         self.units = pygame.sprite.Group()
         self.mines = pygame.sprite.Group()
+        self.explosions = pygame.sprite.Group()
         self.game = game
     
     def add_unit(self, unit: Unit):
@@ -308,6 +414,14 @@ class CombatSystem:
         """
 
         self.mines.add(mine)
+    
+    def add_explosion(self, explosion: "Explosion"):
+        """Ajoute une explosion au système de combat.
+        
+        Args:
+            explosion (Explosion): Explosion à ajouter.
+        """
+        self.explosions.add(explosion)
     
     def fire_projectile(self, shooter: Unit, target: Unit):
         """Crée un projectile tiré par une unité vers une cible.
@@ -343,7 +457,7 @@ class CombatSystem:
         return projectile
     
     def update(self, dt: float):
-        """Met à jour tous les projectiles, mines et gère les collisions.
+        """Met à jour tous les projectiles, mines, explosions et gère les collisions.
 
         Args:
             dt (float): La différence de temps entre chaque frame.
@@ -354,6 +468,9 @@ class CombatSystem:
 
         # Mettre à jour toutes les mines
         self.mines.update(dt)
+        
+        # Mettre à jour toutes les explosions
+        self.explosions.update(dt)
 
         # Vérifier les collisions entre projectiles et unités
         for projectile in self.projectiles:
@@ -437,4 +554,20 @@ class CombatSystem:
                     )
                 else:
                     scaled_image = mine.image
+                screen.blit(scaled_image, (screen_x - scaled_image.get_width()//2, screen_y - scaled_image.get_height()//2))
+        
+        # Dessiner les explosions
+        for explosion in self.explosions:
+            if explosion.is_active:
+                # Position avec décalage de caméra et zoom
+                screen_x = (explosion.position[0] - camera_offset[0]) * zoom
+                screen_y = (explosion.position[1] - camera_offset[1]) * zoom
+                # Adapter la taille de l'explosion au zoom
+                if zoom != 1.0:
+                    scaled_image = pygame.transform.scale(
+                        explosion.image,
+                        (max(1, int(explosion.image.get_width() * zoom)), max(1, int(explosion.image.get_height() * zoom)))
+                    )
+                else:
+                    scaled_image = explosion.image
                 screen.blit(scaled_image, (screen_x - scaled_image.get_width()//2, screen_y - scaled_image.get_height()//2))

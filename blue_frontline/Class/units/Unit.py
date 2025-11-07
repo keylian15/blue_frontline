@@ -329,6 +329,13 @@ class Unit(pygame.sprite.Sprite):
         if self.current_health <= 0:
             self.current_health = 0
             self.is_alive = False
+            
+            # Créer une explosion au moment de la mort
+            if hasattr(self, 'game') and hasattr(self.game, 'combat_system'):
+                from Class.Combat import Explosion
+                explosion = Explosion(int(self.position[0]), int(self.position[1]), size=64)
+                self.game.combat_system.add_explosion(explosion)
+            
             self.die(killer=killer)
     
     def die(self, killer: "Unit"=None):
