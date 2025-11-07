@@ -1226,11 +1226,8 @@ class SousMarin(Unit):
         dy_target = target.position[1] - self.position[1]
         dist_to_target = math.hypot(dx_target, dy_target)
 
-        # Ajuster distances selon le type de cible (paquebot = plus grand)
-        if getattr(target, 'unit_type', None) == 'paquebot' or 'paquebot' in target.__class__.__name__.lower():
-            collision_distance = 80
-        else:
-            collision_distance = 35
+        
+        collision_distance = 35
         if dist_to_target <= collision_distance:
             self.stop()
             self.is_moving = False
