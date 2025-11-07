@@ -371,7 +371,7 @@ class OptionsMenu:
         for unit, active in ia_settings.items():
             # Griser l'éclaireur
             text_color = WHITE
-            if unit == "Eclaireur" or unit == "Chaloupe":
+            if unit == "Eclaireur":
                 text_color = (120, 120, 120)
                 active = True
 

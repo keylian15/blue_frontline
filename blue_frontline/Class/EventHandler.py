@@ -169,6 +169,24 @@ class EventHandler:
             self._save_qlearning_progress_all()
             return True
         
+        if event.key == get_action_key("MINE"):
+            world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
+
+            # Si un sous-marin est sélectionné, poser une mine
+            if (self.game.selected_unit and
+                self.game.selected_unit.is_alive and
+                hasattr(self.game.selected_unit, 'special_ability') and
+                self.game.selected_unit.special_ability == "mines"):
+
+                # Vérifier que la position n'est pas dans un obstacle
+                from Utils import point_in_many_polygons
+                if not point_in_many_polygons(self.game.obstacles, (world_x, world_y)):
+                    x, y = self.game.selected_unit.position
+
+                    # Utiliser la méthode spéciale pour le sous-marin
+                    if hasattr(self.game.selected_unit, 'can_place_mine') and self.game.selected_unit.can_place_mine():
+                        self.game.selected_unit.place_mine(x, y)
+        
         return True
     
     # ==========================================
@@ -297,26 +315,7 @@ class EventHandler:
                     self.game.selected_unit.move_to_position((world_x, world_y))
             else:
                 self.game.select_unit(None)
-
-        # Clic droit
-        elif event.button == get_action_key("MINE"):  # Clic droit
-            world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
-
-            # Si un sous-marin est sélectionné, poser une mine
-            if (self.game.selected_unit and
-                self.game.selected_unit.is_alive and
-                hasattr(self.game.selected_unit, 'special_ability') and
-                self.game.selected_unit.special_ability == "mines"):
-
-                # Vérifier que la position n'est pas dans un obstacle
-                from Utils import point_in_many_polygons
-                if not point_in_many_polygons(self.game.obstacles, (world_x, world_y)):
-                    x, y = self.game.selected_unit.position
-
-                    # Utiliser la méthode spéciale pour le sous-marin
-                    if hasattr(self.game.selected_unit, 'can_place_mine') and self.game.selected_unit.can_place_mine():
-                        self.game.selected_unit.place_mine(x, y)
-                                
+                        
         # Molette haut
         elif event.button == get_action_key("ZOOM_IN"):
             if not getattr(self.game, 'paused', False):
@@ -326,6 +325,10 @@ class EventHandler:
         elif event.button == get_action_key("ZOOM_OUT"):
             if not getattr(self.game, 'paused', False):
                 self.game.camera.zoom_out()
+
+        # Désélectionner l'unité
+        if event.button == 3 : 
+            self.game.select_unit(None)
     
     def screen_to_world_coordinates(self, mouse_pos: tuple[int, int]):
         """Convertit les coordonnées écran en coordonnées monde.
