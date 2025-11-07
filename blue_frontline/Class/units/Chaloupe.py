@@ -69,11 +69,11 @@ class Chaloupe(Unit):
         self.new_path = []
         self.need_recalculate_path = False
 
-        # IA activée par défaut
-        self.ia_enabled = True
-        
         # Paramètre pour activer/désactiver l'IA
         self.is_ia = is_ia
+        
+        # IA activée par défaut (synchronisé avec is_ia)
+        self.ia_enabled = is_ia
         
         # Cible ennemie actuelle
         self.target_enemy = None
@@ -387,7 +387,7 @@ class Chaloupe(Unit):
         Args:
             all_units (list[Unit]): Liste de toutes les unités
         """
-        if not all_units or not self.ia_enabled:
+        if not all_units or not self.is_ia:
             return
             
         # Types d'unités prioritaires pour les Chaloupes (gros navires)
@@ -710,7 +710,7 @@ class Chaloupe(Unit):
 
     def ia(self):
         """Méthode d'IA principale pour la Chaloupe."""
-        if not self.ia_enabled:
+        if not self.is_ia:
             return
             
         # Si on a une cible ennemie valide, ne jamais l'abandonner
