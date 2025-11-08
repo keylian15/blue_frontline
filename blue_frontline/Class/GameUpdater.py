@@ -57,11 +57,12 @@ class GameUpdater:
                 # Cas spécial pour les bases :
                 if unit.unit_type == "plateformePetroliere":
                     if unit.team == "red" : 
-                        unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get("BaseRouge")
+                        unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get("BaseRed")
                     elif unit.team == "green" :
-                        unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get("BaseVerte")
+                        unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get("BaseGreen")
                 else:
-                    unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(unit.unit_type[0].upper() + unit.unit_type[1:])
+                    key = unit.unit_type.capitalize() + unit.team.capitalize()
+                    unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(key, False)
             
             # Mettre à jour l'unité avec toutes les informations nécessaires
             unit.update(dt, self.game.combat_system, self.game.screen, camera_offset, self.game.units)

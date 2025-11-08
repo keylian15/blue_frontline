@@ -363,25 +363,35 @@ class OptionsMenu:
         ia_settings = gameplay_settings["AI_ACTIVATION"]
         ia_x = margin
         ia_y = start_y
-        ia_width = 340
-        ia_rect_height = len(ia_settings) * (button_height + 10) + 20
+        ia_width = 425 * 2  # Largeur * 2 Colonnes
+        ia_rect_height = (len(ia_settings) * (button_height + 10) + 20) / 2
         ia_rect = pygame.Rect(ia_x - 20, ia_y - 10, ia_width, ia_rect_height)
         pygame.draw.rect(self.screen, LIGHT_BLUE, ia_rect, 2, border_radius=10)
 
-        for unit, active in ia_settings.items():
-            # Griser l'éclaireur
+        for i, (unit, active) in enumerate(ia_settings.items()):
+            # Détermine la position
+            if i % 2 == 0:
+                # Colonne de gauche
+                x = ia_x
+                y = ia_y + (i // 2) * (button_height + 10)
+            else:
+                # Colonne de droite
+                x = ia_x + ia_width // 2 + 20  # décale à droite
+                y = ia_y + (i // 2) * (button_height + 10)
+
+            # Texte
             text_color = WHITE
-            if unit == "Eclaireur" or unit == "Chaloupe":
+            # Si l'unité commence par Eclaireur
+            if unit.startswith("Eclaireur"):
                 text_color = (120, 120, 120)
                 active = True
 
-            # Texte
-            text_surf = self.font.render(f"IA {unit}", True, text_color)
-            self.screen.blit(
-                text_surf, (ia_x, ia_y + button_height // 2 - text_surf.get_height() // 2))
+            text_surf = self.font.render(f"{unit}", True, text_color)
+            self.screen.blit(text_surf, (x, y + button_height //
+                             2 - text_surf.get_height() // 2))
 
             # Bouton ON/OFF
-            button_rect = pygame.Rect(ia_x + 200, ia_y, 120, button_height)
+            button_rect = pygame.Rect(x + 250, y, 120, button_height)
             hovered = button_rect.collidepoint(pygame.mouse.get_pos())
             button_surf = self.draw_gradient_button(button_rect, hovered)
             self.screen.blit(button_surf, button_rect)
@@ -394,8 +404,8 @@ class OptionsMenu:
             state_rect = state_surf.get_rect(center=button_rect.center)
             self.screen.blit(state_surf, state_rect)
 
+            # Interaction
             interactive_rects[f"IA_{unit}"] = button_rect
-            ia_y += button_height + 10
 
         # === 2. Autres paramètres ===
         param_x = ia_x + ia_width + spacing_x
