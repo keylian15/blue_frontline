@@ -148,8 +148,9 @@ class SousMarin(Unit):
             bool : True si la mine a été placée, False sinon.
         """
         if self.special_ability == "mines":
-            # Créer la mine à la position exacte du sous-marin
-            mine = Mine(x, y, self.team, damage=18)
+            # Créer la mine à la position exacte du sous-marin avec référence au combat_system
+            combat_system = self.game.combat_system if hasattr(self.game, 'combat_system') else None
+            mine = Mine(x, y, self.team, damage=18, combat_system=combat_system)
             if hasattr(self.game, 'combat_system') and self.game.combat_system:
                 self.game.combat_system.add_mine(mine)
                 self.last_shot_time = time.time()
