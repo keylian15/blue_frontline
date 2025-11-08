@@ -9,7 +9,7 @@ class Explosion(pygame.sprite.Sprite):
     """Classe pour gérer les animations d'explosion."""
     
     def __init__(self, x: int, y: int, size: int = 64):
-        """Initialise une explosion animée.
+        """Initialise une explosion statique avec le sprite explosion.png.
         
         Args:
             x (int): Position x de l'explosion.
@@ -22,59 +22,36 @@ class Explosion(pygame.sprite.Sprite):
         self.size = size
         self.is_active = True
         
-        # Animation
-        self.animation_frames = []
-        self.current_frame = 0
-        self.animation_speed = 0.15  # Durée de chaque frame en secondes
+        # Durée de vie de l'explosion (en secondes)
+        self.lifetime = 0.8  # L'explosion reste visible pendant 0.8 secondes
         self.elapsed_time = 0
-        self.total_frames = 8
         
-        # Créer les frames d'animation
-        self.create_animation_frames()
+        # Charger l'image d'explosion
+        self.load_explosion_image()
         
-        # Image initiale
-        self.image = self.animation_frames[0]
+        # Positionner l'image
         self.rect = self.image.get_rect()
         self.rect.center = (int(x), int(y))
     
-    def create_animation_frames(self):
-        """Crée les frames d'animation de l'explosion."""
-        colors = [
-            (255, 255, 100),  # Jaune clair
-            (255, 200, 0),    # Orange clair
-            (255, 150, 0),    # Orange
-            (255, 100, 0),    # Orange foncé
-            (200, 50, 0),     # Rouge-orange
-            (150, 30, 0),     # Rouge foncé
-            (100, 20, 0),     # Marron-rouge
-            (50, 10, 0),      # Presque noir
-        ]
-        
-        for i, color in enumerate(colors):
-            # Créer une surface transparente
-            surface = pygame.Surface((self.size, self.size), pygame.SRCALPHA)
+    def load_explosion_image(self):
+        """Charge l'image d'explosion depuis le fichier PNG."""
+        try:
+            # Charger le sprite d'explosion
+            explosion_path = resource_path('assets/miscellaneous/png/explosion.png')
+            explosion_image = pygame.image.load(explosion_path).convert_alpha()
             
-            # Calculer la taille du cercle (expansion puis contraction)
-            if i < 4:
-                # Expansion
-                radius = int(self.size * (i + 1) / 8)
-            else:
-                # Contraction
-                radius = int(self.size * (8 - i) / 8)
+            # Redimensionner l'image à la taille souhaitée
+            self.image = pygame.transform.scale(explosion_image, (self.size, self.size))
             
-            # Dessiner plusieurs cercles pour un effet de gradient
-            center = (self.size // 2, self.size // 2)
-            for j in range(3):
-                alpha = 255 - (j * 60)
-                r = radius - (j * (radius // 4))
-                if r > 0:
-                    col_with_alpha = (*color, max(0, alpha))
-                    pygame.draw.circle(surface, col_with_alpha, center, r)
-            
-            self.animation_frames.append(surface)
+        except (pygame.error, FileNotFoundError):
+            # Fallback: créer une explosion simple en cas d'erreur
+            self.image = pygame.Surface((self.size, self.size), pygame.SRCALPHA)
+            # Dessiner un cercle orange/rouge
+            pygame.draw.circle(self.image, (255, 150, 0), (self.size // 2, self.size // 2), self.size // 2)
+            pygame.draw.circle(self.image, (255, 255, 0), (self.size // 2, self.size // 2), self.size // 3)
     
     def update(self, dt: float):
-        """Met à jour l'animation de l'explosion.
+        """Met à jour l'explosion (gère sa durée de vie).
         
         Args:
             dt (float): Delta time en secondes.
@@ -84,16 +61,9 @@ class Explosion(pygame.sprite.Sprite):
         
         self.elapsed_time += dt
         
-        # Passer à la frame suivante
-        if self.elapsed_time >= self.animation_speed:
-            self.elapsed_time = 0
-            self.current_frame += 1
-            
-            # Si l'animation est terminée
-            if self.current_frame >= len(self.animation_frames):
-                self.destroy()
-            else:
-                self.image = self.animation_frames[self.current_frame]
+        # Si la durée de vie est dépassée, détruire l'explosion
+        if self.elapsed_time >= self.lifetime:
+            self.destroy()
     
     def destroy(self):
         """Détruit l'explosion."""
