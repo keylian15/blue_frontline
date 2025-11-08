@@ -66,7 +66,15 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             self.ia_init()
 
     def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
-        """Met à jour la plateforme (tir automatique)."""
+        """Met à jour la plateforme (tir automatique).
+        
+        Args:
+            dt (int, optional): La différence de temps entre chaque frame. Par défaut à 0.
+            combat_system (CombatSystem, optional): Le système de combat. Par défaut à None.
+            screen (pygame.Surface, optional): L'écran sur lequel afficher. Par défaut à None.
+            camera_offset (tuple[float, float], optional): Le décalage de la caméra. Par défaut à (0, 0).
+            all_units (list[Unit], optional): La liste de toutes les unités dans le jeu. Par défaut à None.
+        """
         import time
         if not self.is_alive:
             return
