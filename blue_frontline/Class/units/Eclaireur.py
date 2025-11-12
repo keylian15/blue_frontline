@@ -26,7 +26,7 @@ class Eclaireur(Unit):
         - L'éclaireur peut dessiner sa portée (draw_range) comme les autres unités.
     """
 
-    def __init__(self, game: "Game", team: str) -> None:
+    def __init__(self, game: "Game", team: str, is_ia:bool = True) -> None:
         """
         Args:
             game (Game): instance du jeu.
@@ -173,10 +173,10 @@ class Eclaireur(Unit):
 # ----------------------------------------------------------------------
 
 class EclaireurRouge(Eclaireur):
-    def __init__(self, game: "Game") -> None:
-        super().__init__(game, team="red")
+    def __init__(self, game: "Game", is_ia: bool = True) -> None:
+        super().__init__(game, team="red", is_ia=is_ia)
 
 
 class EclaireurVert(Eclaireur):
-    def __init__(self, game: "Game") -> None:
-        super().__init__(game, team="green")
+    def __init__(self, game: "Game", is_ia: bool = True) -> None:
+        super().__init__(game, team="green", is_ia=is_ia)
