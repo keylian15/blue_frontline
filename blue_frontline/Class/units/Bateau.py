@@ -11,7 +11,7 @@ from shapely.geometry import Point as ShapelyPoint, Polygon
 class Bateau(Unit):
     """Classe unifiée pour les unités Bateau (Rouge et Vert)."""
 
-    def __init__(self, game: "Game", team: str, ia: bool = True):
+    def __init__(self, game: "Game", team: str, is_ia: bool = True):
         """Fonction d'initialisation de la classe Bateau.
 
         Args:
@@ -59,7 +59,7 @@ class Bateau(Unit):
         self._last_block_check_time = time.time()
 
         # === Configuration IA ===
-        self.is_ia = True
+        self.is_ia = is_ia
         self.current_goal = None
         # "base_ennemie", "base_alliee", "attaque_ennemi", "suivre_eclaireur"
         self.current_goal_type = None
@@ -81,8 +81,15 @@ class Bateau(Unit):
 
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None,
                camera_offset: tuple[float, float] = (0, 0), all_units: list[Unit] = None):
-        """Met à jour l'unité en fonction de son état actuel."""
-
+        """Met à jour l'unité en fonction de son état actuel.
+        
+        Args:
+            dt (int, optional): Le delta time entre chaque frame. Par defaut à 0 .
+            combat_system (CombatSystem, optional): Le système de combat pour gérer les attaques. Par defaut à None .
+            screen (pygame.Surface, optional): La surface d'affichage pour dessiner la portée. Par defaut à None .
+            camera_offset (tuple[float, float], optional): Le décalage de la caméra pour le rendu. Par defaut à (0, 0) .
+            all_units (list[Unit], optional): La liste de toutes les unités dans le jeu. Par defaut à None .
+        """
         # Appeler la mise à jour de la classe parent
         super().update(dt, combat_system, screen, camera_offset, all_units)
 
@@ -130,7 +137,12 @@ class Bateau(Unit):
 # ========================================[LOGIQUE IA PRINCIPALE]=============================================
 
     def IA_execute_logic(self, combat_system: CombatSystem, all_units: list[Unit]):
-        """Exécute la logique de l'IA selon le diagramme exact."""
+        """Exécute la logique de l'IA selon le diagramme exact.
+        
+        Args:
+            combat_system (CombatSystem): Le système de combat pour gérer les attaques.
+            all_units (list[Unit]): La liste de toutes les unités dans le jeu.
+        """
 
         # ÉTAPE 1: Chercher un ennemi proche
         enemy = self.get_closest_enemy_in_range()
@@ -202,7 +214,11 @@ class Bateau(Unit):
                 self.current_state = "chercher_but"
 
     def IA_handle_attack_state(self, combat_system: CombatSystem):
-        """Gère l'état d'attaque: vérifier portée, tirer ou se rapprocher."""
+        """Gère l'état d'attaque: vérifier portée, tirer ou se rapprocher.
+        
+        Args:
+            combat_system (CombatSystem): Le système de combat pour gérer les attaques.
+        """
 
         if not self._current_target:
             return
@@ -229,7 +245,13 @@ class Bateau(Unit):
 # ========================================[COMPORTEMENTS IA (décisions)]=======================================
 
     def IA_find_ally_scout(self, all_units: list[Unit]):
-        """Trouve l'éclaireur allié le plus proche (si disponible)."""
+        """Trouve l'éclaireur allié le plus proche (si disponible).
+        
+        Args:
+            all_units (list[Unit]): La liste de toutes les unités dans le jeu.
+        Returns:
+            Unit: L'unité éclaireur alliée la plus proche, ou None si aucun trouvé.
+        """
 
         # Cooldown pour éviter de chercher trop souvent
         self._scout_check_cooldown -= 1
@@ -427,25 +449,46 @@ class Bateau(Unit):
 
         return None
 
-    def IA_heuristic(self, a, b):
-        """Distance de Manhattan pour A*."""
+    def IA_heuristic(self, a : tuple, b : tuple) -> float:
+        """Distance de Manhattan pour A*.
+        
+        Args :
+            a (tuple): Position de départ sous forme de tuple (x, y).
+            b (tuple): Position d'arrivée sous forme de tuple (x, y).
+        Returns:
+            (float): Distance heuristique entre a et b.
+        """
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
 # =============================================[UTILITAIRES IA]=================================================
 
     def IA_is_paquebot(self, unit: Unit) -> bool:
-        """Vérifie si une unité est un paquebot."""
+        """Vérifie si une unité est un paquebot.
+        
+        Args:
+            unit (Unit): L'unité à vérifier.
+        Returns:
+            (bool): True si l'unité est un paquebot, False sinon.
+        """
         return getattr(unit, 'type', None) == "Paquebot" or getattr(unit, 'unit_type', None) == "paquebot"
 
     def IA_get_enemy_base(self):
-        """Renvoie la base ennemie."""
+        """Renvoie la base ennemie.
+        
+        Returns:
+            (Unit): La base ennemie.
+        """
         for p in self.game.plateformes.values():
             if p.team != self.team:
                 return p
         return 
 
     def IA_get_ally_base(self):
-        """Renvoie la base alliée."""
+        """Renvoie la base alliée.
+        
+        Returns:
+            (Unit): La base alliée.
+        """
         for p in self.game.plateformes.values():
             if p.team == self.team:
                 return p
@@ -454,12 +497,12 @@ class Bateau(Unit):
 
 # Classes d'alias pour la compatibilité avec l'ancien code
 class BateauRouge(Bateau):
-    def __init__(self, game: "Game"):
+    def __init__(self, game: "Game", is_ia: bool = True):
         """Fonction d'initialisation de la classe BateauRouge."""
-        super().__init__(game, team="red")
+        super().__init__(game, team="red", is_ia=is_ia)
 
 
 class BateauVert(Bateau):
-    def __init__(self, game: "Game"):
+    def __init__(self, game: "Game", is_ia: bool = True):
         """Fonction d'initialisation de la classe BateauVert."""
-        super().__init__(game, team="green")
+        super().__init__(game, team="green", is_ia=is_ia)

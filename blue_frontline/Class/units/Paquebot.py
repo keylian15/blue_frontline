@@ -8,7 +8,16 @@ from Global import UNIT_CONFIGS
 
 
 class Paquebot(Unit):
+    """Classe unifiée pour les unités Paquebot (Rouge et Vert)."""
     def __init__(self, game: "Game", team: str, is_ia: bool = True):
+        """Fonction d'initialisation de la classe Paquebot.
+
+        Args:
+            game (Game): L'instance du jeu.
+            team (str): L'équipe de l'unité.
+            is_ia (bool): Si True, l'unité est contrôlée par l'IA.
+        """
+        
         config = UNIT_CONFIGS["paquebot"]
         super().__init__(game, team=team, unit_type="paquebot")
 
@@ -40,7 +49,7 @@ class Paquebot(Unit):
         self.manual_override = False
 
         # Tick IA
-        self.is_ia = is_ia
+        self.is_ia = is_ia        
         self._last_ia_tick = time.time()
         self._ia_tick_interval = 0.15
 
@@ -50,6 +59,15 @@ class Paquebot(Unit):
         self.defense_cooldown = 4  # secondes
 
     def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
+        """Mise à jour de l'unité Paquebot.
+
+        Args:
+            dt (int, optional): La différence de temps entre chaque frame. Par défaut à 0.
+            combat_system (CombatSystem, optional): Le système de combat. Par défaut à None.
+            screen (pygame.Surface, optional): L'écran sur lequel afficher. Par défaut à None.
+            camera_offset (tuple[float, float], optional): Le décalage de la caméra. Par défaut à (0, 0).
+            all_units (list[Unit], optional): La liste de toutes les unités dans le jeu. Par défaut à None.
+        """
         super().update(dt, combat_system, screen, camera_offset, all_units)
 
         # Chargement du chemin calculé par le thread (si présent)
@@ -95,6 +113,11 @@ class Paquebot(Unit):
             self.draw_range(screen, camera_offset)
 
     def pos_base_ennemie(self):
+        """Retourne la position de la base ennemie.
+
+        Returns:
+            tuple: La position de la base ennemie et l'objet de la plateforme.
+        """
         if self.team == "red":
             return (self.game.plateformes["green"].position, self.game.plateformes["green"])
         elif self.team == "green":
@@ -102,12 +125,14 @@ class Paquebot(Unit):
         return None, None
 
     def calcul_chemin(self):
+        """Lance le calcul du chemin vers la base ennemie dans un thread séparé."""
         if getattr(self, "path_thread", None) and self.path_thread.is_alive():
             return
         self.need_recalculate_path = False
         self.start_pathfinding_thread(self.compute_path)
 
     def compute_path(self):
+        """Calcule le chemin vers la base ennemie."""
         start = self.position
         target_pos, _ = self.pos_base_ennemie()
         if not start or not target_pos:
@@ -118,6 +143,10 @@ class Paquebot(Unit):
             self.path_found = True
 
     def compute_path_to(self, target_pos):
+        """Calcule le chemin vers une position cible donnée.
+        Args:
+            target_pos (tuple): La position cible (x, y).
+        """
         start = self.position
         if not start or not target_pos:
             return
@@ -127,10 +156,34 @@ class Paquebot(Unit):
             self.path_found = True
 
     def ia_a_star_search(self, start, goal):
+        """Implémentation A* améliorée sur grille 32x32 pixels avec mouvements diagonaux.
+        Args:
+            start (tuple): (x, y) position départ
+            goal (tuple): (x, y) position but
+
+        Returns:
+            list: Liste de positions (x, y) formant le chemin, ou None si pas de chemin.
+        """
         def pos_to_grid(pos):
+            """Convertit une position en coordonnées de grille.
+            
+            Args:
+                pos (tuple): Position (x, y) en pixels.
+            
+            Returns:
+                tuple: Coordonnées de la grille (x, y).
+            """
             return (int(pos[0] // 32), int(pos[1] // 32))
 
         def grid_to_pos(grid):
+            """Convertit des coordonnées de grille en position.
+            
+            Args:
+                grid (tuple): Coordonnées de la grille (x, y).
+            
+            Returns:
+                tuple: Position (x, y) en pixels.
+            """
             return (grid[0] * 32 + 16, grid[1] * 32 + 16)
 
         start_grid = pos_to_grid(start)
@@ -194,10 +247,22 @@ class Paquebot(Unit):
 
 
     def heuristic(self, a, b):
+        """Heuristique de distance de Manhattan pour A*.
+        
+        Args:
+            a (tuple): Position (x, y) 1.
+            b (tuple): Position (x, y) 2.
+
+        Returns:
+            (float): Distance de Manhattan entre a et b.
+        """
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
     def ia_decision(self, all_units=None):
-        """IA agressive : attaque d'abord les ennemis proches, sinon comportement classique."""
+        """IA agressive : attaque d'abord les ennemis proches, sinon comportement classique.
+        Args:
+            all_units (list, optional): Liste de toutes les unités dans le jeu. Par défaut à None.
+        """
         if getattr(self, "manual_override", False):
             return
 
@@ -234,6 +299,11 @@ class Paquebot(Unit):
         self.ia_defense_ou_attaque(units)
 
     def ia_defense_ou_attaque(self, units):
+        """Décide entre défendre la base alliée ou attaquer la base ennemie.
+        
+        Args:
+            units (list): Liste de toutes les unités dans le jeu.
+        """
         allied_base_obj = self.game.plateformes.get(self.team)
         allied_pos = getattr(allied_base_obj, "position", None) if allied_base_obj else None
         enemy_pos, _ = self.pos_base_ennemie()
@@ -276,10 +346,10 @@ class Paquebot(Unit):
 
 
 class PaquebotRouge(Paquebot):
-    def __init__(self, game):
-        super().__init__(game, team="red")
+    def __init__(self, game, is_ia: bool = True):
+        super().__init__(game, team="red", is_ia=is_ia)
 
 
 class PaquebotVert(Paquebot):
-    def __init__(self, game):
-        super().__init__(game, team="green")
+    def __init__(self, game, is_ia: bool = True):
+        super().__init__(game, team="green", is_ia=is_ia)

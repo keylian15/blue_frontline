@@ -21,6 +21,13 @@ class Unit(pygame.sprite.Sprite):
         # Type et team
         self.type = unit_type
         self.team = team
+        if team == "red" : 
+            teamFr = "Rouge"
+        else : 
+            teamFr = "Vert"
+            if unit_type == "chaloupe" : 
+                teamFr = "Verte"
+        self.name = unit_type.capitalize() + teamFr
         
         # Position et mouvement
         base_spawn = self.game.red_platform_zone if team == "red" else self.game.green_platform_zone
@@ -329,6 +336,13 @@ class Unit(pygame.sprite.Sprite):
         if self.current_health <= 0:
             self.current_health = 0
             self.is_alive = False
+            
+            # Créer une explosion au moment de la mort
+            if hasattr(self, 'game') and hasattr(self.game, 'combat_system'):
+                from Class.Combat import Explosion
+                explosion = Explosion(int(self.position[0]), int(self.position[1]), size=64)
+                self.game.combat_system.add_explosion(explosion)
+            
             self.die(killer=killer)
     
     def die(self, killer: "Unit"=None):

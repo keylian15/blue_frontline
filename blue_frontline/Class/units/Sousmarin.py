@@ -148,8 +148,9 @@ class SousMarin(Unit):
             bool : True si la mine a été placée, False sinon.
         """
         if self.special_ability == "mines":
-            # Créer la mine à la position exacte du sous-marin
-            mine = Mine(x, y, self.team, damage=18)
+            # Créer la mine à la position exacte du sous-marin avec référence au combat_system
+            combat_system = self.game.combat_system if hasattr(self.game, 'combat_system') else None
+            mine = Mine(x, y, self.team, damage=18, combat_system=combat_system)
             if hasattr(self.game, 'combat_system') and self.game.combat_system:
                 self.game.combat_system.add_mine(mine)
                 self.last_shot_time = time.time()
@@ -1747,20 +1748,20 @@ class SousMarin(Unit):
 
 # Classes d'alias pour la compatibilité avec l'ancien code
 class SousMarinRouge(SousMarin):
-    def __init__(self, game):
+    def __init__(self, game, is_ia : bool = True):
         """Constructeur de SousMarinRouge.
 
         Args:
             game: L'instance de la classe Game.
         """
-        super().__init__(game, team="red")
+        super().__init__(game, team="red", is_ia=is_ia)
 
 
 class SousMarinVert(SousMarin):
-    def __init__(self, game):
+    def __init__(self, game, is_ia: bool = True):
         """Constructeur de SousMarinVert.
 
         Args:
             game: L'instance de la classe Game.
         """
-        super().__init__(game, team="green")
+        super().__init__(game, team="green", is_ia=is_ia)

@@ -18,6 +18,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         self.team = team
         self.objTiled = objTiled
         self.hitbox_polygon = objTiled.points
+        self.name = "BaseRouge" if team == "red" else "BaseVerte"
 
         self.max_health = 1000
         self.current_health = 1000
@@ -66,7 +67,15 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             self.ia_init()
 
     def update(self, dt=0, combat_system=None, screen=None, camera_offset=(0, 0), all_units=None):
-        """Met à jour la plateforme (tir automatique)."""
+        """Met à jour la plateforme (tir automatique).
+        
+        Args:
+            dt (int, optional): La différence de temps entre chaque frame. Par défaut à 0.
+            combat_system (CombatSystem, optional): Le système de combat. Par défaut à None.
+            screen (pygame.Surface, optional): L'écran sur lequel afficher. Par défaut à None.
+            camera_offset (tuple[float, float], optional): Le décalage de la caméra. Par défaut à (0, 0).
+            all_units (list[Unit], optional): La liste de toutes les unités dans le jeu. Par défaut à None.
+        """
         import time
         if not self.is_alive:
             return
@@ -521,7 +530,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             # On spawn la chaloupe.
             from Global import GAMEPLAY_SETTINGS
             self.event_handler.apply_cost(data[0], data[1], data[2])
-            self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize() + self.team.capitalize()])
+            self.event_handler.spawn_unit(data[0], data[1])
             # === Logs ===
             self.ia_log_action('spawn', self.current_scenario,
                                data[2], {'unit': data[0]})
@@ -564,7 +573,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             if random() < self.probabilites["defense_forte"]["can_spawn"]:
                 from Global import GAMEPLAY_SETTINGS
                 self.event_handler.apply_cost(data[0], data[1], data[2])
-                self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize() + self.team.capitalize()])
+                self.event_handler.spawn_unit(data[0], data[1])
                 # === Logs ===
                 self.ia_log_action(
                     'spawn', self.current_scenario, data[2], {'unit': data[0]})
@@ -580,7 +589,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 else:
                     from Global import GAMEPLAY_SETTINGS
                     self.event_handler.apply_cost(data[0], data[1], data[2])
-                    self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize() + self.team.capitalize()])
+                    self.event_handler.spawn_unit(data[0], data[1])
                     # === Logs ===
                     self.ia_log_action('spawn', self.current_scenario, data[2], {
                         'unit_type': data[0]})
@@ -610,7 +619,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             # On spawn l'unité.
             from Global import GAMEPLAY_SETTINGS
             self.event_handler.apply_cost(data[0], data[1], data[2])
-            self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize() + self.team.capitalize()])
+            self.event_handler.spawn_unit(data[0], data[1])
             # === Logs ===
             self.ia_log_action('spawn', self.current_scenario,
                                data[2], {'unit': data[0]})
@@ -653,7 +662,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             if random() < self.probabilites["attaque_forte"]["can_spawn"]:
                 from Global import GAMEPLAY_SETTINGS
                 self.event_handler.apply_cost(data[0], data[1], data[2])
-                self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize() + self.team.capitalize()])
+                self.event_handler.spawn_unit(data[0], data[1])
 
                 # === Logs ===
                 self.ia_log_action('spawn', self.current_scenario, data[2], {
@@ -671,7 +680,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 else:
                     from Global import GAMEPLAY_SETTINGS
                     self.event_handler.apply_cost(data[0], data[1], data[2])
-                    self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize() + self.team.capitalize()])
+                    self.event_handler.spawn_unit(data[0], data[1])
                     # === Logs ===
                     self.ia_log_action('spawn', self.current_scenario, data[2], {
                         'unit_type': data[0]})
@@ -700,7 +709,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                 # On spawn l'éclaireur.
                 from Global import GAMEPLAY_SETTINGS
                 self.event_handler.apply_cost(data[0], data[1], data[2])
-                self.event_handler.spawn_unit(data[0], data[1], GAMEPLAY_SETTINGS["AI_ACTIVATION"][data[0].capitalize() + self.team.capitalize()])
+                self.event_handler.spawn_unit(data[0], data[1])
                 # === Logs ===
                 self.ia_log_action('spawn', self.current_scenario, data[2], {
                                    'unit_type': data[0]})
