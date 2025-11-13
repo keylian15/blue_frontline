@@ -306,7 +306,12 @@ class EventHandler:
                 self.game.select_unit(clicked_unit)
             elif self.game.selected_unit and self.game.selected_unit.is_alive:
                 # Déplacer l'unité sélectionnée vers la position cliquée
-                self.game.selected_unit.move_to_position((world_x, world_y))
+                if hasattr(self.game.selected_unit, 'move_to_click'):
+                    # Utiliser le pathfinding pour les Chaloupes
+                    self.game.selected_unit.move_to_click((world_x, world_y))
+                elif hasattr(self.game.selected_unit, 'move_to_position'):
+                    # Déplacement direct pour les autres unités
+                    self.game.selected_unit.move_to_position((world_x, world_y))
             else:
                 self.game.select_unit(None)
                         

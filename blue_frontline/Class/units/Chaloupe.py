@@ -60,9 +60,6 @@ class Chaloupe(Unit):
         self._block_check_interval = 1.0
         self._last_block_check_time = time.time()
 
-        # Gestion prise en main manuelle (désactive IA)
-        self.manual_override = False
-
         # Multithreading pour pathfinding
         self.path_thread = None
         self.path_found = False
@@ -91,18 +88,16 @@ class Chaloupe(Unit):
 
         # === SYSTÈME D'IA AVANCÉE ===
         # Initialiser l'IA d'attaque éclair si disponible et si l'IA est activée
-        if AI_AVAILABLE and self.is_ia:
-            self.ai_system = ChaloupeAI(self)
-            self.use_advanced_ai = True
-            self.visual_debug_enabled = True  # Debug visuel activé par défaut
-            print(f"Chaloupe {self.team} : IA avancée activée")
-        else:
-            self.ai_system = None
-            self.use_advanced_ai = False
-            self.visual_debug_enabled = False
-            if not self.is_ia:
-                print(f"Chaloupe {self.team} : IA désactivée")
-        
+        self.ai_system = None
+        self.visual_debug_enabled = False
+        if self.is_ia:
+            self.init_ia()
+
+    def init_ia(self):
+        from Class.units.IA.ChaloupeAI import ChaloupeAI
+        self.ai_system = ChaloupeAI(self)
+        self.visual_debug_enabled = True  # Debug visuel activé par défaut
+
     def update(self, dt: int = 0, combat_system: CombatSystem = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list[Unit] = None):
         """Met à jour l'unité en fonction de son état actuel.
 
@@ -117,86 +112,75 @@ class Chaloupe(Unit):
         # Appeler la mise à jour de la classe parent
         super().update(dt, combat_system, screen, camera_offset, all_units)
         
-        # Si l'IA est désactivée, ne pas exécuter le comportement d'IA
-        if not self.is_ia:
-            return
-
-        # Vérification périodique des unités ennemies
-        now = time.time()
-        if now - self.last_enemy_check > self.enemy_check_interval:
-            self.last_enemy_check = now
+        # Si c'est un IA 
+        if self.is_ia:
             
-            # === SYSTÈME D'IA AVANCÉE ===
-            if self.use_advanced_ai and self.ai_system:
-                # Utiliser l'IA avancée d'attaque éclair
-                self.ai_system.update(dt, all_units)
-            else:
+            # Si le systeme d'ia n'existe pas on l'init.
+            if not self.ai_system : 
+                self.init_ia()
+            
+            # Vérification périodique des unités ennemies
+            now = time.time()
+            if now - self.last_enemy_check > self.enemy_check_interval:
+                self.last_enemy_check = now    
+            
                 # Utiliser le système de base
                 self.check_for_enemies(all_units)
 
-        # === COMPORTEMENT DE BASE === (utilisé si IA avancée désactivée)
-        if not self.use_advanced_ai:
+            # === COMPORTEMENT DE BASE === 
             # Suivi direct de la cible (chaque frame pour fluidité maximale)
             if self.target_enemy and self.target_enemy.is_alive:
                 self.direct_follow_target()
 
-        # Suivi du chemin pathfinding dans le thread
-        if self.path_thread and self.path_thread.is_alive():
-            # Le thread calcule encore, on attend
-            pass
-        else:
-            # Si nouveau chemin calculé, on le charge
-            if self.path_found:
-                self.path_to_follow = self.new_path
-                self.current_path_index = 0
-                if self.path_to_follow:
-                    self.move_to_position(self.path_to_follow[0])
-                self.path_found = False
-
-        # Suivi du déplacement sur chemin
-        if self.path_to_follow and not self.manual_override:
-            if not self.is_moving:
-                self.current_path_index += 1
-                if self.current_path_index < len(self.path_to_follow):
-                    self.move_to_position(self.path_to_follow[self.current_path_index])
-                else:
-                    self.path_to_follow = []
-                    self.current_path_index = 0
-
-        # Reprise après déplacement manuel
-        if self.manual_override and not self.is_moving:
-            self.manual_override = False
-            if self.target_enemy:
-                self.aller_vers_unite_ennemie(self.target_enemy)
+            # Suivi du chemin pathfinding dans le thread
+            if self.path_thread and self.path_thread.is_alive():
+                # Le thread calcule encore, on attend
+                pass
             else:
-                self.aller_vers_base_ennemie_avec_pathfinding()
+                # Si nouveau chemin calculé, on le charge
+                if self.path_found:
+                    self.path_to_follow = self.new_path
+                    self.current_path_index = 0
+                    if self.path_to_follow:
+                        self.move_to_position(self.path_to_follow[0])
+                    self.path_found = False
 
-        # Détection blocage simple
-        now = time.time()
-        if now - self._last_block_check_time > self._block_check_interval:
-            self._last_block_check_time = now
-            self._last_positions.append(self.position)
-            if len(self._last_positions) > 5:
-                self._last_positions.pop(0)
-            if len(self._last_positions) == 5:
-                dist_moved = math.sqrt(
-                    (self._last_positions[-1][0] - self._last_positions[0][0]) ** 2 +
-                    (self._last_positions[-1][1] - self._last_positions[0][1]) ** 2
-                )
-                if dist_moved < 5:
-                    # Blocage détecté, recalculer chemin dans un thread
-                    if not self.need_recalculate_path:
-                        self.need_recalculate_path = True
-                        if self.target_enemy:
-                            self.start_pathfinding_thread(lambda: self.compute_path_to_target(self.target_enemy.position))
-                        else:
-                            self.start_pathfinding_thread(self.compute_path)
+            # Suivi du déplacement sur chemin
+            if self.path_to_follow :
+                if not self.is_moving:
+                    self.current_path_index += 1
+                    if self.current_path_index < len(self.path_to_follow):
+                        self.move_to_position(self.path_to_follow[self.current_path_index])
+                    else:
+                        self.path_to_follow = []
+                        self.current_path_index = 0
+
+            # Détection blocage simple
+            now = time.time()
+            if now - self._last_block_check_time > self._block_check_interval:
+                self._last_block_check_time = now
+                self._last_positions.append(self.position)
+                if len(self._last_positions) > 5:
+                    self._last_positions.pop(0)
+                if len(self._last_positions) == 5:
+                    dist_moved = math.sqrt(
+                        (self._last_positions[-1][0] - self._last_positions[0][0]) ** 2 +
+                        (self._last_positions[-1][1] - self._last_positions[0][1]) ** 2
+                    )
+                    if dist_moved < 5:
+                        # Blocage détecté, recalculer chemin dans un thread
+                        if not self.need_recalculate_path:
+                            self.need_recalculate_path = True
+                            if self.target_enemy:
+                                self.start_pathfinding_thread(lambda: self.compute_path_to_target(self.target_enemy.position))
+                            else:
+                                self.start_pathfinding_thread(self.compute_path)
 
         # Dessiner la portée en permanence
         if screen:
             self.draw_range(screen, camera_offset)
             # Dessiner les informations d'IA si disponible et si debug activé
-            if self.use_advanced_ai and self.ai_system and getattr(self, 'visual_debug_enabled', False):
+            if self.is_ia and self.ai_system and getattr(self, 'visual_debug_enabled', False):
                 self.draw_ai_debug(screen, camera_offset)
         
         # Dessiner le chemin de pathfinding si en mode debug
@@ -480,19 +464,6 @@ class Chaloupe(Unit):
         # Utiliser le système de mouvement de la classe parent
         super().move_to_position(target_position)
 
-    def move_to_click(self, target_position):
-        """Méthode pour déplacer l'unité vers une position cliquée par le joueur.
-        Utilise le pathfinding pour contourner les obstacles.
-        
-        Args:
-            target_position (tuple): Position cible (x, y)
-        """
-        self.manual_override = True
-        self.target_enemy = None  # Annuler la cible ennemie lors d'un clic manuel
-        
-        # Lancer le pathfinding vers la position cliquée
-        self.start_pathfinding_thread(lambda: self.compute_path_to_target(target_position))
-
     def aller_vers_base_ennemie(self):
         """Déplacement direct vers la base ennemie sans pathfinding."""
         position_base_ennemie = self.pos_base_ennemie()
@@ -750,14 +721,6 @@ class Chaloupe(Unit):
             self.start_pathfinding_thread(lambda: self.compute_path_to_target(target_point))
             self._current_patrol_index = (self._current_patrol_index + 1) % len(self._patrol_points)
 
-    def set_manual_target(self, target_position):
-        """Définit une cible manuelle pour l'unité (utilisé lors des clics).
-        
-        Args:
-            target_position (tuple): Position cible (x, y)
-        """
-        self.move_to_click(target_position)
-
     def draw_path(self, screen, camera_offset):
         """Dessine le chemin de pathfinding pour le débogage.
         
@@ -976,23 +939,23 @@ class Chaloupe(Unit):
     
     def get_qlearning_stats(self):
         """Retourne les statistiques Q-Learning de l'IA."""
-        if self.use_advanced_ai and self.ai_system:
+        if self.ai_system:
             return self.ai_system.get_qlearning_stats()
         return None
     
     def save_qlearning_progress(self):
         """Sauvegarde le progrès Q-Learning."""
-        if self.use_advanced_ai and self.ai_system:
+        if self.ai_system:
             self.ai_system.save_qlearning_progress()
     
     def toggle_qlearning(self, enabled: bool):
         """Active/désactive le Q-Learning."""
-        if self.use_advanced_ai and self.ai_system:
+        if self.ai_system:
             self.ai_system.toggle_qlearning(enabled)
     
     def is_qlearning_enabled(self):
         """Vérifie si le Q-Learning est activé."""
-        if self.use_advanced_ai and self.ai_system:
+        if self.ai_system:
             return getattr(self.ai_system, 'qlearning_enabled', False)
         return False
 
