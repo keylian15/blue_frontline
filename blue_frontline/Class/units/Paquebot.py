@@ -49,7 +49,7 @@ class Paquebot(Unit):
         self.manual_override = False
 
         # Tick IA
-        self.is_ia = is_ia
+        self.is_ia = is_ia        
         self._last_ia_tick = time.time()
         self._ia_tick_interval = 0.15
 
@@ -346,10 +346,10 @@ class Paquebot(Unit):
 
 
 class PaquebotRouge(Paquebot):
-    def __init__(self, game):
-        super().__init__(game, team="red")
+    def __init__(self, game, is_ia: bool = True):
+        super().__init__(game, team="red", is_ia=is_ia)
 
 
 class PaquebotVert(Paquebot):
-    def __init__(self, game):
-        super().__init__(game, team="green")
+    def __init__(self, game, is_ia: bool = True):
+        super().__init__(game, team="green", is_ia=is_ia)

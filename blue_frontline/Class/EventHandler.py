@@ -103,8 +103,7 @@ class EventHandler:
                 return
             if self.check_cost(team_key, cost):
                 self.apply_cost(config_key, team_key, cost)
-                from Global import GAMEPLAY_SETTINGS
-                self.spawn_unit(config_key, team_key, GAMEPLAY_SETTINGS["AI_ACTIVATION"][config_key.capitalize() + team_key.capitalize()])
+                self.spawn_unit(config_key, team_key)
                 return True
 
         # Volume
@@ -408,7 +407,7 @@ class EventHandler:
             self.game.hud.petrole_green.count -= cost
         succes()
 
-    def spawn_unit(self, config_key: str, team_key: str, is_ia: bool = True):
+    def spawn_unit(self, config_key: str, team_key: str):
         """Génère une unité.
 
         Args:
@@ -429,7 +428,8 @@ class EventHandler:
         unit_class = class_map.get(config_key)[team_key]
         
         # On instancie l'unité
-        unit = unit_class(self.game)
+        from Global import GAMEPLAY_SETTINGS
+        unit = unit_class(self.game, is_ia=GAMEPLAY_SETTINGS["AI_ACTIVATION"][unit_class.__name__])
         
         if config_key == "pompe_petroliere" :
             if team_key == "red" : 

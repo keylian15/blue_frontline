@@ -11,7 +11,7 @@ from shapely.geometry import Point as ShapelyPoint, Polygon
 class Bateau(Unit):
     """Classe unifiée pour les unités Bateau (Rouge et Vert)."""
 
-    def __init__(self, game: "Game", team: str, ia: bool = True):
+    def __init__(self, game: "Game", team: str, is_ia: bool = True):
         """Fonction d'initialisation de la classe Bateau.
 
         Args:
@@ -59,7 +59,7 @@ class Bateau(Unit):
         self._last_block_check_time = time.time()
 
         # === Configuration IA ===
-        self.is_ia = True
+        self.is_ia = is_ia
         self.current_goal = None
         # "base_ennemie", "base_alliee", "attaque_ennemi", "suivre_eclaireur"
         self.current_goal_type = None
@@ -497,12 +497,12 @@ class Bateau(Unit):
 
 # Classes d'alias pour la compatibilité avec l'ancien code
 class BateauRouge(Bateau):
-    def __init__(self, game: "Game"):
+    def __init__(self, game: "Game", is_ia: bool = True):
         """Fonction d'initialisation de la classe BateauRouge."""
-        super().__init__(game, team="red")
+        super().__init__(game, team="red", is_ia=is_ia)
 
 
 class BateauVert(Bateau):
-    def __init__(self, game: "Game"):
+    def __init__(self, game: "Game", is_ia: bool = True):
         """Fonction d'initialisation de la classe BateauVert."""
-        super().__init__(game, team="green")
+        super().__init__(game, team="green", is_ia=is_ia)

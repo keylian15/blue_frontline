@@ -1748,20 +1748,20 @@ class SousMarin(Unit):
 
 # Classes d'alias pour la compatibilité avec l'ancien code
 class SousMarinRouge(SousMarin):
-    def __init__(self, game):
+    def __init__(self, game, is_ia : bool = True):
         """Constructeur de SousMarinRouge.
 
         Args:
             game: L'instance de la classe Game.
         """
-        super().__init__(game, team="red")
+        super().__init__(game, team="red", is_ia=is_ia)
 
 
 class SousMarinVert(SousMarin):
-    def __init__(self, game):
+    def __init__(self, game, is_ia: bool = True):
         """Constructeur de SousMarinVert.
 
         Args:
             game: L'instance de la classe Game.
         """
-        super().__init__(game, team="green")
+        super().__init__(game, team="green", is_ia=is_ia)
