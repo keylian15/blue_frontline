@@ -125,7 +125,15 @@ class Unit(pygame.sprite.Sprite):
         # Mise à jour du rectangle de collision
         self.rect.center = (int(self.position[0]), int(self.position[1]))
         
+    
+    def die_when_stuck(self):
+        """Vérifie si l'unité est coincée sur un obstacle et la fait mourir si c'est le cas."""
         
+        if point_in_many_polygons(self.game.obstacles, self.position):
+            self.is_alive = False
+            self.die()
+            return True
+        return False
     
     def check_area(self, dt: int):
         """Fonction permettant de verifier la zone dans laquelle l'unité veut aller.
@@ -235,6 +243,7 @@ class Unit(pygame.sprite.Sprite):
         """
         
         if not (self.is_moving and self.target_position):
+            self.die_when_stuck()
             return
         
         # Temps de jeu rapide : 
