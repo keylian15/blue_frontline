@@ -21,23 +21,14 @@ Convention d'équipe:
 """
 
 import heapq
-import logging
 import math
 import random
 from dataclasses import dataclass
-from typing import (Callable, Dict, Iterable, List, Optional, Sequence, Tuple,
-                    Union)
+from typing import (TYPE_CHECKING, Callable, Dict, Iterable, List, Optional, 
+                    Sequence, Tuple, Union)
 
-# ---------------------------------------------------------------------------
-# LOGGER
-# ---------------------------------------------------------------------------
-LOGGER_NAME = "EclaireurAI"
-logger = logging.getLogger(LOGGER_NAME)
-if not logger.handlers:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="[%(levelname)s] %(name)s: %(message)s",
-    )
+if TYPE_CHECKING:
+    from Class.Game import Game
 
 Vec2 = Tuple[float, float]
 Cell = Tuple[int, int]
@@ -136,10 +127,6 @@ class AStar:
 
             expansions += 1
             if expansions > max_expansions:
-                logger.warning(
-                    "A*: expansions max atteintes (%d). Abandon.",
-                    max_expansions,
-                )
                 return []
 
             for nxt in self.neighbors(current):
@@ -317,8 +304,12 @@ class ScoutAI:
         # anti-blocage
         self._last_pos_for_block: Vec2 = self.unit.position
         self._block_timer: float = 0.0
-        self._BLOCK_THRESHOLD_SEC = 1.0
-        self._BLOCK_MIN_MOVE = 5.0  # si on bouge < 5 px on considère pas de progrès
+        self._BLOCK_THRESHOLD_SEC = 0.8  # Réduit pour réagir plus vite
+        self._BLOCK_MIN_MOVE = 8.0  # Augmenté pour mieux détecter le blocage
+        
+        # Compteur de tentatives de blocage répétées (éviter de forcer l'entrée)
+        self._consecutive_blocks = 0
+        self._MAX_CONSECUTIVE_BLOCKS = 3  # Après 3 blocages, abandon complet du waypoint
 
         # petit timer pour éviter "je viens de poser un WP et je dis déjà que je suis arrivé"
         self._just_assigned_wp_timer: float = 0.0
@@ -347,18 +338,6 @@ class ScoutAI:
             self._accum = 0.0
             self._ensure_objective_and_path()
 
-        # debug log toutes les ~2s
-        self._last_debug_tick += dt
-        if self._last_debug_tick >= 2.0:
-            self._last_debug_tick = 0.0
-            logger.debug(
-                "ScoutAI DEBUG TICK: pos=%s goal=%s path_len=%d wander_dir=%s",
-                self.unit.position,
-                self.current_goal_world,
-                len(self._path_world),
-                self._wander_dir,
-            )
-
     def ia_set_enabled(self, value: bool) -> None:
         self.enabled = bool(value)
         if not self.enabled:
@@ -378,14 +357,6 @@ class ScoutAI:
 
         hidden = self.get_hidden_quantum_polygons()
 
-        # debug inventaire zones cachées
-        if hidden:
-            logger.info("ScoutAI DEBUG: %d zones cachées reçues par l'IA", len(hidden))
-            for i, poly in enumerate(hidden):
-                c = self._compute_centroid_from_polygon_like(poly)
-                if c:
-                    logger.info("  -> zone[%d] centroïde vu=(%.1f, %.1f)", i, c[0], c[1])
-
         # cible = zone cachée la plus proche
         target: Optional[Vec2] = None
         if hidden:
@@ -395,7 +366,6 @@ class ScoutAI:
         # ancien comportement = rentrer à la base.
         # maintenant : NON, on reste en patrouille.
         if target is None:
-            logger.info("ScoutAI: aucune zone cachée -> rester en patrouille.")
             self.current_goal_world = None
             # si on est déjà en patrouille, juste s'assurer qu'on a un WP
             if self._wander_dir is None:
@@ -426,10 +396,6 @@ class ScoutAI:
             self._wander_dir = None
             self._path_world = [(tx, ty)]
             self._just_assigned_wp_timer = 0.5
-            logger.warning(
-                "ScoutAI: aucun chemin local vers (%.1f, %.1f) -> je vais TOUT DROIT (dist=%.1f).",
-                tx, ty, dist,
-            )
             self._push_move_order_if_any()
             return
 
@@ -479,12 +445,6 @@ class ScoutAI:
         if best_goal is None:
             return None
 
-        logger.info(
-            "ScoutAI DEBUG: meilleure zone choisie = (%.1f, %.1f) dist=%.1f px",
-            best_goal[0],
-            best_goal[1],
-            math.sqrt(best_d2),
-        )
         return best_goal
 
     # ------------------------------------------------------------------
@@ -508,22 +468,10 @@ class ScoutAI:
                 )
 
         if not path_cells:
-            logger.warning(
-                "ScoutAI: aucun chemin local vers %s -> échec A*.",
-                world_goal,
-            )
             return False
 
         # convertit en points monde
         self._path_world = [self.grid.cell_to_world(c) for c in path_cells]
-
-        if self._path_world:
-            logger.info(
-                "ScoutAI: chemin LOCAL planifié (%d steps), 1er WP=(%.1f, %.1f)",
-                len(self._path_world),
-                self._path_world[0][0],
-                self._path_world[0][1],
-            )
 
         # on n'est plus en patrouille aveugle
         self._wander_dir = None
@@ -562,9 +510,6 @@ class ScoutAI:
             if test_path:
                 return cand_cell
 
-        logger.warning(
-            "ScoutAI: _find_reachable_cell_near abandon (aucune cellule atteignable proche)"
-        )
         return None
 
     # ------------------------------------------------------------------
@@ -578,20 +523,9 @@ class ScoutAI:
         """
         if self._wander_dir is None:
             self._wander_dir = self._pick_new_wander_dir()
-            logger.info(
-                "ScoutAI: patrouille activée. direction=(%.2f, %.2f)",
-                self._wander_dir[0],
-                self._wander_dir[1],
-            )
-
         wp = self._make_forward_waypoint(self._wander_dir)
         self._path_world = [wp]
         self._just_assigned_wp_timer = 0.5
-        logger.info(
-            "ScoutAI: patrouille -> WP=(%.1f, %.1f) (1 step).",
-            wp[0],
-            wp[1],
-        )
         self._push_move_order_if_any()
 
     def _pick_new_wander_dir(self) -> Vec2:
@@ -699,24 +633,12 @@ class ScoutAI:
                 self._wander_dir = new_dir
                 self._path_world = [wp]
                 self._just_assigned_wp_timer = 0.5
-                logger.info(
-                    "ScoutAI: blocage -> nouvelle dir=(%.2f, %.2f), nouveau WP=(%.1f, %.1f)",
-                    self._wander_dir[0],
-                    self._wander_dir[1],
-                    wp[0],
-                    wp[1],
-                )
                 return
 
         # si rien trouvé -> au moins rester dans la carte
         wp_fallback = self._make_forward_waypoint(self._wander_dir)
         self._path_world = [wp_fallback]
         self._just_assigned_wp_timer = 0.5
-        logger.info(
-            "ScoutAI: blocage -> fallback patrouille WP=(%.1f, %.1f)",
-            wp_fallback[0],
-            wp_fallback[1],
-        )
 
     # ------------------------------------------------------------------
     # SUIVI DES WAYPOINTS / ANTI-BLOCAGE
@@ -757,6 +679,7 @@ class ScoutAI:
             # reset blocage
             self._last_pos_for_block = (ux, uy)
             self._block_timer = 0.0
+            self._consecutive_blocks = 0  # Reset compteur de blocages consécutifs
             return
 
         # pas de progrès -> on accumule le blocage
@@ -766,12 +689,19 @@ class ScoutAI:
             return  # pas encore déclaré bloqué
 
         # BLOQUÉ
-        logger.warning(
-            "ScoutAI: unité bloquée sur WP (%.1f, %.1f) depuis %.2fs -> réorientation.",
-            wx,
-            wy,
-            self._block_timer,
-        )
+        self._consecutive_blocks += 1
+
+        # Si trop de blocages consécutifs, abandonner complètement ce waypoint
+        if self._consecutive_blocks >= self._MAX_CONSECUTIVE_BLOCKS:
+            # Vider tout le chemin et entrer en mode patrouille
+            self._path_world = []
+            self._consecutive_blocks = 0
+            self._last_pos_for_block = (ux, uy)
+            self._block_timer = 0.0
+            
+            # Force la patrouille pour éviter de rester coincé
+            self._enter_or_update_patrol()
+            return
 
         # retire le WP actuel
         if self._path_world:
@@ -797,6 +727,7 @@ class ScoutAI:
         # reset blocage pour le prochain segment
         self._last_pos_for_block = (ux, uy)
         self._block_timer = 0.0
+        self._consecutive_blocks = 0  # Reset compteur après waypoint atteint
 
         if self._path_world:
             # encore des WPs (genre chemin A*)
@@ -809,11 +740,6 @@ class ScoutAI:
             wp = self._make_forward_waypoint(self._wander_dir)
             self._path_world = [wp]
             self._just_assigned_wp_timer = 0.5
-            logger.debug(
-                "ScoutAI: patrouille continue -> nouveau WP=(%.1f, %.1f)",
-                wp[0],
-                wp[1],
-            )
             self._push_move_order_if_any()
         else:
             self.unit.stop()
@@ -833,11 +759,6 @@ class ScoutAI:
                 return
 
         self.unit.move_to_position((wx, wy))
-        logger.debug(
-            "ScoutAI DEBUG MOVE ORDER -> (%.1f, %.1f)",
-            wx,
-            wy,
-        )
 
     def _clear_path(self) -> None:
         self._path_world = []
@@ -848,7 +769,7 @@ class ScoutAI:
 # (Ces fonctions sont appelées depuis GameUpdater, mais restent définies
 #  ici pour isoler toute la logique IA dans le fichier de l'éclaireur)
 # =====================================================================
-def _rebuild_nav_if_needed(game: "Game") -> None:
+def _rebuild_nav_if_needed(game: Game) -> None:
     """
     Met à jour les obstacles + nav_grid SEULEMENT si nécessaire
     (ex: changement de marée).
@@ -917,12 +838,8 @@ def update_all_scout_ai(game, dt: float):
 
         try:
             ai_controller.ia_tick(dt)
-        except Exception as e:
-            ux, uy = getattr(unit, "position", (None, None))
-            logger.error(
-                "Erreur ia_tick sur %s (pos=%s,%s) : %s",
-                unit, ux, uy, e
-            )
+        except Exception:
+            pass
 
 
 # ---------------------------------------------------------------------------
