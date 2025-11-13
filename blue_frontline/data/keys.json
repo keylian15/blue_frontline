@@ -69,6 +69,6 @@
     },
     "MINE": {
         "description": "Poser une mine",
-        "key": "BUTTON_RIGHT"
+        "key": "K_SPACE"
     }
 }
