@@ -35,6 +35,9 @@ PETROLE_IMAGE_PATH = resource_path('assets/HUD/petrole.png')
 MAREE_HAUTE_IMAGE_PATH = resource_path('assets/HUD/maree_haute.png')
 MAREE_BASSE_IMAGE_PATH = resource_path('assets/HUD/maree_basse.png')
 
+# === EXPLOSIONS ===
+EXPLOSION_IMAGE_PATH = resource_path('assets/miscellaneous/png/explosion.png')
+
 # === EVENEMENTS ===
 PETROLE_EVENT = pygame.USEREVENT + 1
 TIMER_EVENT = pygame.USEREVENT + 2

@@ -3,7 +3,7 @@ from Class.units.Unit import Unit
 from Utils import resource_path
 from Global import RED_TEAM_PATH, GREEN_TEAM_PATH
 from Utils import load_tileset
-from Class.ExplosionRenderer import explosion_renderer
+from Class.ExplosionRenderer import ExplosionRenderer
 
 
 class Explosion:
@@ -324,6 +324,7 @@ class CombatSystem:
         self.units = pygame.sprite.Group()
         self.mines = pygame.sprite.Group()
         self.explosions = []  # Liste simple car Explosion n'est plus un Sprite
+        self.explosion_renderer = ExplosionRenderer()  # Instance pour le rendu
         self.game = game
     
     def add_unit(self, unit: Unit):
@@ -493,7 +494,7 @@ class CombatSystem:
         for explosion in self.explosions:
             if explosion.is_active:
                 try:
-                    explosion_renderer.render(explosion, screen, camera_offset, zoom)
+                    self.explosion_renderer.render(explosion, screen, camera_offset, zoom)
                 except Exception:
                     # Never break the main loop for rendering errors
                     pass
