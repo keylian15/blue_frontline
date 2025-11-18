@@ -31,6 +31,10 @@ class Hud:
         self.font = pygame.font.Font(None, 24)
         self.popup_selection = 0  # index sélectionné, 0..5
         self.popup_team = 'red'  # équipe affichée: 'red' ou 'green'
+        # Rects des icônes du popup (mis à jour dans draw_unit_popup)
+        self.popup_icon_rects = []
+        # Callback optionnel appelé quand une icône est cliquée: fn(index:int, team:str)
+        self.unit_select_callback = None
         # Noms correspondant à l'ordre d'affichage des icônes rouges
         self.unit_names = [
             "Chaloupe",
@@ -197,6 +201,9 @@ class Hud:
                 'green_sousmarin',
                 'green_platforme'
             ]
+        # Reset rects
+        self.popup_icon_rects = []
+
         for i, key in enumerate(image_keys):
             icon_x = icon_positions[i][0]
             base_image = self.images[key]
@@ -204,6 +211,15 @@ class Hud:
             mini_rect = mini_image.get_rect()
             mini_rect.midtop = (int(icon_x + icon_size / 2 - band_x), popup_icon_margin_top)
             band_surface.blit(mini_image, mini_rect)
+
+            # Calculer le rect sur l'écran pour la détection de clic
+            rect_on_screen = pygame.Rect(
+                int(band_x) + mini_rect.left,
+                int(band_y) + mini_rect.top,
+                mini_rect.width,
+                mini_rect.height,
+            )
+            self.popup_icon_rects.append(rect_on_screen)
 
             # Indication de sélection: cadre jaune autour de l'icône sélectionnée
             if i == self.popup_selection:
@@ -259,18 +275,19 @@ class Hud:
         title_surf = title_font.render(title, True, (255, 255, 255))
         text_surfs = [text_font.render(t, True, (230, 230, 230)) for t in lines]
 
+        # Calcul de la taille et position du panneau
         padding = 10
         inner_w = max(title_surf.get_width(), max((s.get_width() for s in text_surfs), default=0))
         inner_h = title_surf.get_height() + 6 + sum(s.get_height() for s in text_surfs)
         panel_w = inner_w + padding * 2
         panel_h = inner_h + padding * 2
 
-        # Positionner centré par rapport à la bande, au-dessus
-        panel_x = int(band_x + (band_width - panel_w) / 2)
-        panel_y = int(band_y - panel_h - 10)
-        panel_x = max(6, min(panel_x, self.width - panel_w - 6))
-        panel_y = max(6, panel_y)
 
+        # Positionner en bas à gauche de l'écran
+        panel_x = 10  # Marge de 10px depuis le bord gauche
+        panel_y = self.height - panel_h  # Marge de 10px depuis le bas
+
+        # Dessiner le panneau
         panel = pygame.Surface((panel_w, panel_h), pygame.SRCALPHA)
         panel.fill((0, 0, 0, 180))
         pygame.draw.rect(panel, (255, 255, 255), panel.get_rect(), 2)
