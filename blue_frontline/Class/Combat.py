@@ -3,72 +3,31 @@ from Class.units.Unit import Unit
 from Utils import resource_path
 from Global import RED_TEAM_PATH, GREEN_TEAM_PATH
 from Utils import load_tileset
+from Class.ExplosionRenderer import explosion_renderer
 
 
-class Explosion(pygame.sprite.Sprite):
-    """Classe pour gérer les animations d'explosion."""
-    
+class Explosion:
+    """Représentation logique d'une explosion (sans affichage).
+
+    L'affichage est géré par `Class.ExplosionRenderer.explosion_renderer`.
+    """
+
     def __init__(self, x: int, y: int, size: int = 64):
-        """Initialise une explosion statique avec le sprite explosion.png.
-        
-        Args:
-            x (int): Position x de l'explosion.
-            y (int): Position y de l'explosion.
-            size (int): Taille de l'explosion en pixels. Defaults to 64.
-        """
-        super().__init__()
-        
         self.position = [float(x), float(y)]
         self.size = size
         self.is_active = True
-        
-        # Durée de vie de l'explosion (en secondes)
-        self.lifetime = 0.8  # L'explosion reste visible pendant 0.8 secondes
+        self.lifetime = 0.8
         self.elapsed_time = 0
-        
-        # Charger l'image d'explosion
-        self.load_explosion_image()
-        
-        # Positionner l'image
-        self.rect = self.image.get_rect()
-        self.rect.center = (int(x), int(y))
-    
-    def load_explosion_image(self):
-        """Charge l'image d'explosion depuis le fichier PNG."""
-        try:
-            # Charger le sprite d'explosion
-            explosion_path = resource_path('assets/miscellaneous/png/explosion.png')
-            explosion_image = pygame.image.load(explosion_path).convert_alpha()
-            
-            # Redimensionner l'image à la taille souhaitée
-            self.image = pygame.transform.scale(explosion_image, (self.size, self.size))
-            
-        except (pygame.error, FileNotFoundError):
-            # Fallback: créer une explosion simple en cas d'erreur
-            self.image = pygame.Surface((self.size, self.size), pygame.SRCALPHA)
-            # Dessiner un cercle orange/rouge
-            pygame.draw.circle(self.image, (255, 150, 0), (self.size // 2, self.size // 2), self.size // 2)
-            pygame.draw.circle(self.image, (255, 255, 0), (self.size // 2, self.size // 2), self.size // 3)
-    
+
     def update(self, dt: float):
-        """Met à jour l'explosion (gère sa durée de vie).
-        
-        Args:
-            dt (float): Delta time en secondes.
-        """
         if not self.is_active:
             return
-        
         self.elapsed_time += dt
-        
-        # Si la durée de vie est dépassée, détruire l'explosion
         if self.elapsed_time >= self.lifetime:
             self.destroy()
-    
+
     def destroy(self):
-        """Détruit l'explosion."""
         self.is_active = False
-        self.kill()
 
 
 class Projectile(pygame.sprite.Sprite):
@@ -364,7 +323,7 @@ class CombatSystem:
         self.projectiles = pygame.sprite.Group()
         self.units = pygame.sprite.Group()
         self.mines = pygame.sprite.Group()
-        self.explosions = pygame.sprite.Group()
+        self.explosions = []  # Liste simple car Explosion n'est plus un Sprite
         self.game = game
     
     def add_unit(self, unit: Unit):
@@ -391,7 +350,7 @@ class CombatSystem:
         Args:
             explosion (Explosion): Explosion à ajouter.
         """
-        self.explosions.add(explosion)
+        self.explosions.append(explosion)
     
     def fire_projectile(self, shooter: Unit, target: Unit):
         """Crée un projectile tiré par une unité vers une cible.
@@ -440,7 +399,11 @@ class CombatSystem:
         self.mines.update(dt)
         
         # Mettre à jour toutes les explosions
-        self.explosions.update(dt)
+        for explosion in self.explosions:
+            explosion.update(dt)
+        
+        # Nettoyer les explosions inactives
+        self.explosions = [exp for exp in self.explosions if exp.is_active]
 
         # Vérifier les collisions entre projectiles et unités
         for projectile in self.projectiles:
@@ -526,18 +489,11 @@ class CombatSystem:
                     scaled_image = mine.image
                 screen.blit(scaled_image, (screen_x - scaled_image.get_width()//2, screen_y - scaled_image.get_height()//2))
         
-        # Dessiner les explosions
+        # Dessiner les explosions via le renderer dédié
         for explosion in self.explosions:
             if explosion.is_active:
-                # Position avec décalage de caméra et zoom
-                screen_x = (explosion.position[0] - camera_offset[0]) * zoom
-                screen_y = (explosion.position[1] - camera_offset[1]) * zoom
-                # Adapter la taille de l'explosion au zoom
-                if zoom != 1.0:
-                    scaled_image = pygame.transform.scale(
-                        explosion.image,
-                        (max(1, int(explosion.image.get_width() * zoom)), max(1, int(explosion.image.get_height() * zoom)))
-                    )
-                else:
-                    scaled_image = explosion.image
-                screen.blit(scaled_image, (screen_x - scaled_image.get_width()//2, screen_y - scaled_image.get_height()//2))
+                try:
+                    explosion_renderer.render(explosion, screen, camera_offset, zoom)
+                except Exception:
+                    # Never break the main loop for rendering errors
+                    pass
