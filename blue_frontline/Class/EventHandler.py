@@ -429,8 +429,11 @@ class EventHandler:
         
         # On instancie l'unité
         from Global import GAMEPLAY_SETTINGS
-        unit = unit_class(self.game, is_ia=GAMEPLAY_SETTINGS["AI_ACTIVATION"][unit_class.__name__])
-        
+        is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(unit_class.__name__, None)
+        if is_ia is None: 
+            unit = unit_class(self.game)
+        else :
+            unit = unit_class(self.game, is_ia=is_ia)        
         if config_key == "pompe_petroliere" :
             if team_key == "red" : 
                 self.game.nbPompePetroliereRouge += 1
