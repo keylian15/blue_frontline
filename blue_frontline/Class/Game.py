@@ -245,15 +245,14 @@ class Game :
         Args:
             unit (Unit): L'unité à sélectionner.
         """
-        
         # Désélectionner toutes les unités
         for u in self.units:
             if hasattr(u, 'is_selected'):
                 u.is_selected = False
-        
+
         # Sélectionner la nouvelle unité
         if unit and hasattr(unit, 'is_selected'):
-            if unit.unit_type != "pompe_petroliere" : # Ne pas séléctioner l'unité pour la pompe pétrolière 
+            if unit.unit_type != "pompe_petroliere":  # Ne pas sélectionner la pompe pétrolière
                 unit.is_selected = True
                 self.selected_unit = unit
         else:

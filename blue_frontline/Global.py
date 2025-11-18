@@ -35,6 +35,9 @@ PETROLE_IMAGE_PATH = resource_path('assets/HUD/petrole.png')
 MAREE_HAUTE_IMAGE_PATH = resource_path('assets/HUD/maree_haute.png')
 MAREE_BASSE_IMAGE_PATH = resource_path('assets/HUD/maree_basse.png')
 
+# === EXPLOSIONS ===
+EXPLOSION_IMAGE_PATH = resource_path('assets/miscellaneous/png/explosion.png')
+
 # === EVENEMENTS ===
 PETROLE_EVENT = pygame.USEREVENT + 1
 TIMER_EVENT = pygame.USEREVENT + 2
@@ -158,6 +161,10 @@ MAPPING = {
     "edge_right_corner_bottom_left": 71,
     "edge_bottom_corner": 72,
     "edge_right_corner": 73,
+    # Passage a la ligne 6, modification des fulls, full 0 est celui de base
+    "full_1": 80,
+    "full_2": 81,
+    
 }
 
 # Utilisation d'un mask binaire pour la séléction de tuiles.
