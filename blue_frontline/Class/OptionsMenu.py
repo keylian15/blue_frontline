@@ -381,10 +381,10 @@ class OptionsMenu:
 
             # Texte
             text_color = WHITE
-            # Si l'unité commence par Eclaireur
-            if unit.startswith("Eclaireur"):
-                text_color = (120, 120, 120)
-                active = True
+            # # Si l'unité commence par Eclaireur
+            # if unit.startswith("Eclaireur"):
+            #     text_color = (120, 120, 120)
+            #     active = True
 
             text_surf = self.font.render(f"{unit}", True, text_color)
             self.screen.blit(text_surf, (x, y + button_height //
