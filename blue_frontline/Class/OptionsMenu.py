@@ -23,6 +23,10 @@ class OptionsMenu:
         self.BUTTON_HEIGHT = 60
         self.VERTICAL_SPACING = 80
         self.BUTTON_PADDING = 80
+        
+        self.cursor_blink_timer = 0
+        self.cursor_visible = True
+        self.CURSOR_BLINK_SPEED = 500  # millisecondes
 
         # État actuel : 'main' ou 'controls'
         self.current_view = 'main'
@@ -50,7 +54,7 @@ class OptionsMenu:
             self.controls = {action: get_pygame_key(
                 data.get("key")) for action, data in controls_keys.items()}
 
-        self.dragging_slider = TIME_MAREE
+        self.dragging_slider = None
         self.active_input = None
 
         # Créer les boutons du menu principal
@@ -157,6 +161,61 @@ class OptionsMenu:
         except Exception as e:
             print(f"Erreur lors de la sauvegarde des touches: {e}")
             return False
+
+    def draw_input_field(self, rect, label, value, is_active):
+        """
+        Dessine un champ de saisie avec indicateurs visuels
+        
+        Args:
+            rect: pygame.Rect - Position et taille
+            label: str - Label du champ (ex: "Pétrole / sec")
+            value: int - Valeur actuelle
+            is_active: bool - Si le champ est actif
+        """
+        # Couleur de fond et bordure selon l'état
+        if is_active:
+            bg_color = (40, 60, 100)  # Bleu plus foncé quand actif
+            border_color = (100, 200, 255)  # Bleu clair
+            border_width = 4
+        else:
+            bg_color = OCEAN_BLUE
+            border_color = WHITE
+            border_width = 2
+        
+        # Fond
+        pygame.draw.rect(self.screen, bg_color, rect, border_radius=10)
+        
+        # Bordure
+        pygame.draw.rect(
+            self.screen, 
+            border_color, 
+            rect, 
+            border_width, 
+            border_radius=BUTTON_BORDER_RADIUS
+        )
+        
+        # Texte
+        value_str = str(value)
+        text = f"{label}: {value_str}"
+        text_surf = self.font.render(text, True, WHITE)
+        text_x = rect.x + 10
+        text_y = rect.centery - text_surf.get_height() // 2
+        self.screen.blit(text_surf, (text_x, text_y))
+        
+        # Curseur clignotant si actif
+        if is_active and self.cursor_visible:
+            # Position du curseur après le texte
+            cursor_x = text_x + text_surf.get_width() + 5
+            cursor_y_top = rect.centery - 15
+            cursor_y_bottom = rect.centery + 15
+            
+            pygame.draw.line(
+                self.screen,
+                (255, 255, 100),  # Jaune pour bien voir
+                (cursor_x, cursor_y_top),
+                (cursor_x, cursor_y_bottom),
+                3
+            )
 
     def draw_gradient_button(self, rect, hovered=False):
         """Dessine un bouton avec dégradé"""
@@ -356,7 +415,7 @@ class OptionsMenu:
         spacing_x = 40
         spacing_y = 40
         button_height = self.BUTTON_HEIGHT
-        button_width = 250
+        button_width = self.MIN_BUTTON_WIDTH
         start_y = 150
 
         # === 1. IA ===
@@ -413,7 +472,7 @@ class OptionsMenu:
         max_width = self.WIDTH - margin
 
         # --- Temps Marée (slider) ---
-        slider_width = 300
+        slider_width = self.MIN_BUTTON_WIDTH
         slider_height = 20
         slider_x = param_x
         slider_y = param_y + button_height // 2 - slider_height // 2
@@ -438,38 +497,65 @@ class OptionsMenu:
         self.screen.blit(text_surf, (slider_x, slider_y - 30))
         interactive_rects["TIME_MAREE"] = track_rect
         interactive_rects["TIME_MAREE_CURSOR"] = cursor_rect
+        
+        # Avancer x et y pour la grille
+        param_x += button_width + spacing_x
+        
+        # --- Octaves (slider) ---
+        slider_width = self.MIN_BUTTON_WIDTH
+        slider_height = 20
+        slider_x = param_x 
+        slider_y = param_y + button_height // 2 - slider_height // 2
+
+        # Track
+        octave_track_rect = pygame.Rect(
+            slider_x, slider_y, slider_width, slider_height)
+        pygame.draw.rect(self.screen, OCEAN_BLUE, octave_track_rect, border_radius=10)
+
+        # Récupérer la valeur depuis gameplay_settings
+        octave_val = gameplay_settings.get('OCTAVES', 4)
+        octave_min = 1
+        octave_max = 8
+        cursor_pos = int(slider_x + ((octave_val - octave_min) /
+                        (octave_max - octave_min)) * slider_width)
+        cursor_rect = pygame.Rect(
+            cursor_pos - 10, slider_y - 5, 20, slider_height + 10)
+        pygame.draw.rect(self.screen, LIGHT_BLUE, cursor_rect, border_radius=5)
+
+        # Texte
+        text_surf = self.font.render(f"Octaves (Perlin): {octave_val}", True, WHITE)
+        self.screen.blit(text_surf, (slider_x, slider_y - 30))
+        interactive_rects["OCTAVES"] = octave_track_rect
+        interactive_rects["OCTAVES_CURSOR"] = cursor_rect
 
         # Avancer x et y pour la grille
         param_y += button_height + 2 * spacing_y
-        param_x_start = param_x
+        param_x = ia_x + ia_width + spacing_x 
 
-        # --- Pétrole / sec (input) ---
-        rect = pygame.Rect(param_x, param_y, button_width, button_height)
-        pygame.draw.rect(self.screen, OCEAN_BLUE, rect, border_radius=10)
-        pygame.draw.rect(self.screen, WHITE, rect, 3,
-                         border_radius=BUTTON_BORDER_RADIUS)
-        value_str = str(gameplay_settings['OIL_PER_SECOND'])
-        text_surf = self.font.render(
-            f"Pétrole / sec: {value_str}", True, WHITE)
-        self.screen.blit(
-            text_surf, (rect.x + 10, rect.centery - text_surf.get_height()//2))
-        interactive_rects["OIL_PER_SECOND"] = rect
-
-        # --- Pièces / kill (input) ---
-        param_x += button_width + spacing_x
-        if param_x + button_width > max_width:
-            param_x = param_x_start
-            param_y += button_height + spacing_y
-        rect = pygame.Rect(param_x, param_y, button_width, button_height)
-        pygame.draw.rect(self.screen, OCEAN_BLUE, rect, border_radius=10)
-        pygame.draw.rect(self.screen, WHITE, rect, 3,
-                         border_radius=BUTTON_BORDER_RADIUS)
-        value_str = str(gameplay_settings['PIECE_PER_KILL'])
-        text_surf = self.font.render(
-            f"Pièces / Kill: {value_str}", True, WHITE)
-        self.screen.blit(
-            text_surf, (rect.x + 10, rect.centery - text_surf.get_height()//2))
-        interactive_rects["PIECE_PER_KILL"] = rect
+        # --- Pétrole / sec (input amélioré) ---
+        oil_rect = pygame.Rect(param_x, param_y, button_width, button_height)
+        is_active = (self.active_input == "OIL_PER_SECOND")
+        
+        self.draw_input_field(
+            oil_rect,
+            "Pétrole / sec",
+            gameplay_settings['OIL_PER_SECOND'],
+            is_active
+        )
+        interactive_rects["OIL_PER_SECOND"] = oil_rect
+        
+        # --- Pièces / kill (input amélioré) ---
+        param_x += button_width + spacing_x        
+        piece_rect = pygame.Rect(param_x, param_y, button_width, button_height)
+        is_active = (self.active_input == "PIECE_PER_KILL")
+        
+        self.draw_input_field(
+            piece_rect,
+            "Pièces / Kill",
+            gameplay_settings['PIECE_PER_KILL'],
+            is_active
+        )
+        interactive_rects["PIECE_PER_KILL"] = piece_rect
 
         # Bouton Appliquer
         apply_rect = pygame.Rect(
@@ -546,6 +632,11 @@ class OptionsMenu:
                 control_rects, back_button_rect = self.draw_controls_menu()
                 interactive_rects = None
             elif self.current_view == 'gameplay':
+                self.cursor_blink_timer += clock.get_time()
+                if self.cursor_blink_timer >= self.CURSOR_BLINK_SPEED:
+                    self.cursor_visible = not self.cursor_visible
+                    self.cursor_blink_timer = 0
+
                 interactive_rects = self.draw_gameplay_menu()
 
             pygame.display.flip()
@@ -626,6 +717,8 @@ class OptionsMenu:
                                         gameplay_settings["AI_ACTIVATION"][unit] = not gameplay_settings["AI_ACTIVATION"][unit]
                                     elif key == "TIME_MAREE":
                                         self.dragging_slider = "TIME_MAREE"
+                                    elif key == "OCTAVES":
+                                        self.dragging_slider = "OCTAVES"
                                     elif key in ["OIL_PER_SECOND", "PIECE_PER_KILL"]:
                                         self.active_input = key
                                     elif key == "back":
@@ -642,24 +735,37 @@ class OptionsMenu:
 
                 elif event.type == pygame.MOUSEBUTTONUP:
                     # Relâchement de la souris
-                    if self.dragging_slider == "TIME_MAREE":
+                    if self.dragging_slider in ["TIME_MAREE", "OCTAVES"]:
                         self.dragging_slider = None
 
                 elif event.type == pygame.MOUSEMOTION:
-                    # Déplacement du curseur
+                    # Déplacement du curseur TIME_MAREE
                     if self.dragging_slider == "TIME_MAREE" and interactive_rects:
                         mouse_x = pygame.mouse.get_pos()[0]
                         slider_x = interactive_rects["TIME_MAREE"].x
                         slider_width = interactive_rects["TIME_MAREE"].width
-                        # Limiter à la track
-                        mouse_x = max(slider_x, min(
-                            slider_x + slider_width, mouse_x))
-                        # Calculer la valeur proportionnelle
+                        mouse_x = max(slider_x, min(slider_x + slider_width, mouse_x))
                         time_min = 30
                         time_max = 360
                         proportion = (mouse_x - slider_x) / slider_width
                         gameplay_settings = Global.get_gameplay_settings()
                         gameplay_settings["TIME_MAREE"] = int(
                             time_min + proportion * (time_max - time_min))
+                    
+                    # Curseur Octaves - CORRIGÉ : Bonnes valeurs min/max
+                    if self.dragging_slider == "OCTAVES" and interactive_rects:
+                        mouse_x = pygame.mouse.get_pos()[0]
+                        slider_x = interactive_rects["OCTAVES"].x
+                        slider_width = interactive_rects["OCTAVES"].width
+                        mouse_x = max(slider_x, min(slider_x + slider_width, mouse_x))
+                        
+                        # CORRIGÉ : Bonnes valeurs pour les octaves
+                        octaves_min = 1
+                        octaves_max = 8
+                        proportion = (mouse_x - slider_x) / slider_width
+                        gameplay_settings = Global.get_gameplay_settings()
+                        gameplay_settings["OCTAVES"] = int(
+                            octaves_min + proportion * (octaves_max - octaves_min))
+
 
         return True

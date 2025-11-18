@@ -180,8 +180,8 @@ class Game :
                 self.water_tileset,       # 1: Eau peu profonde
                 self.island_tileset       # 2: Île
             ]
-
-            self.perlin = Perlin()
+            from Global import GAMEPLAY_SETTINGS
+            self.perlin = Perlin(GAMEPLAY_SETTINGS["OCTAVES"])
             island_matrix = self.perlin.generate_island(island_height_tiles, island_width_tiles)
             island_surface = self.perlin.smooth_map(island_matrix, tileset_surface_smooth)
 
