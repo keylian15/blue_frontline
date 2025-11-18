@@ -286,7 +286,10 @@ class Perlin:
                     # On utilise un mask pour du binaire afin de savoir quelle tuile prendre.
                     mask = self.update_mask(matrice, x, y, zone_recherche)
                     
-                    tile_index = MASK_MAPPING.get(mask, MAPPING["full"])
+                    # Lors de la séléction du full on a le choix entre plusieurs tuiles
+                    liste_full = ["full", "full_1", "full_2"]
+                    from random import choice
+                    tile_index = MASK_MAPPING.get(mask, MAPPING["full"]) # MAPPING[choice(liste_full)]
                 tile = spritesheet[tile_index]
                 surface.blit(tile, (x * 32, y * 32))
 

@@ -161,6 +161,10 @@ MAPPING = {
     "edge_right_corner_bottom_left": 71,
     "edge_bottom_corner": 72,
     "edge_right_corner": 73,
+    # Passage a la ligne 6, modification des fulls, full 0 est celui de base
+    "full_1": 80,
+    "full_2": 81,
+    
 }
 
 # Utilisation d'un mask binaire pour la séléction de tuiles.
