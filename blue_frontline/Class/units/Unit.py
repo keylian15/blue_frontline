@@ -241,6 +241,7 @@ class Unit(pygame.sprite.Sprite):
         """
         
         if not (self.is_moving and self.target_position):
+            self.die_when_stuck()
             return
         
         # Temps de jeu rapide : 
@@ -363,6 +364,15 @@ class Unit(pygame.sprite.Sprite):
                 
         self.kill()  # Retire l'unité du groupe pygame
         self.game.units.remove(self)  # Retire l'unité de la liste des unités
+
+    def die_when_stuck(self):
+        """Vérifie si l'unité est coincée sur un obstacle et la fait mourir si c'est le cas."""
+        
+        if point_in_many_polygons(self.game.obstacles, self.position):
+            self.is_alive = False
+            self.die()
+            return True
+        return False
         
     def get_health_percentage(self):
         """Retourne le pourcentage de vie restante."""
