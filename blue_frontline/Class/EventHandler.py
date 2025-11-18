@@ -303,7 +303,8 @@ class EventHandler:
             clicked_unit = self.game.find_unit_at_position(world_x, world_y)
 
             if clicked_unit:
-                self.game.select_unit(clicked_unit)
+                if clicked_unit.team == self.game.hud.player_team:
+                    self.game.select_unit(clicked_unit)
             elif self.game.selected_unit and self.game.selected_unit.is_alive:
                 # Déplacer l'unité sélectionnée vers la position cliquée
                 if hasattr(self.game.selected_unit, 'move_to_click'):
