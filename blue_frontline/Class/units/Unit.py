@@ -27,7 +27,10 @@ class Unit(pygame.sprite.Sprite):
             teamFr = "Vert"
             if unit_type == "chaloupe" : 
                 teamFr = "Verte"
-        self.name = unit_type.capitalize() + teamFr
+        if unit_type == "sousmarin" :
+            self.name = "SousMarin" + teamFr
+        else : 
+            self.name = unit_type.capitalize() + teamFr
         
         # Position et mouvement
         base_spawn = self.game.red_platform_zone if team == "red" else self.game.green_platform_zone
