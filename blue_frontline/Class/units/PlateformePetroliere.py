@@ -699,7 +699,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         Returns:
             bool: True si le scénario est réalisé, False sinon.
         """
-
+        return
         from Utils import get_cost
         data = "eclaireur", self.team, get_cost("eclaireur")
         # On vérifie que l'on peux spawn l'éclaireur.

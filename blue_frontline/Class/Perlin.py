@@ -287,9 +287,12 @@ class Perlin:
                     mask = self.update_mask(matrice, x, y, zone_recherche)
                     
                     # Lors de la séléction du full on a le choix entre plusieurs tuiles
-                    liste_full = ["full", "full_1", "full_2"]
-                    from random import choice
-                    tile_index = MASK_MAPPING.get(mask, MAPPING["full"]) # MAPPING[choice(liste_full)]
+                    if mask == 0 : # Full  
+                        from random import choice
+                        liste_full = [MAPPING["full"], MAPPING["full_1"], MAPPING["full_2"]]
+                        tile_index = choice(liste_full)
+                    else:
+                        tile_index = MASK_MAPPING.get(mask, MAPPING["full"]) 
                 tile = spritesheet[tile_index]
                 surface.blit(tile, (x * 32, y * 32))
 

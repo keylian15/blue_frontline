@@ -258,7 +258,6 @@ class Chaloupe(Unit):
         
         if need_pathfinding and (current_time - self.last_pathfinding_time > self.pathfinding_cooldown):
             # Pathfinding seulement si obstacles ET cooldown écoulé
-            print(f"Obstacle détecté - Pathfinding vers {self.target_enemy.unit_type}")
             self.last_pathfinding_time = current_time
             self.direct_follow_mode = False
             self.start_pathfinding_thread(lambda: self.compute_path_to_target(current_target_position))
@@ -422,7 +421,6 @@ class Chaloupe(Unit):
             if new_target:
                 # Aller vers la nouvelle cible
                 self.aller_vers_unite_ennemie(new_target)
-                print(f"Chaloupe {self.team} cible maintenant: {new_target.unit_type}")
             else:
                 # Plus d'ennemis dans la zone, patrouiller sans aller vers la base
                 self.patrol_area()

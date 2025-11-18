@@ -57,9 +57,6 @@ class Renderer:
         # Marquer comme terminé
         self.map_needs_refresh = False
         
-        # Actualiser les références
-        self.game.refresh_all_references(self.game)
-
     def restore_quantum_islands(self):
         """Réstaure les iles quantiques."""
         if hasattr(self.game, 'quantum_islands'):

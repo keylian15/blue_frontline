@@ -186,7 +186,6 @@ class Unit(pygame.sprite.Sprite):
                 self.game.quantique_area_name.append('ile_quantique_' + str(index))  # On ajoute le nom de l'ile dans la liste des iles quantiques
                 
                 self.game.renderer.refresh_map()  # On rafraichit le rendu
-                self.game.refresh_all_references(self.game)  # On met a jour la map
                 self.game.quantique('ile_quantique_' + str(index))  # On appel la fonction quantique du jeu pour activer le changement
             else:
                 self.stop()  # Seul l'eclaireur peut découvrir la zone

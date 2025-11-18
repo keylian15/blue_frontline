@@ -504,35 +504,6 @@ class Game :
         elif hasattr(self, 'menu_button_rect') and self.menu_button_rect.collidepoint(mouse_pos):
             self.return_to_menu()
     
-    def refresh_all_references(self, game: "Game"):
-        """Actualise toutes les références des gestionnaires après reconstruction de la map.
-
-        Args:
-            game (Game): La référence du jeu.
-        """
-        
-        # Réinitialiser les gestionnaires pour qu'ils utilisent les nouvelles références
-        self.event_handler.game = game
-        self.initializer.game = game
-        self.updater.game = game
-        self.input_manager.game = game
-        self.renderer.game = game
-        self.combat_system.game = game
-        self.overlay_menu.game = game
-        
-        # S'assurer que les unités sont dans le nouveau groupe
-        if hasattr(self, 'units') and self.units:
-            for unit in self.units:
-                if unit.is_alive:
-                    self.group.add(unit)
-                    unit.game = game
-                if hasattr(unit, 'refresh_all_references') : 
-                    unit.refresh_all_references(game)
-        
-        # S'assurer que la caméra est dans le nouveau groupe
-        if hasattr(self, 'camera') and self.camera not in self.group.sprites():
-            self.group.add(self.camera)
-
     def restart_game(self):
         """Redémarre le jeu."""
         

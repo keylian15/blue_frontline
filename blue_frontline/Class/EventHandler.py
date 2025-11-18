@@ -445,7 +445,4 @@ class EventHandler:
         self.game.combat_system.add_unit(unit)
         self.game.units.append(unit)
         self.game.group.add(unit)
-        
-        # On envoi la map a toutes les instances
-        self.game.refresh_all_references(self.game)
         return True

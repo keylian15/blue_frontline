@@ -136,16 +136,6 @@ class Eclaireur(Unit):
     # ------------------------------------------------------------------
     # OVERRIDES COMBAT / DEGATS
     # ------------------------------------------------------------------
-    def take_damage(self, amount: float) -> None:
-        """Inflige des dégâts à l'éclaireur."""
-        if amount <= 0:
-            return
-
-        self.current_health -= amount
-        if self.current_health <= 0:
-            self.current_health = 0
-            self.destroy()
-
     def destroy(self) -> None:
         """Destruction du bateau (PV <= 0)."""
         # Le jeu principal garde self.game.units comme liste d'unités actives.
