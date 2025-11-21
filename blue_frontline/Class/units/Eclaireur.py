@@ -74,27 +74,32 @@ class Eclaireur(Unit):
         # sélection HUD (GameUpdater met à jour self.is_selected)
         self.is_selected: bool = False
 
-        # === CRÉATION DU CONTROLEUR IA ===
-        # On suppose que le Game a déjà construit la grille de navigation :
-        #   game.build_nav_grid() -> game.nav_grid_adapter
-        #
-        # Et qu'il expose :
-        #   - game.get_hidden_quantum_polygons() -> liste de polygones cachés
-        #   - game.get_base_position(team) -> (x,y) base alliée
-        #
-        # ScoutAI respecte la convention d'équipe:
-        #   ai.is_ia == True
-        #   ai.ia_tick(dt) sera appelée dans GameUpdater
-        #
-        self.ai: ScoutAI = ScoutAI(
-            unit=self,
-            grid=game.nav_grid_adapter,
-            get_hidden_quantum_polygons=game.get_hidden_quantum_polygons,
-            get_base_pos=game.get_base_position,
-            return_to_base_when_done=True,
-            replan_interval=0.5,      # l'IA recalcule son plan régulièrement
-            proximity_epsilon=8.0,    # distance considérée "waypoint atteint"
-        )
+        # === GESTION DE L'IA ===
+        # Conserver le même comportement que les autres unités :
+        # - stocker `self.is_ia` à partir du paramètre `is_ia`
+        # - n'instancier le contrôleur ScoutAI que si `is_ia` est True
+        # - laisser le runtime (update) créer/détruire l'IA si le flag change
+        self.is_ia = is_ia
+
+        self.ai: Optional[ScoutAI] = None
+        if self.is_ia:
+            self.init_ai(game)
+
+    def init_ai(self, game: "Game") -> None:
+        """Initialise le contrôleur ScoutAI si possible."""
+        try:
+            self.ai = ScoutAI(
+                unit=self,
+                grid=game.nav_grid_adapter,
+                get_hidden_quantum_polygons=game.get_hidden_quantum_polygons,
+                get_base_pos=game.get_base_position,
+                return_to_base_when_done=True,
+                replan_interval=0.5,
+                proximity_epsilon=8.0,
+            )
+        except Exception:
+            # Ne jamais planter l'initialisation de l'unité si l'IA échoue
+            self.ai = None
 
     # ------------------------------------------------------------------
     # UPDATE PAR FRAME
@@ -120,6 +125,26 @@ class Eclaireur(Unit):
         Et on rajoute juste l'affichage spécifique si besoin.
         """
         super().update(dt, combat_system, screen, camera_offset, all_units)
+
+        # Synchroniser l'existence du contrôleur IA avec le flag `is_ia`.
+        # `GameUpdater` peut changer `unit.is_ia` à chaque frame selon `GAMEPLAY_SETTINGS`.
+        if getattr(self, 'is_ia', False):
+            if self.ai is None:
+                try:
+                    self.init_ai(self.game)
+                except Exception:
+                    pass
+        else:
+            # Si l'IA est désactivée en runtime, libérer le contrôleur
+            if self.ai is not None:
+                try:
+                    if hasattr(self.ai, 'shutdown'):
+                        try:
+                            self.ai.shutdown()
+                        except Exception:
+                            pass
+                finally:
+                    self.ai = None
 
         # Pour l'éclaireur, on veut toujours afficher sa zone d'influence
         # (même s'il n'est pas sélectionné) ? ou seulement s'il est sélectionné ?
