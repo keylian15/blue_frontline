@@ -153,7 +153,7 @@ class Eclaireur(Unit):
         # L'éclaireur n'a pas de portée de tir donc ça ne sert pas à grand-chose
         # en combat. On n'en rajoute pas plus ici pour ne pas surcharger l'écran.
         #
-        # Si tu veux l'afficher toujours, tu peux décommenter :
+        # Pour l'afficher, on peut décommenter :
         #
         # if screen:
         #     self.draw_range(screen, camera_offset)
@@ -171,7 +171,7 @@ class Eclaireur(Unit):
 
         # On marque l'unité comme morte pour éviter update() / IA_tick()
         self.is_alive = False
-        self.kill()  # retire aussi du groupe pygame
+        self.kill()
 
     def can_fire(self) -> bool:
         """L'éclaireur ne tire pas."""
