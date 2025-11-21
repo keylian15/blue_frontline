@@ -1,19 +1,20 @@
 {
   "unlocked_achievements": [
     "submarine_fleet",
-    "mass_producer",
-    "fleet_admiral",
-    "big_spender",
     "naval_architect",
-    "trigger_happy",
-    "first_unit"
+    "platform_buster",
+    "big_spender",
+    "first_unit",
+    "fleet_admiral",
+    "mass_producer",
+    "trigger_happy"
   ],
   "stats": {
     "units_created": {
-      "chaloupe": 66,
-      "bateau": 24,
+      "chaloupe": 72,
+      "bateau": 27,
       "eclaireur": 0,
-      "paquebot": 39,
+      "paquebot": 40,
       "sousmarin": 12
     },
     "units_killed": {
@@ -25,23 +26,21 @@
     },
     "games_won": 0,
     "games_lost": 0,
-    "total_petrole_spent": 9600,
+    "total_petrole_spent": 10020,
     "total_coins_earned": 0,
-    "platforms_destroyed": 0,
-    "bullets_fired": 500,
-    "quantum_islands_activated": 1,
-    "total_playtime_seconds": 0.21981899999998866,
+    "platforms_destroyed": 1,
+    "bullets_fired": 749,
+    "quantum_islands_activated": 3,
+    "total_playtime_seconds": 0.30770099999999306,
     "units_created_same_game": [
-      "paquebot",
-      "sousmarin",
       "chaloupe",
+      "paquebot",
       "bateau"
     ],
-    "max_units_alive": 64,
+    "max_units_alive": 9,
     "different_unit_types_created": [
-      "paquebot",
-      "sousmarin",
       "chaloupe",
+      "paquebot",
       "bateau"
     ]
   }
