@@ -1,7 +1,9 @@
 from random import randint
-from perlin_noise import PerlinNoise
-from Global import *
+
 import pygame
+from Global import *
+from perlin_noise import PerlinNoise
+
 
 class Perlin:
     """Générateur de bruit de Perlin pour créer des îles procédurales."""

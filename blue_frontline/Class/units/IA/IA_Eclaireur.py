@@ -15,28 +15,248 @@ Comportement:
     * dès qu'une zone cachée devient assez proche -> on quitte la patrouille
       et on tente d'y aller
 
-Convention d'équipe:
+Convention :
 - toute IA a is_ia = True
 - appel public = ia_tick()
 """
 
+import csv
+import heapq
+import logging
 import math
 import random
-from typing import (TYPE_CHECKING, Callable, List, Optional, Sequence, Tuple, Union)
+import time
+from dataclasses import dataclass
+from typing import (Callable, Dict, Iterable, List, Optional, Sequence, Tuple,
+                    Union)
 
-if TYPE_CHECKING:
-    from Class.Game import Game
+import Global
 
-# Import de toute la logique de pathfinding depuis le fichier séparé
-from .PathfindingLogic import (
-    AStar,
-    GridAdapter,
-    SimpleGrid,
-    Polygon,
-    Vec2,
-    Cell,
-    make_grid_adapter_from_simplegrid,
-)
+# -----------z----------------------------------------------------------------
+# LOGGER
+# ---------------------------------------------------------------------------
+LOGGER_NAME = "EclaireurAI"
+logger = logging.getLogger(LOGGER_NAME)
+if not logger.handlers:
+    logging.basicConfig(
+        level=logging.INFO,
+        format="[%(levelname)s] %(name)s: %(message)s",
+    )
+
+Vec2 = Tuple[float, float]
+Cell = Tuple[int, int]
+
+
+# ---------------------------------------------------------------------------
+# Shapely optionnel
+# ---------------------------------------------------------------------------
+try:
+    from shapely.geometry import Polygon  # type: ignore
+except Exception:
+    class Polygon:  # type: ignore
+        """fallback Polygon minimal pour tests"""
+
+        def __init__(self, points: Sequence[Vec2]):
+            self._points = list(points)
+
+        @property
+        def centroid(self):
+            sx = sum(p[0] for p in self._points)
+            sy = sum(p[1] for p in self._points)
+            n = len(self._points)
+
+            class _C:
+                def __init__(self, x, y):
+                    self.x = x
+                    self.y = y
+
+            return _C(sx / n, sy / n)
+
+
+# ---------------------------------------------------------------------------
+# File de priorité pour A*
+# ---------------------------------------------------------------------------
+class _PriorityQueue:
+    def __init__(self) -> None:
+        self._pq: List[Tuple[float, int, Cell]] = []
+        self._tiebreak: int = 0
+
+    def push(self, priority: float, item: Cell) -> None:
+        self._tiebreak += 1
+        heapq.heappush(self._pq, (priority, self._tiebreak, item))
+
+    def pop(self) -> Cell:
+        return heapq.heappop(self._pq)[2]
+
+    def __bool__(self) -> bool:
+        return bool(self._pq)
+
+
+def octile(a: Cell, b: Cell) -> float:
+    dx = abs(a[0] - b[0])
+    dy = abs(a[1] - b[1])
+    return (dx + dy) + (math.sqrt(2.0) - 2.0) * min(dx, dy)
+
+
+class AStar:
+    """
+    A* classique sur grille 8 directions.
+    On met une limite d'expansions pour ne pas freeze le jeu.
+    """
+
+    def __init__(
+        self,
+        is_walkable: Callable[[Cell], bool],
+        cost: Callable[[Cell], float],
+        neighbors: Callable[[Cell], Iterable[Cell]],
+        heuristic: Callable[[Cell, Cell], float] = octile,
+    ) -> None:
+        self.is_walkable = is_walkable
+        self.cost = cost
+        self.neighbors = neighbors
+        self.heuristic = heuristic
+
+    def find_path(
+        self,
+        start: Cell,
+        goal: Cell,
+        max_expansions: int = 1000,
+    ) -> List[Cell]:
+        if not self.is_walkable(start) or not self.is_walkable(goal):
+            return []
+
+        frontier = _PriorityQueue()
+        frontier.push(0.0, start)
+
+        came_from: Dict[Cell, Optional[Cell]] = {start: None}
+        g_cost: Dict[Cell, float] = {start: 0.0}
+
+        expansions = 0
+
+        while frontier:
+            current = frontier.pop()
+            if current == goal:
+                break
+
+            expansions += 1
+            if expansions > max_expansions:
+                logger.warning(
+                    "A*: expansions max atteintes (%d). Abandon.",
+                    max_expansions,
+                )
+                return []
+
+            for nxt in self.neighbors(current):
+                if not self.is_walkable(nxt):
+                    continue
+
+                new_cost = g_cost[current] + max(1.0, float(self.cost(nxt)))
+                if nxt not in g_cost or new_cost < g_cost[nxt]:
+                    g_cost[nxt] = new_cost
+                    priority = new_cost + self.heuristic(nxt, goal)
+                    frontier.push(priority, nxt)
+                    came_from[nxt] = current
+
+        if goal not in came_from:
+            return []
+
+        # reconstruction du chemin
+        path: List[Cell] = []
+        cur: Optional[Cell] = goal
+        while cur is not None:
+            path.append(cur)
+            cur = came_from[cur]
+        path.reverse()
+        return path
+
+
+# ---------------------------------------------------------------------------
+# Grille / adapter
+# ---------------------------------------------------------------------------
+@dataclass
+class GridAdapter:
+    cell_size: int
+    world_to_cell: Callable[[Vec2], Cell]
+    cell_to_world: Callable[[Cell], Vec2]
+    is_walkable: Callable[[Cell], bool]
+    cost: Callable[[Cell], float]
+    neighbors: Callable[[Cell], Iterable[Cell]]
+
+
+class SimpleGrid:
+    """
+    Grille rectangulaire walkable + coûts.
+    neighbors8 empêche de traverser un coin bloqué en diagonale.
+    """
+
+    def __init__(self, width: int, height: int, cell_size: int = 32) -> None:
+        self.width = int(width)
+        self.height = int(height)
+        self.cell_size = int(cell_size)
+
+        self.walkable: List[List[bool]] = [
+            [True for _ in range(self.height)] for _ in range(self.width)
+        ]
+        self.costs: List[List[float]] = [
+            [1.0 for _ in range(self.height)] for _ in range(self.width)
+        ]
+
+    def in_bounds(self, c: Cell) -> bool:
+        x, y = c
+        return 0 <= x < self.width and 0 <= y < self.height
+
+    def is_walkable(self, c: Cell) -> bool:
+        x, y = c
+        return self.in_bounds(c) and self.walkable[x][y]
+
+    def cost(self, c: Cell) -> float:
+        x, y = c
+        if not self.in_bounds(c):
+            return float("inf")
+        return self.costs[x][y]
+
+    def neighbors8(self, c: Cell) -> Iterable[Cell]:
+        x, y = c
+        for dx in (-1, 0, 1):
+            for dy in (-1, 0, 1):
+                if dx == 0 and dy == 0:
+                    continue
+
+                nc = (x + dx, y + dy)
+                if not self.in_bounds(nc):
+                    continue
+
+                # anti "corner cut"
+                if dx != 0 and dy != 0:
+                    if not (
+                        self.is_walkable((x + dx, y))
+                        and self.is_walkable((x, y + dy))
+                    ):
+                        continue
+
+                yield nc
+
+    def world_to_cell(self, p: Vec2) -> Cell:
+        x, y = p
+        return int(x // self.cell_size), int(y // self.cell_size)
+
+    def cell_to_world(self, c: Cell) -> Vec2:
+        cx, cy = c
+        return (
+            cx * self.cell_size + self.cell_size * 0.5,
+            cy * self.cell_size + self.cell_size * 0.5,
+        )
+
+
+def make_grid_adapter_from_simplegrid(grid: SimpleGrid) -> GridAdapter:
+    return GridAdapter(
+        cell_size=grid.cell_size,
+        world_to_cell=grid.world_to_cell,
+        cell_to_world=grid.cell_to_world,
+        is_walkable=grid.is_walkable,
+        cost=grid.cost,
+        neighbors=grid.neighbors8,
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -101,16 +321,17 @@ class ScoutAI:
         # anti-blocage
         self._last_pos_for_block: Vec2 = self.unit.position
         self._block_timer: float = 0.0
-        self._BLOCK_THRESHOLD_SEC = 0.8  # Réduit pour réagir plus vite
-        self._BLOCK_MIN_MOVE = 8.0  # Augmenté pour mieux détecter le blocage
-        
-        # Compteur de tentatives de blocage répétées (éviter de forcer l'entrée)
-        self._consecutive_blocks = 0
-        self._MAX_CONSECUTIVE_BLOCKS = 3  # Après 3 blocages, abandon complet du waypoint
+        self._BLOCK_THRESHOLD_SEC = 1.0
+        self._BLOCK_MIN_MOVE = 5.0  # si on bouge < 5 px on considère pas de progrès
 
         # petit timer pour éviter "je viens de poser un WP et je dis déjà que je suis arrivé"
         self._just_assigned_wp_timer: float = 0.0
+        # petit timer pour éviter "je viens de poser un WP et je dis déjà que je suis arrivé"
+        self._just_assigned_wp_timer: float = 0.0
 
+        # Simplified policy: we do NOT run heavy diagnostics here.
+        # The scout will only attempt to access hidden zones in time windows
+        # of 3 minutes ON / 3 minutes OFF. See `_zones_open_now()`.
         self.enabled: bool = True
 
     # ------------------------------------------------------------------
@@ -135,6 +356,20 @@ class ScoutAI:
             self._accum = 0.0
             self._ensure_objective_and_path()
 
+        # debug log toutes les ~2s
+        self._last_debug_tick += dt
+        if self._last_debug_tick >= 2.0:
+            self._last_debug_tick = 0.0
+            logger.debug(
+                "ScoutAI DEBUG TICK: pos=%s goal=%s path_len=%d wander_dir=%s",
+                self.unit.position,
+                self.current_goal_world,
+                len(self._path_world),
+                self._wander_dir,
+            )
+        # (No periodic diagnostic or teleport detection here in the simplified
+        # version — keep the tick loop light and deterministic.)
+
     def ia_set_enabled(self, value: bool) -> None:
         self.enabled = bool(value)
         if not self.enabled:
@@ -154,15 +389,26 @@ class ScoutAI:
 
         hidden = self.get_hidden_quantum_polygons()
 
-        # cible = zone cachée la plus proche
-        target: Optional[Vec2] = None
+        # Pré-calculer les centroïdes pour éviter plusieurs calculs
+        centroid_list: List[Vec2] = []
         if hidden:
-            target = self._pick_best_hidden_zone(hidden)
+            logger.info("ScoutAI DEBUG: %d zones cachées reçues par l'IA", len(hidden))
+            for i, poly in enumerate(hidden):
+                c = self._compute_centroid_from_polygon_like(poly)
+                if c:
+                    centroid_list.append(c)
+                    logger.info("  -> zone[%d] centroïde vu=(%.1f, %.1f)", i, c[0], c[1])
+
+        # cible = zone cachée la plus proche (parmi les centroïdes valides)
+        target: Optional[Vec2] = None
+        if centroid_list:
+            target = self._pick_best_hidden_zone(centroid_list)
 
         # S'il n'y a plus de zones cachées:
         # ancien comportement = rentrer à la base.
         # maintenant : NON, on reste en patrouille.
         if target is None:
+            logger.info("ScoutAI: aucune zone cachée -> rester en patrouille.")
             self.current_goal_world = None
             # si on est déjà en patrouille, juste s'assurer qu'on a un WP
             if self._wander_dir is None:
@@ -175,6 +421,24 @@ class ScoutAI:
             return
 
         self.current_goal_world = target
+        # If zones are currently closed by schedule, don't attempt pathing;
+        # fallback to patrol but keep current_goal_world so we can retry later
+        if not self._zones_open_now():
+            # Log the configured period so we can see runtime changes from options
+            period = float(Global.TIME_MAREE) if getattr(Global, 'TIME_MAREE', 0) > 0 else 180.0
+            ts = getattr(self.unit, 'game_time', None)
+            try:
+                window = int(math.floor(float(ts) / period)) if ts is not None else None
+            except Exception:
+                window = None
+
+            logger.info(
+                "ScoutAI: zones fermées par schedule (%ds ON/OFF) time=%s -> éviter d'essayer d'y aller maintenant.",
+                int(period),
+                str(window) if window is not None else "n/a",
+            )
+            self._enter_or_update_patrol()
+            return
 
         # tenter de planifier un chemin local (A*)
         got_path = self._plan_local_path_to(target)
@@ -183,21 +447,17 @@ class ScoutAI:
             self._wander_dir = None
             return
 
-        # pas de chemin A*
-        ux, uy = self.unit.position
-        tx, ty = target
-        dist = math.hypot(tx - ux, ty - uy)
-
-        if dist < 1200.0:
-            # "je fonce tout droit vers la cible"
-            self._wander_dir = None
-            self._path_world = [(tx, ty)]
-            self._just_assigned_wp_timer = 0.5
-            self._push_move_order_if_any()
-            return
-
-        # trop loin ET pas de chemin -> patrouille
+        # pas de chemin A* -> considérer la cible comme inacessible pour l'instant.
+        # Ne pas forcer l'unité à y aller directement : on passe en patrouille,
+        # mais on conserve `current_goal_world` pour pouvoir réessayer plus tard
+        # quand la grille aura changé ou que la cible deviendra atteignable.
+        logger.warning(
+            "ScoutAI: aucun chemin local vers (%.1f, %.1f) -> zone temporairement inaccessible, patrouille (réessaiera).",
+            target[0], target[1],
+        )
+        # enter patrol mode (keeps current_goal_world so future replans will retry)
         self._enter_or_update_patrol()
+        return
 
     def _compute_centroid_from_polygon_like(self, poly: object) -> Optional[Vec2]:
         c = getattr(poly, "centroid", None)
@@ -224,15 +484,71 @@ class ScoutAI:
 
         return None
 
+    def _zones_open_now(self) -> bool:
+        """
+            Détermine si les zones quantiques sont "ouvertes" selon une fenêtre
+            temporelle périodique basée sur la valeur configurable `TIME_MAREE`.
+
+            On lit l'horloge de jeu via `self.unit.game_time` si disponible.
+            Règle initiale : accessibles quand floor(game_time / TIME_MAREE) % 2 == 1
+                (donc accessibles sur [TIME_MAREE..2*TIME_MAREE), [3*TIME_MAREE..4*TIME_MAREE), ...).
+        """
+        # essayer de récupérer le temps de jeu (unit.game_time)
+        ts = getattr(self.unit, 'game_time', None)
+
+        # fallback: si l'unité ne fournit pas game_time, tenter via game.hud.timer.count
+        if ts is None:
+            game = getattr(self.unit, 'game', None)
+            if game is None:
+                # certaines unités n'ont pas de référence 'game' ; essayer owner.game
+                owner = getattr(self.unit, 'owner', None)
+                game = getattr(owner, 'game', None) if owner is not None else None
+
+            if game is not None:
+                hud = getattr(game, 'hud', None)
+                if hud is not None and hasattr(hud, 'timer'):
+                    ts = getattr(hud.timer, 'count', None)
+
+        if ts is None:
+            # si on ne connaît toujours pas le temps de jeu, on considère fermé
+            return False
+
+        try:
+            period = float(Global.TIME_MAREE) if getattr(Global, 'TIME_MAREE', 0) > 0 else 180.0
+            window = int(math.floor(float(ts) / period))
+            # Original logic: odd windows => accessible
+            return (window % 2) == 1
+        except Exception:
+            return False
+
     def _pick_best_hidden_zone(self, hidden: Sequence[object]) -> Optional[Vec2]:
+        """
+        Choisit la zone la plus proche.
+
+        `hidden` peut être une séquence d'objets polygonaux (tuples/objets) ou
+        une séquence déjà transformée de centroïdes (tuples (x,y)). La méthode
+        gère les deux cas pour éviter des recomputations inutiles.
+        """
+
         ux, uy = self.unit.position
         best_goal: Optional[Vec2] = None
         best_d2: float = float("inf")
 
-        for poly in hidden:
-            goal = self._compute_centroid_from_polygon_like(poly)
+        for item in hidden:
+            # si l'item est déjà une coordonnée (centroid pré-calculé)
+            if isinstance(item, (list, tuple)) and len(item) >= 2:
+                try:
+                    tx = float(item[0])
+                    ty = float(item[1])
+                    goal = (tx, ty)
+                except Exception:
+                    goal = None
+            else:
+                goal = self._compute_centroid_from_polygon_like(item)
+
             if goal is None:
                 continue
+
             tx, ty = goal
             d2 = (tx - ux) ** 2 + (ty - uy) ** 2
             if d2 < best_d2:
@@ -242,7 +558,23 @@ class ScoutAI:
         if best_goal is None:
             return None
 
+        logger.info(
+            "ScoutAI DEBUG: meilleure zone choisie = (%.1f, %.1f) dist=%.1f px",
+            best_goal[0],
+            best_goal[1],
+            math.sqrt(best_d2),
+        )
         return best_goal
+
+    def _report_accessible_hidden_zones(self) -> None:
+        """
+        Diagnostic: pour chaque zone cachée, teste si l'éclaireur peut l'atteindre
+        via A* (avec une limite d'expansions raisonnable). Logge le résultat et
+        appelle le callback si défini.
+        """
+        # Diagnostic removed in simplified build: keep method as no-op to
+        # preserve compatibility if external code calls it.
+        return
 
     # ------------------------------------------------------------------
     # PATHFIND LOCAL
@@ -252,7 +584,7 @@ class ScoutAI:
         goal_cell = self.grid.world_to_cell(world_goal)
 
         # tentative directe
-        path_cells = self.astar.find_path(start_cell, goal_cell, max_expansions=1000)
+        path_cells = self.astar.find_path(start_cell, goal_cell, max_expansions=1500)
 
         # sinon chercher une cellule atteignable proche du but
         if not path_cells:
@@ -261,14 +593,27 @@ class ScoutAI:
                 path_cells = self.astar.find_path(
                     start_cell,
                     alt_cell,
-                    max_expansions=1000,
+                    max_expansions=1500,
                 )
 
         if not path_cells:
+            logger.warning(
+                "ScoutAI: aucun chemin local vers %s -> échec A*.",
+                world_goal,
+            )
             return False
+        # (Simplified) accept the found path immediately.
 
         # convertit en points monde
         self._path_world = [self.grid.cell_to_world(c) for c in path_cells]
+
+        if self._path_world:
+            logger.info(
+                "ScoutAI: chemin LOCAL planifié (%d steps), 1er WP=(%.1f, %.1f)",
+                len(self._path_world),
+                self._path_world[0][0],
+                self._path_world[0][1],
+            )
 
         # on n'est plus en patrouille aveugle
         self._wander_dir = None
@@ -284,29 +629,66 @@ class ScoutAI:
         goal_cell: Cell,
         search_radius_cells: int = 6,
     ) -> Optional[Cell]:
-
         gx, gy = goal_cell
-        candidates: List[Tuple[float, Cell]] = []
 
+        # Collecte des cellules candidate walkable autour du goal
+        candidates: List[Cell] = []
         for dx in range(-search_radius_cells, search_radius_cells + 1):
             for dy in range(-search_radius_cells, search_radius_cells + 1):
                 cand = (gx + dx, gy + dy)
                 if not self.grid.is_walkable(cand):
                     continue
-                dist2 = dx * dx + dy * dy
-                candidates.append((dist2, cand))
+                candidates.append(cand)
 
-        candidates.sort(key=lambda t: t[0])
-
-        for _, cand_cell in candidates[:30]:
-            test_path = self.astar.find_path(
-                start_cell,
-                cand_cell,
-                max_expansions=500,
+        if not candidates:
+            logger.warning(
+                "ScoutAI: _find_reachable_cell_near abandon (aucune cellule candidate walkable)",
             )
-            if test_path:
-                return cand_cell
+            return None
 
+        # Si le start est déjà une candidate -> OK
+        if start_cell in candidates:
+            return start_cell
+
+        # Run a single A*-like search from start and accept any of the candidate cells
+        frontier = _PriorityQueue()
+        frontier.push(0.0, start_cell)
+
+        came_from: Dict[Cell, Optional[Cell]] = {start_cell: None}
+        g_cost: Dict[Cell, float] = {start_cell: 0.0}
+
+        expansions = 0
+        max_expansions = max(500, (search_radius_cells * search_radius_cells) * 10)
+
+        # For heuristic we use the original goal_cell as proxy (cheaper than min over candidates)
+        while frontier:
+            current = frontier.pop()
+            if current in candidates:
+                # found reachable candidate
+                return current
+
+            expansions += 1
+            if expansions > max_expansions:
+                logger.warning(
+                    "A* multi-goal: expansions max atteintes (%d). Abandon.",
+                    max_expansions,
+                )
+                return None
+
+            for nxt in self.grid.neighbors(current):
+                if not self.grid.is_walkable(nxt):
+                    continue
+
+                new_cost = g_cost[current] + max(1.0, float(self.grid.cost(nxt)))
+                if nxt not in g_cost or new_cost < g_cost[nxt]:
+                    g_cost[nxt] = new_cost
+                    priority = new_cost + octile(nxt, goal_cell)
+                    frontier.push(priority, nxt)
+                    came_from[nxt] = current
+
+        logger.warning(
+            "ScoutAI: _find_reachable_cell_near abandon (aucune cellule atteignable proche)"
+        )
         return None
 
     # ------------------------------------------------------------------
@@ -320,9 +702,20 @@ class ScoutAI:
         """
         if self._wander_dir is None:
             self._wander_dir = self._pick_new_wander_dir()
+            logger.info(
+                "ScoutAI: patrouille activée. direction=(%.2f, %.2f)",
+                self._wander_dir[0],
+                self._wander_dir[1],
+            )
+
         wp = self._make_forward_waypoint(self._wander_dir)
         self._path_world = [wp]
         self._just_assigned_wp_timer = 0.5
+        logger.info(
+            "ScoutAI: patrouille -> WP=(%.1f, %.1f) (1 step).",
+            wp[0],
+            wp[1],
+        )
         self._push_move_order_if_any()
 
     def _pick_new_wander_dir(self) -> Vec2:
@@ -430,12 +823,24 @@ class ScoutAI:
                 self._wander_dir = new_dir
                 self._path_world = [wp]
                 self._just_assigned_wp_timer = 0.5
+                logger.info(
+                    "ScoutAI: blocage -> nouvelle dir=(%.2f, %.2f), nouveau WP=(%.1f, %.1f)",
+                    self._wander_dir[0],
+                    self._wander_dir[1],
+                    wp[0],
+                    wp[1],
+                )
                 return
 
         # si rien trouvé -> au moins rester dans la carte
         wp_fallback = self._make_forward_waypoint(self._wander_dir)
         self._path_world = [wp_fallback]
         self._just_assigned_wp_timer = 0.5
+        logger.info(
+            "ScoutAI: blocage -> fallback patrouille WP=(%.1f, %.1f)",
+            wp_fallback[0],
+            wp_fallback[1],
+        )
 
     # ------------------------------------------------------------------
     # SUIVI DES WAYPOINTS / ANTI-BLOCAGE
@@ -476,7 +881,6 @@ class ScoutAI:
             # reset blocage
             self._last_pos_for_block = (ux, uy)
             self._block_timer = 0.0
-            self._consecutive_blocks = 0  # Reset compteur de blocages consécutifs
             return
 
         # pas de progrès -> on accumule le blocage
@@ -486,19 +890,12 @@ class ScoutAI:
             return  # pas encore déclaré bloqué
 
         # BLOQUÉ
-        self._consecutive_blocks += 1
-
-        # Si trop de blocages consécutifs, abandonner complètement ce waypoint
-        if self._consecutive_blocks >= self._MAX_CONSECUTIVE_BLOCKS:
-            # Vider tout le chemin et entrer en mode patrouille
-            self._path_world = []
-            self._consecutive_blocks = 0
-            self._last_pos_for_block = (ux, uy)
-            self._block_timer = 0.0
-            
-            # Force la patrouille pour éviter de rester coincé
-            self._enter_or_update_patrol()
-            return
+        logger.warning(
+            "ScoutAI: unité bloquée sur WP (%.1f, %.1f) depuis %.2fs -> réorientation.",
+            wx,
+            wy,
+            self._block_timer,
+        )
 
         # retire le WP actuel
         if self._path_world:
@@ -524,7 +921,6 @@ class ScoutAI:
         # reset blocage pour le prochain segment
         self._last_pos_for_block = (ux, uy)
         self._block_timer = 0.0
-        self._consecutive_blocks = 0  # Reset compteur après waypoint atteint
 
         if self._path_world:
             # encore des WPs (genre chemin A*)
@@ -537,6 +933,11 @@ class ScoutAI:
             wp = self._make_forward_waypoint(self._wander_dir)
             self._path_world = [wp]
             self._just_assigned_wp_timer = 0.5
+            logger.debug(
+                "ScoutAI: patrouille continue -> nouveau WP=(%.1f, %.1f)",
+                wp[0],
+                wp[1],
+            )
             self._push_move_order_if_any()
         else:
             self.unit.stop()
@@ -555,7 +956,18 @@ class ScoutAI:
             if (dx * dx + dy * dy) < 16.0:  # ~4px²
                 return
 
-        self.unit.move_to_position((wx, wy))
+        # Simplified: don't run short A* safety check here; issue move order
+        # directly. Keep a defensive try/except to avoid crashing if the
+        # underlying unit API misbehaves.
+        try:
+            self.unit.move_to_position((wx, wy))
+            logger.debug(
+                "ScoutAI DEBUG MOVE ORDER -> (%.1f, %.1f)",
+                wx,
+                wy,
+            )
+        except Exception:
+            logger.exception("ScoutAI: erreur en envoyant l'ordre de mouvement")
 
     def _clear_path(self) -> None:
         self._path_world = []
@@ -563,10 +975,8 @@ class ScoutAI:
 
 # =====================================================================
 # RUNTIME GLOBAL POUR LES ECLAIREURS
-# (Ces fonctions sont appelées depuis GameUpdater, mais restent définies
-#  ici pour isoler toute la logique IA dans le fichier de l'éclaireur)
 # =====================================================================
-def _rebuild_nav_if_needed(game: Game) -> None:
+def _rebuild_nav_if_needed(game: "Game") -> None:
     """
     Met à jour les obstacles + nav_grid SEULEMENT si nécessaire
     (ex: changement de marée).
@@ -635,12 +1045,16 @@ def update_all_scout_ai(game, dt: float):
 
         try:
             ai_controller.ia_tick(dt)
-        except Exception:
-            pass
+        except Exception as e:
+            ux, uy = getattr(unit, "position", (None, None))
+            logger.error(
+                "Erreur ia_tick sur %s (pos=%s,%s) : %s",
+                unit, ux, uy, e
+            )
 
 
 # ---------------------------------------------------------------------------
-# petit test rapide si on run ce fichier directement
+# TEST
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     print("[TEST] IA_Eclaireur sanity check (patrouille dirigée).")
@@ -670,7 +1084,7 @@ if __name__ == "__main__":
         def stop(self) -> None:
             self.is_moving = False
 
-    # zones cachées bidon
+    # zones cachées
     class _Poly:
         def __init__(self, x: float, y: float) -> None:
             class _C:
