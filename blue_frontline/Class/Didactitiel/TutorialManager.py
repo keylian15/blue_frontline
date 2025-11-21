@@ -250,7 +250,6 @@ class TutorialManager:
         
         import time
         blink = (time.time() % 0.6) < 0.3 # ON 300ms / OFF 300ms
-        # blink = (time.time() % 0.1) < 0.05
         border_color = (255, 0, 0, 255) if blink else (255, 0, 0, 0)
 
         pygame.draw.rect(
@@ -260,7 +259,6 @@ class TutorialManager:
             width=10,               # épaisseur du contour
             border_radius=border_radius
         )
-
 
         # --- Blit des lignes ---
         offset_y = padding
