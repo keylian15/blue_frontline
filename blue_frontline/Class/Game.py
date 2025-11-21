@@ -180,8 +180,8 @@ class Game :
                 self.water_tileset,       # 1: Eau peu profonde
                 self.island_tileset       # 2: Île
             ]
-
-            self.perlin = Perlin()
+            from Global import GAMEPLAY_SETTINGS
+            self.perlin = Perlin(GAMEPLAY_SETTINGS["OCTAVES"])
             island_matrix = self.perlin.generate_island(island_height_tiles, island_width_tiles)
             island_surface = self.perlin.smooth_map(island_matrix, tileset_surface_smooth)
 
@@ -245,15 +245,14 @@ class Game :
         Args:
             unit (Unit): L'unité à sélectionner.
         """
-        
         # Désélectionner toutes les unités
         for u in self.units:
             if hasattr(u, 'is_selected'):
                 u.is_selected = False
-        
+
         # Sélectionner la nouvelle unité
         if unit and hasattr(unit, 'is_selected'):
-            if unit.unit_type != "pompe_petroliere" : # Ne pas séléctioner l'unité pour la pompe pétrolière 
+            if unit.unit_type != "pompe_petroliere":  # Ne pas sélectionner la pompe pétrolière
                 unit.is_selected = True
                 self.selected_unit = unit
         else:
@@ -504,35 +503,6 @@ class Game :
         elif hasattr(self, 'menu_button_rect') and self.menu_button_rect.collidepoint(mouse_pos):
             self.return_to_menu()
     
-    def refresh_all_references(self, game: "Game"):
-        """Actualise toutes les références des gestionnaires après reconstruction de la map.
-
-        Args:
-            game (Game): La référence du jeu.
-        """
-        
-        # Réinitialiser les gestionnaires pour qu'ils utilisent les nouvelles références
-        self.event_handler.game = game
-        self.initializer.game = game
-        self.updater.game = game
-        self.input_manager.game = game
-        self.renderer.game = game
-        self.combat_system.game = game
-        self.overlay_menu.game = game
-        
-        # S'assurer que les unités sont dans le nouveau groupe
-        if hasattr(self, 'units') and self.units:
-            for unit in self.units:
-                if unit.is_alive:
-                    self.group.add(unit)
-                    unit.game = game
-                if hasattr(unit, 'refresh_all_references') : 
-                    unit.refresh_all_references(game)
-        
-        # S'assurer que la caméra est dans le nouveau groupe
-        if hasattr(self, 'camera') and self.camera not in self.group.sprites():
-            self.group.add(self.camera)
-
     def restart_game(self):
         """Redémarre le jeu."""
         

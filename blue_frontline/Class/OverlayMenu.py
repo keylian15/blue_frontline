@@ -94,8 +94,6 @@ class OverlayMenu:
         elif upgrade_name == "vitesse":
             plateforme.fire_rate = value / 4
 
-        self.game.refresh_all_references(self.game)
-
     def position_buttons(self):
         """Positionne tous les boutons verticalement."""
         total_height = len(self.buttons) * 100

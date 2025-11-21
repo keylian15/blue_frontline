@@ -27,7 +27,10 @@ class Unit(pygame.sprite.Sprite):
             teamFr = "Vert"
             if unit_type == "chaloupe" : 
                 teamFr = "Verte"
-        self.name = unit_type.capitalize() + teamFr
+        if unit_type == "sousmarin" :
+            self.name = "SousMarin" + teamFr
+        else : 
+            self.name = unit_type.capitalize() + teamFr
         
         # Position et mouvement
         base_spawn = self.game.red_platform_zone if team == "red" else self.game.green_platform_zone
@@ -186,7 +189,6 @@ class Unit(pygame.sprite.Sprite):
                 self.game.quantique_area_name.append('ile_quantique_' + str(index))  # On ajoute le nom de l'ile dans la liste des iles quantiques
                 
                 self.game.renderer.refresh_map()  # On rafraichit le rendu
-                self.game.refresh_all_references(self.game)  # On met a jour la map
                 self.game.quantique('ile_quantique_' + str(index))  # On appel la fonction quantique du jeu pour activer le changement
             else:
                 self.stop()  # Seul l'eclaireur peut découvrir la zone
@@ -242,6 +244,7 @@ class Unit(pygame.sprite.Sprite):
         """
         
         if not (self.is_moving and self.target_position):
+            self.die_when_stuck()
             return
         
         # Temps de jeu rapide : 
@@ -364,6 +367,21 @@ class Unit(pygame.sprite.Sprite):
                 
         self.kill()  # Retire l'unité du groupe pygame
         self.game.units.remove(self)  # Retire l'unité de la liste des unités
+                    
+        # Créer une explosion au moment de la mort
+        if hasattr(self, 'game') and hasattr(self.game, 'combat_system'):
+            from Class.Combat import Explosion
+            explosion = Explosion(int(self.position[0]), int(self.position[1]), size=64)
+            self.game.combat_system.add_explosion(explosion)
+
+    def die_when_stuck(self):
+        """Vérifie si l'unité est coincée sur un obstacle et la fait mourir si c'est le cas."""
+        
+        if point_in_many_polygons(self.game.obstacles, self.position):
+            self.is_alive = False           
+            self.die()
+            return True
+        return False
         
     def get_health_percentage(self):
         """Retourne le pourcentage de vie restante."""

@@ -295,6 +295,27 @@ class EventHandler:
         
         # Gérer les clics sur le menu superposé
         self.game.overlay_menu.handle_event(event)
+
+        # Gérer les clics sur le HUD (popup d'unités) - style similaire aux autres contrôles
+        # BLOQUÉ si le HUD est caché
+        if event.button == 1 and hasattr(self.game, 'hud') and hasattr(self.game.hud, 'popup_icon_rects'):
+            # Ne permettre les clics sur le popup QUE si le HUD est visible
+            if getattr(self.game.hud, 'show', False):
+                rects = self.game.hud.popup_icon_rects
+                if rects:
+                    pos = getattr(event, 'pos', None)
+                    if pos:
+                        for i, rect in enumerate(rects):
+                            if rect is None:
+                                continue
+                            if rect.collidepoint(pos):
+                                # Mettre à jour la sélection dans le HUD
+                                self.game.hud.popup_selection = i
+                                # Appeler le callback si défini
+                                callback = getattr(self.game.hud, 'unit_select_callback', None)
+                                if callable(callback):
+                                    callback(i, self.game.hud.popup_team)
+                                return
         
         # Clic gauche
         if event.button == get_action_key("SELECT_MOVE"):  # Clic gauche
@@ -302,10 +323,14 @@ class EventHandler:
             # Chercher une unité à cette position
             clicked_unit = self.game.find_unit_at_position(world_x, world_y)
 
+            hud_visible = getattr(self.game, 'hud', None) and getattr(self.game.hud, 'show', False)
+
             if clicked_unit:
-                self.game.select_unit(clicked_unit)
+                # Sélectionner l'unité (même si le HUD est caché)
+                if clicked_unit.team == self.game.hud.player_team:
+                    self.game.select_unit(clicked_unit)
             elif self.game.selected_unit and self.game.selected_unit.is_alive:
-                # Déplacer l'unité sélectionnée vers la position cliquée
+                # Déplacer l'unité sélectionnée vers la position cliquée (même si HUD caché)
                 if hasattr(self.game.selected_unit, 'move_to_click'):
                     # Utiliser le pathfinding pour les Chaloupes
                     self.game.selected_unit.move_to_click((world_x, world_y))
@@ -313,7 +338,9 @@ class EventHandler:
                     # Déplacement direct pour les autres unités
                     self.game.selected_unit.move_to_position((world_x, world_y))
             else:
-                self.game.select_unit(None)
+                # Si le HUD est visible et qu'aucune unité n'a été cliquée, désélectionner
+                if hud_visible:
+                    self.game.select_unit(None)
                         
         # Molette haut
         elif event.button == get_action_key("ZOOM_IN"):
@@ -429,8 +456,11 @@ class EventHandler:
         
         # On instancie l'unité
         from Global import GAMEPLAY_SETTINGS
-        unit = unit_class(self.game, is_ia=GAMEPLAY_SETTINGS["AI_ACTIVATION"][unit_class.__name__])
-        
+        is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(unit_class.__name__, None)
+        if is_ia is None: 
+            unit = unit_class(self.game)
+        else :
+            unit = unit_class(self.game, is_ia=is_ia)        
         if config_key == "pompe_petroliere" :
             if team_key == "red" : 
                 self.game.nbPompePetroliereRouge += 1
@@ -441,7 +471,4 @@ class EventHandler:
         self.game.combat_system.add_unit(unit)
         self.game.units.append(unit)
         self.game.group.add(unit)
-        
-        # On envoi la map a toutes les instances
-        self.game.refresh_all_references(self.game)
         return True

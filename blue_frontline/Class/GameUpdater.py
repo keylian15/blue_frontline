@@ -23,14 +23,10 @@ class GameUpdater:
             dt (float): Delta time frame.
             game (Game): Référence au jeu.
         """
-
-        # 1. Sync les refs internes du Game (liste des unités, plateformes, etc.)
-        self.game.refresh_all_references(game)
-
-        # 2. Caméra
+        # 1. Caméra
         self.game.camera.update()
 
-        # 3. Audio (listener = caméra donc après update caméra)
+        # 2. Audio (listener = caméra donc après update caméra)
         try:
             if hasattr(self.game, "sound") and self.game.sound:
                 self.game.sound.update()
@@ -38,13 +34,13 @@ class GameUpdater:
             # on évite qu'un bug son casse la frame
             pass
 
-        # 4. Zoom / renderer si le niveau de zoom a changé
+        # 3. Zoom / renderer si le niveau de zoom a changé
         self.update_renderer_for_zoom()
 
-        # 5. Sync combat_system <-> unités (ajouter nouvelles unités vivantes)
+        # 4. Sync combat_system <-> unités (ajouter nouvelles unités vivantes)
         self.sync_units_with_combat_system()
 
-        # 6. Mettre à jour les unités (déplacement, tir, collisions, HUD...)
+        # 5. Mettre à jour les unités (déplacement, tir, collisions, HUD...)
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
 
         for unit in self.game.units:
@@ -54,14 +50,7 @@ class GameUpdater:
                 # Si l'unité est une IA, on met à jour si elle est ia
                 # On récuperera la valeur depuis les paramètres de gameplay
                 from Global import GAMEPLAY_SETTINGS
-                # Cas spécial pour les bases :
-                if unit.unit_type == "plateformePetroliere":
-                    if unit.team == "red" : 
-                        unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(unit.name)
-                    elif unit.team == "green" :
-                        unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(unit.name)
-                else:
-                    unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(unit.name, False)
+                unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(unit.name, False)
             
             # Mettre à jour l'unité avec toutes les informations nécessaires
             unit.update(dt, self.game.combat_system, self.game.screen, camera_offset, self.game.units)
@@ -70,15 +59,15 @@ class GameUpdater:
             if hasattr(unit, 'is_selected'):
                 unit.is_selected = (unit == self.game.selected_unit)
 
-        # 7. Mettre à jour l'IA des éclaireurs UNIQUEMENT
+        # 6. Mettre à jour l'IA des éclaireurs UNIQUEMENT
         # (gère aussi le rebuild nav_grid en cas de marée)
         update_all_scout_ai(self.game, dt)
 
-        # 8. Combat system (verrouillage / tir / dégâts / mort)
+        # 7. Combat system (verrouillage / tir / dégâts / mort)
         if hasattr(self.game, "combat_system"):
             self.game.combat_system.update(dt)
 
-        # 9. MAJ du groupe de rendu Pyscroll
+        # 8. MAJ du groupe de rendu Pyscroll
         self.game.group.update()
         self.game.group.center(self.game.camera.rect.center)
 
