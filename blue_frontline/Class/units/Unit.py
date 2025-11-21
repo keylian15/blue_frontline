@@ -367,12 +367,18 @@ class Unit(pygame.sprite.Sprite):
                 
         self.kill()  # Retire l'unité du groupe pygame
         self.game.units.remove(self)  # Retire l'unité de la liste des unités
+                    
+        # Créer une explosion au moment de la mort
+        if hasattr(self, 'game') and hasattr(self.game, 'combat_system'):
+            from Class.Combat import Explosion
+            explosion = Explosion(int(self.position[0]), int(self.position[1]), size=64)
+            self.game.combat_system.add_explosion(explosion)
 
     def die_when_stuck(self):
         """Vérifie si l'unité est coincée sur un obstacle et la fait mourir si c'est le cas."""
         
         if point_in_many_polygons(self.game.obstacles, self.position):
-            self.is_alive = False
+            self.is_alive = False           
             self.die()
             return True
         return False
