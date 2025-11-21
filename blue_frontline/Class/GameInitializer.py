@@ -193,7 +193,8 @@ class GameInitializer:
     def init_sound(self):
         """Initialise le système sonore (via l'API publique Sound)."""
         # Sound va gérer l'init du mixer et les canaux
-        self.game.sound = Sound(self.game)
+        if self.game.mode != "tuto":
+            self.game.sound = Sound(self.game)
 
     def switch_layer(self):
         """Active le bon calque de marée (haute ou basse) dans Tiled

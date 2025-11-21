@@ -26,12 +26,13 @@ class InputManager:
         """Gère les entrées continues (touches maintenues) pour le tuto"""
         
         pressed = pygame.key.get_pressed()
-        if not self.game.paused:
-            if self.game.tutorial.phase == 0:
-                self.handle_camera_movement(pressed)
-                self.handle_hud_toggle(pressed)
+        if self.game.tutorial.phase == 2 and self.game.tutorial.step == 9 :
+            self.handle_camera_movement(pressed)
 
-        self._handle_shooting(pressed)
+        if self.game.tutorial.phase == 2 and self.game.tutorial.step == 15 :
+            if pressed[get_action_key("SHOOT")]: 
+                self.trigger_shooting()
+                self.game.tutorial.next_step()
 
     
     def handle_camera_movement(self, pressed: tuple[bool]):

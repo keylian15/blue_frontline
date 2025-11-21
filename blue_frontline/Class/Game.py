@@ -561,6 +561,11 @@ class Game :
         self.game_running = True  # Variable pour contrôler le retour au menu
         
         if self.mode == "tuto":
+            self.paused = True
+            # Passer toutes les ia en False
+            from Global import GAMEPLAY_SETTINGS
+            for valeur in GAMEPLAY_SETTINGS["AI_ACTIVATION"] : 
+                GAMEPLAY_SETTINGS["AI_ACTIVATION"][valeur] = False
             
             while running and self.game_running: 
                 dt = clock.tick(FPS) / TIME_STEP
@@ -569,7 +574,7 @@ class Game :
                 running = self.event_handler.handle_events_tuto()
                 
                 # Gestion des entrées continues
-                if not self.paused:
+                if not self.paused or self.tutorial.phase == 2:
                     self.input_manager.handle_continuous_input_tuto()
                 
                 # Mise à jour des systèmes
