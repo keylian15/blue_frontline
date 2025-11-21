@@ -65,6 +65,183 @@ class EventHandler:
         
         return True
     
+    def handle_events_tuto(self):
+        
+        for event in pygame.event.get(): 
+            if event.type == pygame.QUIT: 
+                return False
+
+            # Gestion des événements HUD
+            self.game.hud.petrole_green.handle_event(event, self.game.nbPompePetroliereVert)
+            self.game.hud.petrole_red.handle_event(event, self.game.nbPompePetroliereRouge)
+            self.game.hud.timer.handle_event(event)
+
+            # Gestion du changement de marée                   
+            if self.game.hud.timer.maree_changed:
+                self.game.initializer.switch_layer()
+                
+                # Reconstruire la map
+                if hasattr(self.game.renderer, 'map_needs_refresh') and self.game.renderer.map_needs_refresh:
+                    self.game.renderer.refresh_map()  
+
+                # Gestion des zones quantiques
+                if self.game.hud.timer.maree_haute:
+                    self.game.quantique()
+                    
+                # On charge les obstacles
+                self.game.setObstacles()
+
+                # Marquer le changement comme traité
+                self.game.hud.timer.maree_changed = False
+                
+            # Gestion des touches
+            elif event.type == pygame.KEYDOWN:
+                if not self.handle_keydown_events_tuto(event):
+                    continue
+
+            # Gestion des clics souris
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self.handle_mouse_events_tuto(event)
+        
+        return True
+    
+    def handle_keydown_events_tuto(self, event: pygame.event):
+        """Gère les événements de touches pressées dans le tuto.
+
+        Args:
+            event (pygame.event): Événement pygame.
+
+        Returns:
+            bool: True si l'événement a été traité, False sinon.
+        """
+        
+        if event.key == pygame.K_ESCAPE:
+            options_menu = OptionsMenu(self.game.screen)
+            retour = options_menu.run()
+            if type(retour) == tuple and len(retour) == 2:
+                changed, new_gameplay_settings = retour
+                if changed:
+                    # Appliquer les nouveaux paramètres de gameplay au jeu
+                    from Global import set_gameplay_setting
+                    set_gameplay_setting(new_gameplay_settings)
+            
+            return True
+
+        return
+        # Entrée via le HUD (bandeau bas) pour spawn l'unité sélectionnée (coût géré dans Game.spawn_unit)
+        if event.key == pygame.K_RETURN :
+            hud = self.game.hud
+            selection_index = hud.popup_selection
+            team_key = hud.popup_team  # 'red' ou 'green'
+            # Récupérer la clé de config de l'unité (le type d'unité)
+            if selection_index < 0 or selection_index >= len(hud.unit_config_keys):
+                return True
+            config_key = hud.unit_config_keys[selection_index]
+            
+            # Vérifier le coût en pétrole
+            cost = UNIT_CONFIGS.get(config_key, {}).get('cost')
+            if not cost:
+                return
+            if self.check_cost(team_key, cost):
+                self.apply_cost(config_key, team_key, cost)
+                self.spawn_unit(config_key, team_key)
+                return True
+
+        if event.key == get_action_key("HUD_LEFT"):
+            self.game.hud.popup_selection = (self.game.hud.popup_selection - 1) % len(self.game.hud.unit_names)
+            return True
+        if event.key == get_action_key("HUD_RIGHT"):
+            self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
+            return True
+
+        if event.key ==  get_action_key("SWITCH_TEAM"):
+            # Changer d'équipe dans le HUD:
+            self.game.hud.toggle_popup_team()
+            self.game.hud.switch_team()
+            self.game.overlay_menu.switch_team()
+            return True        
+        return True
+    
+    def handle_mouse_events_tuto(self, event: pygame.event):
+        """Gère les événements de souris dans le tuto.
+
+        Args:
+            event (pygame.event): Événement de souris à traiter.
+        """
+        
+        # Passer le tuto avec clic gauche dans la 1ere phase
+        if self.game.tutorial.phase == 1 and event.button == 1 : 
+            self.game.tutorial.next_step()
+        
+        if event.button == get_action_key("ZOOM_IN"):
+            if not getattr(self.game, 'paused', False):
+                self.game.camera.zoom_in()
+        
+        # Molette bas
+        elif event.button == get_action_key("ZOOM_OUT"):
+            if not getattr(self.game, 'paused', False):
+                self.game.camera.zoom_out()  
+        return
+        
+        # Gérer les clics sur le menu superposé
+        self.game.overlay_menu.handle_event(event)
+
+        # Gérer les clics sur le HUD (popup d'unités) - style similaire aux autres contrôles
+        # BLOQUÉ si le HUD est caché
+        if event.button == 1 and hasattr(self.game, 'hud') and hasattr(self.game.hud, 'popup_icon_rects'):
+            # Ne permettre les clics sur le popup QUE si le HUD est visible
+            if getattr(self.game.hud, 'show', False):
+                rects = self.game.hud.popup_icon_rects
+                if rects:
+                    pos = getattr(event, 'pos', None)
+                    if pos:
+                        for i, rect in enumerate(rects):
+                            if rect is None:
+                                continue
+                            if rect.collidepoint(pos):
+                                # Mettre à jour la sélection dans le HUD
+                                self.game.hud.popup_selection = i
+                                # Appeler le callback si défini
+                                callback = getattr(self.game.hud, 'unit_select_callback', None)
+                                if callable(callback):
+                                    callback(i, self.game.hud.popup_team)
+                                return
+        
+        # Clic gauche
+        if event.button == get_action_key("SELECT_MOVE"):  # Clic gauche
+            world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
+            # Chercher une unité à cette position
+            clicked_unit = self.game.find_unit_at_position(world_x, world_y)
+
+            hud_visible = getattr(self.game, 'hud', None) and getattr(self.game.hud, 'show', False)
+
+            if clicked_unit:
+                # Sélectionner l'unité (même si le HUD est caché)
+                if clicked_unit.team == self.game.hud.player_team:
+                    self.game.select_unit(clicked_unit)
+            elif self.game.selected_unit and self.game.selected_unit.is_alive:
+                # Déplacer l'unité sélectionnée vers la position cliquée (même si HUD caché)
+                if hasattr(self.game.selected_unit, 'move_to_click'):
+                    # Utiliser le pathfinding pour les Chaloupes
+                    self.game.selected_unit.move_to_click((world_x, world_y))
+                elif hasattr(self.game.selected_unit, 'move_to_position'):
+                    # Déplacement direct pour les autres unités
+                    self.game.selected_unit.move_to_position((world_x, world_y))
+            else:
+                # Si le HUD est visible et qu'aucune unité n'a été cliquée, désélectionner
+                if hud_visible:
+                    self.game.select_unit(None)
+                        
+        # Molette haut
+        elif event.button == get_action_key("ZOOM_IN"):
+            if not getattr(self.game, 'paused', False):
+                self.game.camera.zoom_in()
+        
+        # Molette bas
+        elif event.button == get_action_key("ZOOM_OUT"):
+            if not getattr(self.game, 'paused', False):
+                self.game.camera.zoom_out()    
+    
     def handle_keydown_events(self, event: pygame.event):
         """Gère les événements de touches pressées.
 

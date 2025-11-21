@@ -21,6 +21,17 @@ class InputManager:
             self.handle_hud_toggle(pressed)
 
         self._handle_shooting(pressed)
+        
+    def handle_continuous_input_tuto(self):
+        """Gère les entrées continues (touches maintenues) pour le tuto"""
+        
+        pressed = pygame.key.get_pressed()
+        if not self.game.paused:
+            if self.game.tutorial.phase == 0:
+                self.handle_camera_movement(pressed)
+                self.handle_hud_toggle(pressed)
+
+        self._handle_shooting(pressed)
 
     
     def handle_camera_movement(self, pressed: tuple[bool]):

@@ -39,33 +39,22 @@ class IslandSprite(pygame.sprite.Sprite):
 class Game : 
     """Classe principale du jeu."""
 
-    def __init__(self, screen: pygame.surface): 
+    def __init__(self, screen: pygame.surface, mode: str = "normal"): 
         """Fonction permettant d'initialiser le jeu.
 
         Args:
             screen (pygame.surface): La surface d'affichage du jeu.
+            mode (str, optional): Le mode de jeu ("normal", "tuto", etc.). Defaults to "normal".
         """
-        
+        # Variables de base
+        self.mode = mode
         self.screen = screen
-    
-        # Système de succès (sera assigné par le menu)
-        self.achievements_system = None
-        
-        # Gestionnaire de notifications de succès
-        self.notification_manager = AchievementNotificationManager(screen)
-        
+            
         # La liste des iles quantiques GRAPHIQUES
         self.quantum_islands = [] 
         
         # Initialiser les gestionnaires
         self.initializer = GameInitializer(self)
-        
-        # Initialiser les composants principaux
-        self.initializer.init_map()
-        self.initializer.init_camera()
-        self.initializer.init_game_systems()
-        self.initializer.init_ui()
-        self.initializer.init_sound()
         
         # Variable pour suivre les changements de zoom
         self.last_zoom_level = self.camera.zoom_level
@@ -100,6 +89,18 @@ class Game :
         self.quantique_area_name = []
         self.setQuantiqueArea()
         self.build_nav_grid()
+        
+        if self.mode == "tuto":
+            # Activer le didacticiel
+            from Class.Didactitiel.TutorialManager import TutorialManager
+            self.tutorial = TutorialManager(self)
+                
+        # Système de succès (sera assigné par le menu)
+        self.achievements_system = None
+        
+        # Gestionnaire de notifications de succès
+        self.notification_manager = AchievementNotificationManager(screen)
+
 
     # --- Utilitaire audio: notification post-quantique (ne change pas la logique de génération) ---
     def notify_quantum_audio(self):
@@ -559,47 +560,78 @@ class Game :
         running = True
         self.game_running = True  # Variable pour contrôler le retour au menu
         
-        # Réinitialiser les statistiques de jeu pour les succès
-        if self.achievements_system:
-            self.achievements_system.reset_game_stats()
-        
-        while running and self.game_running: 
-            dt = clock.tick(FPS) / TIME_STEP
+        if self.mode == "tuto":
             
-            # Mettre à jour le temps de jeu pour les succès
+            while running and self.game_running: 
+                dt = clock.tick(FPS) / TIME_STEP
+                                
+                # Gestion des événements
+                running = self.event_handler.handle_events_tuto()
+                
+                # Gestion des entrées continues
+                if not self.paused:
+                    self.input_manager.handle_continuous_input_tuto()
+                
+                # Mise à jour des systèmes
+                self.updater.update_systems(dt, self)
+                
+                # Rendu
+                self.renderer.render()
+                self.tutorial.update()
+                self.tutorial.draw()
+            
+                pygame.display.flip()
+                
+            if not self.game_running:
+                return  # Retourner au menu
+            
+            pygame.quit()
+        
+        else : 
+            # Réinitialiser les statistiques de jeu pour les succès
             if self.achievements_system:
-                self.achievements_system.update_playtime(dt / 1000)  # Convertir en secondes
+                self.achievements_system.reset_game_stats()
+            
+            while running and self.game_running: 
+                dt = clock.tick(FPS) / TIME_STEP
+                
+                # Mettre à jour le temps de jeu pour les succès
+                if self.achievements_system:
+                    self.achievements_system.update_playtime(dt / 1000)  # Convertir en secondes
+                
+                # Gestion des événements
+                running = self.event_handler.handle_events()
+                
+                # Gestion des entrées continues
+                if not self.paused:
+                    self.input_manager.handle_continuous_input()
+                
+                # Mise à jour des systèmes
+                self.updater.update_systems(dt, self)
 
-            
-            # Gestion des événements
-            running = self.event_handler.handle_events()
-            
-            # Gestion des entrées continues
-            if not self.paused:
-                self.input_manager.handle_continuous_input()
-            
-            # Mise à jour des systèmes
-            self.updater.update_systems(dt, self)
-
-            # Vérifier s'il y a de nouvelles notifications de succès
-            if self.achievements_system:
-                new_notifications = self.achievements_system.get_pending_notifications()
-                for notification in new_notifications:
-                    self.notification_manager.add_notification(notification['achievement'])
-            
-            # Mettre à jour le gestionnaire de notifications
-            self.notification_manager.update(dt)
-            
-            # Rendu
-            self.renderer.render()
-            
-            # Afficher l'écran de victoire si le jeu est gagné
-            if self.game_won:
-                self.draw_victory_screen()
-            
-            pygame.display.flip()
+                # Vérifier s'il y a de nouvelles notifications de succès
+                if self.achievements_system:
+                    new_notifications = self.achievements_system.get_pending_notifications()
+                    for notification in new_notifications:
+                        self.notification_manager.add_notification(notification['achievement'])
+                
+                    # Mettre à jour le gestionnaire de notifications
+                    self.notification_manager.update(dt)
+                
+                # Rendu
+                self.renderer.render()
+                
+                if self.mode == "tuto" :                
+                    self.tutorial.update()
+                    self.tutorial.draw()
+                    
+                # Afficher l'écran de victoire si le jeu est gagné
+                if self.game_won:
+                    self.draw_victory_screen()
+                
+                pygame.display.flip()
         
-        if not self.game_running:
-            return  # Retourner au menu
-        
-        pygame.quit()
+            if not self.game_running:
+                return  # Retourner au menu
+            
+            pygame.quit()

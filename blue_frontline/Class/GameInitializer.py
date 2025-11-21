@@ -38,6 +38,13 @@ class GameInitializer:
             game (Game): Référence au jeu.
         """
         self.game = game
+        
+        # Initialiser les composants principaux
+        self.init_map()
+        self.init_camera()
+        self.init_game_systems()
+        self.init_ui()
+        self.init_sound()
 
     def init_map(self):
         """Initialise les données de la map et les tilesets.
