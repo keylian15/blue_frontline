@@ -169,19 +169,17 @@ class EventHandler:
             return True
         
         if event.key == get_action_key("MINE"):
-            world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
-
             # Si un sous-marin est sélectionné, poser une mine
             if (self.game.selected_unit and
                 self.game.selected_unit.is_alive and
                 hasattr(self.game.selected_unit, 'special_ability') and
                 self.game.selected_unit.special_ability == "mines"):
 
+                x, y = self.game.selected_unit.position
+                
                 # Vérifier que la position n'est pas dans un obstacle
                 from Utils import point_in_many_polygons
-                if not point_in_many_polygons(self.game.obstacles, (world_x, world_y)):
-                    x, y = self.game.selected_unit.position
-
+                if not point_in_many_polygons(self.game.obstacles, (x, y)):
                     # Utiliser la méthode spéciale pour le sous-marin
                     if hasattr(self.game.selected_unit, 'can_place_mine') and self.game.selected_unit.can_place_mine():
                         self.game.selected_unit.place_mine(x, y)
