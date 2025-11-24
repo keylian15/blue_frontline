@@ -115,7 +115,13 @@ class Game :
     def setObstacles(self):
         """Fonction permettant de récupérer les obstacles du jeu."""
         # On récupére les collisions générales.
-        self.obstacles = [obj.as_points for obj in self.tmx_data.objects if obj.type == "Collision"]
+        self.obstacles = []
+        for obj in self.tmx_data.objects:
+            if obj.type == "Collision":
+                if hasattr(obj, 'points'):
+                    self.obstacles.append(obj.points)
+                elif hasattr(obj, "as_points"):
+                    self.obstacles.append(obj.as_points)
         self.eau_peu_profondes = []
         
         layer_name = "Collision_Haute" if self.hud.timer.maree_haute else "Collision_Basse"
