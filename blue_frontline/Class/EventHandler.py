@@ -77,7 +77,14 @@ class EventHandler:
         
         if event.key == pygame.K_ESCAPE:
             options_menu = OptionsMenu(self.game.screen)
-            options_menu.run()
+            retour = options_menu.run()
+            if type(retour) == tuple and len(retour) == 2:
+                changed, new_gameplay_settings = retour
+                if changed:
+                    # Appliquer les nouveaux paramètres de gameplay au jeu
+                    from Global import set_gameplay_setting
+                    set_gameplay_setting(new_gameplay_settings)
+            
             return True
 
         # Entrée via le HUD (bandeau bas) pour spawn l'unité sélectionnée (coût géré dans Game.spawn_unit)
@@ -94,63 +101,10 @@ class EventHandler:
             cost = UNIT_CONFIGS.get(config_key, {}).get('cost')
             if not cost:
                 return
-            
-            def succes():
-                """Fonction interne pour gérer les succès liés aux unités créées."""
-
-                # Suivre les statistiques pour les succès
-                if self.game.achievements_system:
-                    self.game.achievements_system.track_unit_created(config_key, cost)
-                    # Mettre à jour le nombre maximum d'unités vivantes
-                    alive_units = len([u for u in self.game.units if u.is_alive and hasattr(u, 'unit_type')])
-                    self.game.achievements_system.update_max_units_alive(alive_units)
-                
-                # Marquer le type d'unité comme créé dans cette partie
-                self.game.units_created_this_game.add(config_key)
-
-            # S'il n'y a pas assez de pétrole.
-            if team_key == "red"  :
-                if self.game.hud.petrole_red.count < cost:
-                    return None
-                else : 
-                    self.game.hud.petrole_red.count -= cost
-                    succes()
-            else : 
-                if self.game.hud.petrole_green.count < cost: 
-                    return None
-                else :
-                    self.game.hud.petrole_green.count -= cost
-                    succes()
-            
-            # Créer l'unité
-            # Mapping type + équipe -> classe
-            class_map = {
-                'chaloupe': {'red': ChaloupeRouge, 'green': ChaloupeVerte},
-                'bateau': {'red': BateauRouge, 'green': BateauVert},
-                'paquebot': {'red': PaquebotRouge, 'green': PaquebotVert},
-                'eclaireur': {'red': EclaireurRouge, 'green': EclaireurVert},
-                'sousmarin': {'red': SousMarinRouge, 'green': SousMarinVert},
-                'pompe_petroliere': {'red': PompePetroliereRouge, 'green': PompePetroliereVert},
-            }
-            unit_class = class_map.get(config_key)[team_key]
-            
-            # On instancie l'unité
-            unit = unit_class(self.game)
-            
-            if config_key == "pompe_petroliere" :
-                if team_key == "red" : 
-                    self.game.nbPompePetroliereRouge += 1
-                else : 
-                    self.game.nbPompePetroliereVert += 1
-            
-            # Ajouter au système de combat et au groupe de sprites
-            self.game.combat_system.add_unit(unit)
-            self.game.units.append(unit)
-            self.game.group.add(unit)
-            
-            # On envoi la map a toutes les instances
-            self.game.refresh_all_references(self.game)
-            return True
+            if self.check_cost(team_key, cost):
+                self.apply_cost(config_key, team_key, cost)
+                self.spawn_unit(config_key, team_key)
+                return True
 
         # Volume
         if event.key == get_action_key("VOLUME_UP"):
@@ -184,6 +138,7 @@ class EventHandler:
             # Changer d'équipe dans le HUD:
             self.game.hud.toggle_popup_team()
             self.game.hud.switch_team()
+            self.game.overlay_menu.switch_team()
             return True
         
         # === COMMANDES DEBUG Q-LEARNING ===
@@ -212,6 +167,24 @@ class EventHandler:
         if event.key == pygame.K_F5:
             self._save_qlearning_progress_all()
             return True
+        
+        if event.key == get_action_key("MINE"):
+            world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
+
+            # Si un sous-marin est sélectionné, poser une mine
+            if (self.game.selected_unit and
+                self.game.selected_unit.is_alive and
+                hasattr(self.game.selected_unit, 'special_ability') and
+                self.game.selected_unit.special_ability == "mines"):
+
+                # Vérifier que la position n'est pas dans un obstacle
+                from Utils import point_in_many_polygons
+                if not point_in_many_polygons(self.game.obstacles, (world_x, world_y)):
+                    x, y = self.game.selected_unit.position
+
+                    # Utiliser la méthode spéciale pour le sous-marin
+                    if hasattr(self.game.selected_unit, 'can_place_mine') and self.game.selected_unit.can_place_mine():
+                        self.game.selected_unit.place_mine(x, y)
         
         return True
     
@@ -320,6 +293,9 @@ class EventHandler:
             self.game.handle_victory_click(pygame.mouse.get_pos())
             return
         
+        # Gérer les clics sur le menu superposé
+        self.game.overlay_menu.handle_event(event)
+        
         # Clic gauche
         if event.button == get_action_key("SELECT_MOVE"):  # Clic gauche
             world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
@@ -338,26 +314,7 @@ class EventHandler:
                     self.game.selected_unit.move_to_position((world_x, world_y))
             else:
                 self.game.select_unit(None)
-
-        # Clic droit
-        elif event.button == get_action_key("MINE"):  # Clic droit
-            world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
-
-            # Si un sous-marin est sélectionné, poser une mine
-            if (self.game.selected_unit and
-                self.game.selected_unit.is_alive and
-                hasattr(self.game.selected_unit, 'special_ability') and
-                self.game.selected_unit.special_ability == "mines"):
-
-                # Vérifier que la position n'est pas dans un obstacle
-                from Utils import point_in_many_polygons
-                if not point_in_many_polygons(self.game.obstacles, (world_x, world_y)):
-                    x, y = self.game.selected_unit.position
-
-                    # Utiliser la méthode spéciale pour le sous-marin
-                    if hasattr(self.game.selected_unit, 'can_place_mine') and self.game.selected_unit.can_place_mine():
-                        self.game.selected_unit.place_mine(x, y)
-                                
+                        
         # Molette haut
         elif event.button == get_action_key("ZOOM_IN"):
             if not getattr(self.game, 'paused', False):
@@ -367,6 +324,10 @@ class EventHandler:
         elif event.button == get_action_key("ZOOM_OUT"):
             if not getattr(self.game, 'paused', False):
                 self.game.camera.zoom_out()
+
+        # Désélectionner l'unité
+        if event.button == 3 : 
+            self.game.select_unit(None)
     
     def screen_to_world_coordinates(self, mouse_pos: tuple[int, int]):
         """Convertit les coordonnées écran en coordonnées monde.

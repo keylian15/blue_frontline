@@ -23,10 +23,10 @@ Retrouvez l’ensemble de la documentation du projet BlueFrontline sur **Read th
   [👥 **Documentation Utilisateur**  ](https://blue-frontline.readthedocs.io/fr/latest)
 
 - 
-  [🛠️ **Manuel Administrateur**  ](https://blue-frontline.readthedocs.io/fr/latest/MANUEL_ADMINISTRATEUR)
+  [🛠️ **Manuel Administrateur**  ](https://blue-frontline.readthedocs.io/fr/latest/doc_admin)
 
 -  
-  [🧩 **Documentation Technique (Fonctions)** ](https://blue-frontline.readthedocs.io/fr/latest/api)
+  [🧩 **Documentation Technique (Fonctions)** ](https://blue-frontline.readthedocs.io/fr/latest/doc_technique)
 ---
 
 ## Structure du projet

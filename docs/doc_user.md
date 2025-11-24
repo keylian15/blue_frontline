@@ -38,10 +38,11 @@ Il existe deux façons d'installer et de lancer **Blue Frontline** :
 
 1. Toujours depuis l'onglet **Releases**, téléchargez le code source si vous ne souhaitez pas utiliser l’exécutable.  
 2. Décompressez le fichier téléchargé.  
-3. Assurez-vous d’avoir **Python** installé sur votre machine.  
+3. Assurez-vous d’avoir **Python** et **PIP** installé sur votre machine.  
 4. Ouvrez un terminal dans le dossier du projet et lancez :  
 
 ```bash
+pip install -r requirements.txt
 python blue_frontline/main.py
 ```
 

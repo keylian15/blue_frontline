@@ -1,4 +1,4 @@
-import pygame, time, math
+import pygame, time, math, threading
 from Global import *
 from Utils import load_tileset, point_in_many_polygons, random_point_in_polygon
 from Class.Perlin import Perlin
@@ -21,10 +21,19 @@ class Unit(pygame.sprite.Sprite):
         # Type et team
         self.type = unit_type
         self.team = team
+        if team == "red" : 
+            teamFr = "Rouge"
+        else : 
+            teamFr = "Vert"
+            if unit_type == "chaloupe" : 
+                teamFr = "Verte"
+        self.name = unit_type.capitalize() + teamFr
         
         # Position et mouvement
         base_spawn = self.game.red_platform_zone if team == "red" else self.game.green_platform_zone
-            
+        if self.type == "pompe_petroliere" : 
+            base_spawn = self.game.red_pompe_zone if team == "red" else self.game.green_pompe_zone
+        
         self.position = random_point_in_polygon(base_spawn)
         self.speed_x = 0  # Vitesse en pixels par seconde sur l'axe X
         self.speed_y = 0  # Vitesse en pixels par seconde sur l'axe Y
@@ -54,6 +63,12 @@ class Unit(pygame.sprite.Sprite):
             self.range_color = config.get("range_color", {}).get(team, (255, 0, 0, 50))
         else:
             self.range_color = (255, 0, 0, 50) if team == "red" else (0, 255, 0, 50)
+        
+        # Multithreading pour pathfinding
+        self.path_thread = None
+        self.path_found = False
+        self.new_path = []
+        self.need_recalculate_path = False
 
     # Chaque unité peut avoir sa propre tuile, pour chaque équipe, et tout est configurable
     def load_sprite_from_tileset(self, team: str, unit_type: str):
@@ -165,7 +180,6 @@ class Unit(pygame.sprite.Sprite):
                 index = self.game.quantique_area.index(result[1])
                 if index == 0:  # L'ile quantique n°4 est l'index 0 car la plus haute sur Tiled.
                     index = 4
-                    print("ici")
                 
                 self.game.initializer.toggle_layer('fog' + str(index), False)  # On enléve le calque de brouillard
                 self.game.quantique_area_hidden.remove(result[1])  # On enlève l'ile de la liste des iles cachées
@@ -323,6 +337,13 @@ class Unit(pygame.sprite.Sprite):
         if self.current_health <= 0:
             self.current_health = 0
             self.is_alive = False
+            
+            # Créer une explosion au moment de la mort
+            if hasattr(self, 'game') and hasattr(self.game, 'combat_system'):
+                from Class.Combat import Explosion
+                explosion = Explosion(int(self.position[0]), int(self.position[1]), size=64)
+                self.game.combat_system.add_explosion(explosion)
+            
             self.die(killer=killer)
     
     def die(self, killer: "Unit"=None):
@@ -338,6 +359,7 @@ class Unit(pygame.sprite.Sprite):
             unit_type = getattr(self, 'unit_type', None)
 
             if self.team == "red" : 
+<<<<<<< HEAD
 <<<<<<< Updated upstream
                 self.game.hud.piece_green.count += 1
             else :
@@ -356,7 +378,14 @@ class Unit(pygame.sprite.Sprite):
                         self.game.achievements_system_rouge.track_unit_killed(unit_type)
                 
 >>>>>>> Stashed changes
+=======
+                self.game.hud.piece_green.add_piece()
+            else :
+                self.game.hud.piece_red.add_piece()
+                
+>>>>>>> 7e1a3efa5a193eee92cda04c8860fd15245bc8a1
         self.kill()  # Retire l'unité du groupe pygame
+        self.game.units.remove(self)  # Retire l'unité de la liste des unités
         
     def get_health_percentage(self):
         """Retourne le pourcentage de vie restante."""
@@ -585,3 +614,22 @@ class Unit(pygame.sprite.Sprite):
                 closest_enemy = enemy
                 
         return closest_enemy
+    
+    def start_pathfinding_thread(self, function: callable):
+        """Va chercher le ou les thread qui vont faire les calcul.
+
+        Args:
+            function (callable): La fonction de pathfinding à exécuter dans le thread.
+        """
+        self.path_thread = threading.Thread(target=function, daemon=True)
+        self.path_thread.start()
+        
+    def recalculate_path(self, function: callable):
+        """Signale qu'il faut recalculer le chemin.
+
+        Args:
+            function (callable): La fonction de pathfinding à exécuter dans le thread.
+        """
+        if not self.need_recalculate_path:
+            self.need_recalculate_path = True
+            self.start_pathfinding_thread(function)

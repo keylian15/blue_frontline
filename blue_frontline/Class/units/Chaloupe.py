@@ -4,16 +4,25 @@ from Class.Combat import CombatSystem
 from Global import UNIT_CONFIGS
 from Utils import point_in_many_polygons
 
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
+=======
+>>>>>>> 7e1a3efa5a193eee92cda04c8860fd15245bc8a1
 # Import de l'IA séparée
 try:
     from Class.units.IA.ChaloupeAI import ChaloupeAI
     AI_AVAILABLE = True
 except ImportError:
+<<<<<<< HEAD
     AI_AVAILABLE = False
 
 >>>>>>> Stashed changes
+=======
+    print("IA ChaloupeAI non disponible, utilisation du comportement de base")
+    AI_AVAILABLE = False
+
+>>>>>>> 7e1a3efa5a193eee92cda04c8860fd15245bc8a1
 class Chaloupe(Unit):
     """Classe unifiée pour les unités Chaloupe (Rouge et Verte)."""
     

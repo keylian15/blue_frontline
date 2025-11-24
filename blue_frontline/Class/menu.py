@@ -132,7 +132,13 @@ class Menu:
                             achievements_menu.run()
                         elif text == "Options":
                             options_menu = OptionsMenu(self.screen)
-                            options_menu.run()
+                            retour = options_menu.run()
+                            if type(retour) == tuple and len(retour) == 2:
+                                changed, new_gameplay_settings = retour
+                                if changed:
+                                    # Appliquer les nouveaux paramètres de gameplay au jeu
+                                    from Global import set_gameplay_setting
+                                    set_gameplay_setting(new_gameplay_settings)
 
                 pygame.display.flip()
 
