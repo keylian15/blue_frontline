@@ -16,7 +16,7 @@ class Camera(pygame.sprite.Sprite):
         
         super().__init__()
         # Déplacement de la caméra (en pixels)
-        self.camera_move = 20
+        self.camera_move = 8
 
         # === Limites de la caméra ===
         self.screen_width, self.screen_height = screen_size
