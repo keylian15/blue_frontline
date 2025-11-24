@@ -1,0 +1,20 @@
+{
+    "AI_ACTIVATION": {
+        "BaseRouge": false,
+        "BaseVerte": false,
+        "ChaloupeRouge": false,
+        "ChaloupeVerte": false,
+        "BateauRouge": false,
+        "BateauVert": false,
+        "PaquebotRouge": false,
+        "PaquebotVert": false,
+        "EclaireurRouge": false,
+        "EclaireurVert": false,
+        "SousMarinRouge": false,
+        "SousMarinVert": false
+    },
+    "TIME_MAREE": 180,
+    "OIL_PER_SECOND": 100,
+    "PIECE_PER_KILL": 5,
+    "OCTAVES": 4
+}

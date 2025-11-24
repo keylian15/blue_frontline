@@ -23,8 +23,8 @@ class Petrole:
         """
         
         if event.type == self.PETROLE_EVENT:
-            from Global import OIL_PER_SECOND
-            self.count += OIL_PER_SECOND + nbPompe
+            from Global import get_gameplay_settings
+            self.count += get_gameplay_settings()["OIL_PER_SECOND"] + nbPompe
 
     def set_speed(self, speed: int):
         """Ajuste la vitesse d'auto-incrément. Si speed == 0, met en pause (désactive l'événement).

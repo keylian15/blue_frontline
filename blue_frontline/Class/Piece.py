@@ -8,5 +8,5 @@ class Piece:
         
     def add_piece(self):
         """Ajoute des pièces."""
-        from Global import PIECE_PER_KILL
-        self.count += PIECE_PER_KILL * self.multiplicateur
+        from Global import get_gameplay_settings
+        self.count += get_gameplay_settings()["PIECE_PER_KILL"] * self.multiplicateur

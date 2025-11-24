@@ -170,6 +170,9 @@ class Unit(pygame.sprite.Sprite):
         
         # Si la prochaine position est dans une ile, on arrête le mouvement
         if point_in_many_polygons(self.game.obstacles, next_position):
+            # On pénalise les IA
+            if self.is_ia: 
+                self.die()
             self.stop()
             self.is_moving = False
             self.target_position = None
@@ -382,6 +385,8 @@ class Unit(pygame.sprite.Sprite):
             from Class.Combat import Explosion
             explosion = Explosion(int(self.position[0]), int(self.position[1]), size=64)
             self.game.combat_system.add_explosion(explosion)
+            
+        self.game.selected_unit = None
 
     def die_when_stuck(self):
         """Vérifie si l'unité est coincée sur un obstacle et la fait mourir si c'est le cas."""

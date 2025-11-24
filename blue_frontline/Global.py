@@ -10,14 +10,12 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 # === Temps ===
 FPS = 60
 TIME_STEP = 1000  # en ms => 1 seconde
-TIME_MAREE = 180
-
-# === Économie ===
-PIECE_PER_KILL = 1
-OIL_PER_SECOND = 1
 
 # === Achivements ===
 ACHIVEMENTS_PATH = user_data_path("data/achievements.json")
+
+# === Settings ===
+SETTINGS_PATH = user_data_path("data/gameplay_settings.json")
 
 # Vitesses de temps disponibles
 TIME_SPEEDS = [1, 2, 4, 8, 10, 20, 0.5]
@@ -471,37 +469,27 @@ def get_controls_keys():
             CONTROLS_KEYS = {}
     return CONTROLS_KEYS
 
-
-GAMEPLAY_SETTINGS = {
-    "AI_ACTIVATION": {
-        "BaseRouge": True,
-        "BaseVerte": True,
-        "ChaloupeRouge": True,
-        "ChaloupeVerte": True,
-        "BateauRouge": True,
-        "BateauVert": True,
-        "PaquebotRouge": True,
-        "PaquebotVert": True,
-        "EclaireurRouge": True,
-        "EclaireurVert": True,
-        "SousMarinRouge": True,
-        "SousMarinVert": True,
-    },
-    "TIME_MAREE": TIME_MAREE,
-    "OIL_PER_SECOND": OIL_PER_SECOND,
-    "PIECE_PER_KILL": PIECE_PER_KILL,
-    "OCTAVES": 4
-}
-
-
 def get_gameplay_settings():
     return GAMEPLAY_SETTINGS
 
 
-def set_gameplay_setting(dico_settings):
+def set_gameplay_setting(new_settings):
+    global GAMEPLAY_SETTINGS
+
+    GAMEPLAY_SETTINGS = new_settings
+
+    # Sauvegarde dans le fichier JSON
+    with open(SETTINGS_PATH, "w") as f:
+        json.dump(GAMEPLAY_SETTINGS, f, indent=4)
+
+def load_gameplay_settings():
+    """Charge les settings depuis le JSON (appelé au lancement du jeu)."""
     global GAMEPLAY_SETTINGS, TIME_MAREE, OIL_PER_SECOND, PIECE_PER_KILL
 
-    GAMEPLAY_SETTINGS = dico_settings
-    TIME_MAREE = dico_settings["TIME_MAREE"]
-    OIL_PER_SECOND = dico_settings["OIL_PER_SECOND"]
-    PIECE_PER_KILL = dico_settings["PIECE_PER_KILL"]
+    with open(SETTINGS_PATH, "r") as f:
+        GAMEPLAY_SETTINGS = json.load(f)
+
+    # Mise en cache des paramètres pour accès rapide
+    TIME_MAREE = GAMEPLAY_SETTINGS["TIME_MAREE"]
+    OIL_PER_SECOND = GAMEPLAY_SETTINGS["OIL_PER_SECOND"]
+    PIECE_PER_KILL = GAMEPLAY_SETTINGS["PIECE_PER_KILL"]

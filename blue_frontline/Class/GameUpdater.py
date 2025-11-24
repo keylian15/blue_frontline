@@ -42,15 +42,16 @@ class GameUpdater:
 
         # 5. Mettre à jour les unités (déplacement, tir, collisions, HUD...)
         camera_offset = self.game.camera.get_offset(self.game.screen.get_size())
-
+        from Global import get_gameplay_settings
+        settings = get_gameplay_settings()
+        
         for unit in self.game.units:
             
             # On vérifie si l'unité a l'attribut is_ia 
             if hasattr(unit, 'is_ia'):
                 # Si l'unité est une IA, on met à jour si elle est ia
                 # On récuperera la valeur depuis les paramètres de gameplay
-                from Global import GAMEPLAY_SETTINGS
-                unit.is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(unit.name, False)
+                unit.is_ia = settings["AI_ACTIVATION"].get(unit.name, False)
             
             # Mettre à jour l'unité avec toutes les informations nécessaires
             unit.update(dt, self.game.combat_system, self.game.screen, camera_offset, self.game.units)

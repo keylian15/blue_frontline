@@ -725,7 +725,8 @@ class OptionsMenu:
                                         self.current_view = 'main'
                                     elif key == "apply":
                                         # Appliquer les changements au moteur de jeu
-                                        return True, GAMEPLAY_SETTINGS
+                                        set_gameplay_setting(gameplay_settings)
+                                        return True
                                     break
 
                     elif event.button == 4 and self.current_view == 'controls':  # Molette haut

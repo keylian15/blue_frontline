@@ -528,7 +528,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         data = nom, self.team, get_cost(nom)
         if self.event_handler.check_cost(data[1], data[2]):
             # On spawn la chaloupe.
-            from Global import GAMEPLAY_SETTINGS
             self.event_handler.apply_cost(data[0], data[1], data[2])
             self.event_handler.spawn_unit(data[0], data[1])
             # === Logs ===
@@ -571,7 +570,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
             # On a 75% de chance de spawn l'unité.
             if random() < self.probabilites["defense_forte"]["can_spawn"]:
-                from Global import GAMEPLAY_SETTINGS
                 self.event_handler.apply_cost(data[0], data[1], data[2])
                 self.event_handler.spawn_unit(data[0], data[1])
                 # === Logs ===
@@ -587,7 +585,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                     self.ia_do_defense_forte(indice + 1)
 
                 else:
-                    from Global import GAMEPLAY_SETTINGS
                     self.event_handler.apply_cost(data[0], data[1], data[2])
                     self.event_handler.spawn_unit(data[0], data[1])
                     # === Logs ===
@@ -617,7 +614,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         # On vérifie qu'on peux spawn l'unité.
         if self.event_handler.check_cost(data[1], data[2]):
             # On spawn l'unité.
-            from Global import GAMEPLAY_SETTINGS
             self.event_handler.apply_cost(data[0], data[1], data[2])
             self.event_handler.spawn_unit(data[0], data[1])
             # === Logs ===
@@ -660,7 +656,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
             # On a 25% de chance de spawn l'unité.
             if random() < self.probabilites["attaque_forte"]["can_spawn"]:
-                from Global import GAMEPLAY_SETTINGS
                 self.event_handler.apply_cost(data[0], data[1], data[2])
                 self.event_handler.spawn_unit(data[0], data[1])
 
@@ -678,7 +673,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
                     self.ia_do_attack_forte(indice + 1)
 
                 else:
-                    from Global import GAMEPLAY_SETTINGS
                     self.event_handler.apply_cost(data[0], data[1], data[2])
                     self.event_handler.spawn_unit(data[0], data[1])
                     # === Logs ===
@@ -706,7 +700,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             # On vérifie qu'on est sous le seuil.
             if self.units_ally_dico[data[0]] < self.seuils["passive"][data[0]]:
                 # On spawn l'éclaireur.
-                from Global import GAMEPLAY_SETTINGS
                 self.event_handler.apply_cost(data[0], data[1], data[2])
                 self.event_handler.spawn_unit(data[0], data[1])
                 # === Logs ===

@@ -101,13 +101,41 @@ class Game :
             # Activer le didacticiel
             from Class.Didactitiel.TutorialManager import TutorialManager
             self.tutorial = TutorialManager(self)
+        elif self.mode == "PVP": 
+            # Ici on désactive les IA
+            self.set_ia_setting(False, "green")
+            self.set_ia_setting(False, "red")
+        elif self.mode == "PVE":
+            # On active l'IA pour la team Verte
+            self.set_ia_setting(True, "green")
+            self.set_ia_setting(False, "red")
+            
+        elif self.mode == "EVE":
+            # On active l'IA pour la team Verte et la team Red
+            self.set_ia_setting(True, "green")
+            self.set_ia_setting(True, "red")
                 
         # Système de succès (sera assigné par le menu)
         self.achievements_system = None
         
         # Gestionnaire de notifications de succès
         self.notification_manager = AchievementNotificationManager(screen)
+        
+    def set_ia_setting(self, ia_setting: bool, team: str):
+        """
+        Définit les paramètres IA pour l'équipe demandée.
+        """
+        settings = get_gameplay_settings()
 
+        for key in settings["AI_ACTIVATION"]:
+            if team == "red":
+                if key.endswith("Rouge"):
+                    settings["AI_ACTIVATION"][key] = ia_setting  
+            else:
+                if not key.endswith("Rouge"):
+                    settings["AI_ACTIVATION"][key] = ia_setting
+        
+        set_gameplay_setting(settings)
 
     # --- Utilitaire audio: notification post-quantique (ne change pas la logique de génération) ---
     def notify_quantum_audio(self):
@@ -196,8 +224,8 @@ class Game :
                 self.water_tileset,       # 1: Eau peu profonde
                 self.island_tileset       # 2: Île
             ]
-            from Global import GAMEPLAY_SETTINGS
-            self.perlin = Perlin(GAMEPLAY_SETTINGS["OCTAVES"])
+            from Global import get_gameplay_settings
+            self.perlin = Perlin(get_gameplay_settings()["OCTAVES"])
             island_matrix = self.perlin.generate_island(island_height_tiles, island_width_tiles)
             island_surface = self.perlin.smooth_map(island_matrix, tileset_surface_smooth)
 
@@ -569,9 +597,10 @@ class Game :
         # Mode tuto : désactiver les IA
         if self.mode == "tuto":
             self.paused = True
-            from Global import GAMEPLAY_SETTINGS
-            for key in GAMEPLAY_SETTINGS["AI_ACTIVATION"]:
-                GAMEPLAY_SETTINGS["AI_ACTIVATION"][key] = False
+            from Global import get_gameplay_settings
+            settings = get_gameplay_settings()
+            for key in settings["AI_ACTIVATION"] :
+                settings["AI_ACTIVATION"][key] = False
         else : 
             # Initialiser les systèmes de succès pour les deux équipes si ils ne sont pas déjà assignés
             if not hasattr(self, 'achievements_system_rouge') or not self.achievements_system_rouge:

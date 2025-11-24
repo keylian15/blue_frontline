@@ -81,13 +81,7 @@ class EventHandler:
         # Menu Options
         if event.key == get_action_key("OPTIONS"):
             options_menu = OptionsMenu(self.game.screen)
-            retour = options_menu.run()
-            if type(retour) == tuple and len(retour) == 2:
-                changed, new_gameplay_settings = retour
-                if changed:
-                    # Appliquer les nouveaux paramètres de gameplay au jeu
-                    from Global import set_gameplay_setting
-                    set_gameplay_setting(new_gameplay_settings)
+            options_menu.run()
 
         # Création d'unité
         elif event.key == get_action_key("CREATE_UNIT"):
@@ -297,13 +291,7 @@ class EventHandler:
         # Menu options
         if event.key == get_action_key("OPTIONS"):
             options_menu = OptionsMenu(self.game.screen)
-            retour = options_menu.run()
-            if type(retour) == tuple and len(retour) == 2:
-                changed, new_gameplay_settings = retour
-                if changed:
-                    # Appliquer les nouveaux paramètres de gameplay au jeu
-                    from Global import set_gameplay_setting
-                    set_gameplay_setting(new_gameplay_settings)
+            options_menu.run()
 
         seq = self.game.tutorial.messages[self.game.tutorial.step]
         # On vérifie s'il existe une réstriction sur la séquence
@@ -564,8 +552,8 @@ class EventHandler:
         unit_class = class_map.get(config_key)[team_key]
 
         # On instancie l'unité
-        from Global import GAMEPLAY_SETTINGS
-        is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(
+        from Global import get_gameplay_settings
+        is_ia = get_gameplay_settings()["AI_ACTIVATION"].get(
             unit_class.__name__, None)
         if is_ia is None:
             unit = unit_class(self.game)

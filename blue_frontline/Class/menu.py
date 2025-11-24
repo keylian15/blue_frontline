@@ -93,6 +93,51 @@ class Menu:
         txt_rect = txt.get_rect(midleft=(anchor_rect.right + 20, y + h // 2))
         self.screen.blit(txt, txt_rect)
 
+    def choose_game_mode(self):
+        """Affiche un sous-menu pour choisir le mode de jeu et retourne le choix."""
+        modes = [
+            ("Joueur vs Joueur", "PVP"),
+            ("Joueur vs IA", "PVE"),
+            ("IA vs IA", "EVE")
+        ]
+
+        running = True
+        while running:
+            mouse_pos = pygame.mouse.get_pos()
+            mouse_click = False
+
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN and event.key == pygame.K_F4 and (pygame.key.get_mods() & pygame.KMOD_ALT):
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                    mouse_click = True
+
+            self.screen.blit(self.background, (0, 0))
+
+            # Affichage des boutons
+            start_y = self.HEIGHT // 3
+            for idx, (text, mode) in enumerate(modes):
+                w, h = 500, 70
+                x = self.WIDTH // 2 - w // 2
+                y = start_y + idx * (h + 20)
+                hovered = x <= mouse_pos[0] <= x + w and y <= mouse_pos[1] <= y + h
+                self.draw_button(text, x, y, w, h, hovered)
+
+                if hovered and mouse_click:
+                    return mode  # Retourne le mode choisi
+            # Bouton retour
+            back_button_rect = pygame.Rect(50, self.HEIGHT - 80, 250, 60)
+            self.draw_button("Retour", back_button_rect.x, back_button_rect.y, back_button_rect.width, back_button_rect.height, back_button_rect.collidepoint(mouse_pos))
+
+            if back_button_rect.collidepoint(mouse_pos) and mouse_click:
+                return "menu"
+            
+            pygame.display.flip()
+
     def run(self):
         """Boucle principale du menu."""
         menu = True
@@ -122,11 +167,15 @@ class Menu:
                             pygame.quit()
                             sys.exit()
                         elif text == "Jouer":
-                            game = Game(self.screen)
-                            # Le système de succès sera assigné dans Game.run() selon l'équipe du joueur
-                            game.achievements_system_rouge = self.achievements_system_rouge
-                            game.achievements_system_vert = self.achievements_system_vert
-                            game.run()
+                            mode = self.choose_game_mode()  
+                            if mode == "menu": 
+                                continue
+                            else : 
+                                game = Game(self.screen, mode)
+                                # Le système de succès sera assigné dans Game.run() selon l'équipe du joueur
+                                game.achievements_system_rouge = self.achievements_system_rouge
+                                game.achievements_system_vert = self.achievements_system_vert
+                                game.run()
                         elif text == "Succès":
                             achievements_menu = AchievementsMenu(self.screen)
                             achievements_menu.set_achievements_systems(None)  # Pas besoin de game dans le menu
