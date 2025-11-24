@@ -1,6 +1,8 @@
 import pygame, math
 from Global import *
 from Class.AchievementsSystem import AchievementsSystem
+from Class.AchievementsSystemRouge import AchievementsSystemRouge
+from Class.AchievementsSystemVert import AchievementsSystemVert
 
 class AchievementsMenu:
     """Menu d'affichage des succès du jeu."""
@@ -47,20 +49,62 @@ class AchievementsMenu:
             'rect': pygame.Rect(self.MARGIN + 170, self.HEIGHT - 80, 150, 50)
         }
         
+        # Boutons de sélection d'équipe
+        button_width = 120
+        button_spacing = 20
+        start_x = self.WIDTH - 2 * button_width - button_spacing - self.MARGIN
+        self.team_red_button = {
+            'text': 'Équipe Rouge',
+            'rect': pygame.Rect(start_x, self.MARGIN, button_width, 40)
+        }
+        self.team_green_button = {
+            'text': 'Équipe Verte',
+            'rect': pygame.Rect(start_x + button_width + button_spacing, self.MARGIN, button_width, 40)
+        }
+        
         # Scroll
         self.scroll_y = 0
         self.scroll_speed = 30
         self.max_scroll = 0
         
-        # Référence au système de succès
-        self.achievements_system = None
+        # Gestion des équipes
+        self.current_team = "Rouge"  # Équipe par défaut
+        self.achievements_system_rouge = None
+        self.achievements_system_vert = None
+        self.achievements_system = None  # Système actuellement sélectionné
+    
+    def set_achievements_systems(self, game):
+        """Initialise les systèmes de succès pour les deux équipes.
+        
+        Args:
+            game: Référence au jeu (peut être None pour le menu).
+        """
+        self.achievements_system_rouge = AchievementsSystemRouge(game)
+        self.achievements_system_vert = AchievementsSystemVert(game)
+        self.achievements_system = self.achievements_system_rouge  # Équipe rouge par défaut
+    
+    def switch_team(self, team_name):
+        """Change l'équipe sélectionnée.
+        
+        Args:
+            team_name (str): Nom de l'équipe ("Rouge" ou "Vert").
+        """
+        self.current_team = team_name
+        if team_name == "Rouge":
+            self.achievements_system = self.achievements_system_rouge
+        else:
+            self.achievements_system = self.achievements_system_vert
+        
+        # Reset du scroll quand on change d'équipe
+        self.scroll_y = 0
     
     def set_achievements_system(self, achievements_system):
-        """Définit le système de succès à utiliser.
+        """Définit le système de succès à utiliser (pour compatibilité).
         
         Args:
             achievements_system (AchievementsSystem): Le système de succès.
         """
+        # Méthode conservée pour compatibilité
         self.achievements_system = achievements_system
     
     def draw_star(self, surface, x, y, size, filled=False):
@@ -277,6 +321,7 @@ class AchievementsMenu:
         # Boutons (toujours visibles)
         self.draw_back_button()
         self.draw_reset_button()
+        self.draw_team_buttons()
     
     def draw_back_button(self):
         """Dessine le bouton retour."""
@@ -305,6 +350,48 @@ class AchievementsMenu:
         text_rect = text_surface.get_rect(center=self.reset_button['rect'].center)
         self.screen.blit(text_surface, text_rect)
     
+    def draw_team_buttons(self):
+        """Dessine les boutons de sélection d'équipe."""
+        mouse_pos = pygame.mouse.get_pos()
+        
+        # Bouton équipe rouge
+        red_hovered = self.team_red_button['rect'].collidepoint(mouse_pos)
+        red_selected = self.current_team == "Rouge"
+        red_color = (150, 50, 50) if red_selected else (100, 30, 30)
+        if red_hovered:
+            red_color = (200, 70, 70) if red_selected else (130, 40, 40)
+        
+        pygame.draw.rect(self.screen, red_color, self.team_red_button['rect'], border_radius=5)
+        pygame.draw.rect(self.screen, WHITE if red_selected else (150, 150, 150), 
+                        self.team_red_button['rect'], 2, border_radius=5)
+        
+        # Texte du bouton rouge
+        red_text_surface = pygame.font.SysFont(None, 24).render(self.team_red_button['text'], True, WHITE)
+        red_text_rect = red_text_surface.get_rect(center=self.team_red_button['rect'].center)
+        self.screen.blit(red_text_surface, red_text_rect)
+        
+        # Bouton équipe verte
+        green_hovered = self.team_green_button['rect'].collidepoint(mouse_pos)
+        green_selected = self.current_team == "Vert"
+        green_color = (50, 150, 50) if green_selected else (30, 100, 30)
+        if green_hovered:
+            green_color = (70, 200, 70) if green_selected else (40, 130, 40)
+        
+        pygame.draw.rect(self.screen, green_color, self.team_green_button['rect'], border_radius=5)
+        pygame.draw.rect(self.screen, WHITE if green_selected else (150, 150, 150), 
+                        self.team_green_button['rect'], 2, border_radius=5)
+        
+        # Texte du bouton vert
+        green_text_surface = pygame.font.SysFont(None, 24).render(self.team_green_button['text'], True, WHITE)
+        green_text_rect = green_text_surface.get_rect(center=self.team_green_button['rect'].center)
+        self.screen.blit(green_text_surface, green_text_rect)
+        
+        # Indicateur de l'équipe actuelle
+        team_indicator = f"Équipe actuelle: {self.current_team}"
+        indicator_surface = pygame.font.SysFont(None, 28).render(team_indicator, True, WHITE)
+        indicator_rect = indicator_surface.get_rect(midtop=(self.WIDTH // 2, self.MARGIN + 50))
+        self.screen.blit(indicator_surface, indicator_rect)
+    
     def handle_scroll(self, scroll_direction):
         """Gère le défilement du menu.
         
@@ -327,6 +414,12 @@ class AchievementsMenu:
             return 'back'
         elif self.reset_button['rect'].collidepoint(mouse_pos):
             return 'reset'
+        elif self.team_red_button['rect'].collidepoint(mouse_pos):
+            self.switch_team("Rouge")
+            return None
+        elif self.team_green_button['rect'].collidepoint(mouse_pos):
+            self.switch_team("Vert")
+            return None
         return None
     
     def run(self):

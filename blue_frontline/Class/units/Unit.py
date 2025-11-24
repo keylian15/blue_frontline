@@ -326,6 +326,7 @@ class Unit(pygame.sprite.Sprite):
         
         self.speed_x = 0
         self.speed_y = 0
+        self.target_position = None  # Annuler aussi la destination
     
     def take_damage(self, damage: int, killer: "Unit"=None):
         """Inflige des dégâts à l'unité. killer = unité qui inflige le coup fatal (pour récompense).
@@ -355,15 +356,23 @@ class Unit(pygame.sprite.Sprite):
             killer (Unit, optional): L'entité attaquante. Defaults to None.
         """
         
-        # Attribution des pièces uniquement si tué par un ennemi
+        # Attribution des pièces et suivi des succès uniquement si tué par un ennemi
         if killer and hasattr(killer, 'team') and killer.team != self.team and hasattr(self, 'game') and hasattr(self.game, 'hud'):
             # Détermination du type d'unité pour la récompense
             unit_type = getattr(self, 'unit_type', None)
 
             if self.team == "red" : 
                 self.game.hud.piece_green.add_piece()
+                # Suivi des succès pour l'équipe verte (qui a tué l'unité rouge)
+                if hasattr(self.game, 'achievements_system_vert') and self.game.achievements_system_vert:
+                    if unit_type:
+                        self.game.achievements_system_vert.track_unit_killed(unit_type)
             else :
                 self.game.hud.piece_red.add_piece()
+                # Suivi des succès pour l'équipe rouge (qui a tué l'unité verte)
+                if hasattr(self.game, 'achievements_system_rouge') and self.game.achievements_system_rouge:
+                    if unit_type:
+                        self.game.achievements_system_rouge.track_unit_killed(unit_type)
                 
         self.kill()  # Retire l'unité du groupe pygame
         self.game.units.remove(self)  # Retire l'unité de la liste des unités
@@ -423,7 +432,8 @@ class Unit(pygame.sprite.Sprite):
         current_time = time.time()
         time_since_last_shot = current_time - self.last_shot_time
         multiplica = self.game.hud.timer.get_speed_multiplier()
-        return time_since_last_shot >= (1.0 / (self.fire_rate * multiplica))
+        cooldown_needed = (1.0 / (self.fire_rate * multiplica))
+        return time_since_last_shot >= cooldown_needed
     
     def attack(self, target: "Unit", combat_system: "CombatSystem" = None):
         """Attaque une cible si possible. Si un système de combat est fourni, créer un projectile.
@@ -451,7 +461,7 @@ class Unit(pygame.sprite.Sprite):
             return True
         return False
     
-    def combat_update(self, combat_system: "CombatSysteme" = None):
+    def combat_update(self, combat_system: "CombatSystem" = None):
         """Met à jour la logique de combat. Si une cible est définie, essaie d'attaquer la cible.
 
         Args:
@@ -461,8 +471,6 @@ class Unit(pygame.sprite.Sprite):
         if self.target and self.target.is_alive:
             if self.is_in_range(self.target):
                 self.attack(self.target, combat_system)
-            else:
-                self.target = None
         
     def draw_health_bar(self, screen: pygame.Surface, camera_offset: tuple[int, int]=(0, 0), zoom: float=1.0):
         """Dessine une barre de vie au-dessus de l'unité, qui suit le zoom et la caméra.

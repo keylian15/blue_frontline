@@ -1,22 +1,23 @@
 import pygame, json, os
-from Global import *
+from Utils import user_data_path
 
 class AchievementsSystem:
-    """Système de gestion des succès du jeu."""
+    """Système de gestion des succès du jeu - Classe de base."""
     
-    def __init__(self, game=None):
+    def __init__(self, game=None, team_name=""):
         """Initialise le système de succès.
 
         Args:
             game (Game, optional): Référence au jeu. Par defaut à None.
+            team_name (str): Nom de l'équipe pour les fichiers de sauvegarde
         """
         self.game = game
+        self.team_name = team_name
         self.achievements = self._init_achievements()
         self.unlocked_achievements = set()
-        self.pending_notifications = []  # Queue des notifications à afficher
-        self.save_file = ACHIVEMENTS_PATH
+        self.pending_notifications = []
         
-        # Statistiques de jeu
+        # Statistiques du joueur
         self.stats = {
             'units_created': {'chaloupe': 0, 'bateau': 0, 'eclaireur': 0, 'paquebot': 0, 'sousmarin': 0},
             'units_killed': {'chaloupe': 0, 'bateau': 0, 'eclaireur': 0, 'paquebot': 0, 'sousmarin': 0},
@@ -28,13 +29,18 @@ class AchievementsSystem:
             'bullets_fired': 0,
             'quantum_islands_activated': 0,
             'total_playtime_seconds': 0,
-            'units_created_same_game': set(),  # Pour les succès par partie
+            'units_created_same_game': set(),
             'max_units_alive': 0,
-            'different_unit_types_created': set(),  # Tous les types créés dans la partie
+            'different_unit_types_created': set(),
         }
         
-        # Charger les succès précédemment débloqués
         self.load_achievements()
+    
+    def get_save_filename(self):
+        """Retourne le nom du fichier de sauvegarde selon l'équipe."""
+        if self.team_name:
+            return user_data_path(f"data/achievements_{self.team_name.lower()}.json")
+        return user_data_path("data/achievements.json")
     
     def _init_achievements(self):
         """Initialise la liste des succès avec leurs conditions.
@@ -400,7 +406,7 @@ class AchievementsSystem:
             data['stats']['units_created_same_game'] = list(data['stats']['units_created_same_game'])
             data['stats']['different_unit_types_created'] = list(data['stats']['different_unit_types_created'])
             
-            with open(self.save_file, 'w', encoding='utf-8') as f:
+            with open(self.get_save_filename(), 'w', encoding='utf-8') as f:
                 json.dump(data, f, indent=2, ensure_ascii=False)
         except Exception as e:
             print(f"Erreur lors de la sauvegarde des succès: {e}")
@@ -408,8 +414,9 @@ class AchievementsSystem:
     def load_achievements(self):
         """Charge les succès débloqués depuis un fichier JSON."""
         try:
-            if os.path.exists(self.save_file):
-                with open(self.save_file, 'r', encoding='utf-8') as f:
+            save_file = self.get_save_filename()
+            if os.path.exists(save_file):
+                with open(save_file, 'r', encoding='utf-8') as f:
                     data = json.load(f)
                 
                 self.unlocked_achievements = set(data.get('unlocked_achievements', []))
@@ -472,3 +479,12 @@ class AchievementsSystem:
         
         # Sauvegarder le reset
         self.save_achievements()
+    
+    def unlock_test_achievements(self):
+        """Débloque quelques succès pour les tests."""
+        # Simuler la création d'unités pour l'équipe
+        self.stats['units_created']['chaloupe'] = 5
+        self.stats['units_created']['bateau'] = 2
+        
+        # Vérifier et débloquer les succès correspondants
+        self.check_achievements()

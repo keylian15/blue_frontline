@@ -4,6 +4,8 @@ from Class.Game import Game
 from Class.OptionsMenu import OptionsMenu
 from Class.AchievementsMenu import AchievementsMenu
 from Class.AchievementsSystem import AchievementsSystem
+from Class.AchievementsSystemRouge import AchievementsSystemRouge
+from Class.AchievementsSystemVert import AchievementsSystemVert
 
 class Menu:
     """Classe pour gérer le menu principal du jeu."""
@@ -33,8 +35,12 @@ class Menu:
             ("Quitter", start_x, start_y + (BUTTON_HEIGHT + BUTTON_SPACING) * 3, BUTTON_WIDTH, BUTTON_HEIGHT),
         ]
         
-        # Système de succès global
-        self.achievements_system = AchievementsSystem()
+        
+        self.achievements_system_rouge = AchievementsSystemRouge()
+        self.achievements_system_vert = AchievementsSystemVert()
+        
+        # Système par défaut (Rouge) pour compatibilité
+        self.achievements_system = self.achievements_system_rouge
 
     def draw_button(self, text: str, x: int, y: int, w: int, h: int, hovered: bool):
         """Fonction pour dessiner un bouton avec un texte et une bordure.
@@ -116,11 +122,13 @@ class Menu:
                             sys.exit()
                         elif text == "Jouer":
                             game = Game(self.screen)
-                            game.achievements_system = self.achievements_system
+                            # Le système de succès sera assigné dans Game.run() selon l'équipe du joueur
+                            game.achievements_system_rouge = self.achievements_system_rouge
+                            game.achievements_system_vert = self.achievements_system_vert
                             game.run()
                         elif text == "Succès":
                             achievements_menu = AchievementsMenu(self.screen)
-                            achievements_menu.set_achievements_system(self.achievements_system)
+                            achievements_menu.set_achievements_systems(None)  # Pas besoin de game dans le menu
                             achievements_menu.run()
                         elif text == "Options":
                             options_menu = OptionsMenu(self.screen)

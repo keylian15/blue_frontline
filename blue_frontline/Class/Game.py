@@ -16,6 +16,8 @@ from Class.AchievementNotification import AchievementNotificationManager
 from Class.units.IA.IA_Eclaireur import SimpleGrid, make_grid_adapter_from_simplegrid
 from Utils import point_in_many_polygons
 from Class.units import PlateformePetroliere
+from Class.AchievementsSystemRouge import AchievementsSystemRouge
+from Class.AchievementsSystemVert import AchievementsSystemVert
 
 
 class IslandSprite(pygame.sprite.Sprite):
@@ -48,8 +50,10 @@ class Game :
         
         self.screen = screen
     
-        # Système de succès (sera assigné par le menu)
+        # Systèmes de succès (seront assignés par le menu)
         self.achievements_system = None
+        self.achievements_system_rouge = None
+        self.achievements_system_vert = None
         
         # Gestionnaire de notifications de succès
         self.notification_manager = AchievementNotificationManager(screen)
@@ -156,9 +160,11 @@ class Game :
         Args:
             name (str, optional): Le nom d'une île si on veut en générer qu'une seule. Defaults to None.
         """        
-        # Suivre les statistiques pour les succès (îles quantiques)
-        if self.achievements_system:
-            self.achievements_system.track_quantum_island_activated()
+        # Suivre les statistiques pour les succès (îles quantiques) - global pour les deux équipes
+        if hasattr(self, 'achievements_system_rouge') and self.achievements_system_rouge:
+            self.achievements_system_rouge.track_quantum_island_activated()
+        if hasattr(self, 'achievements_system_vert') and self.achievements_system_vert:
+            self.achievements_system_vert.track_quantum_island_activated()
         
         # Nettoyer les anciennes îles
         if not name :
@@ -418,10 +424,13 @@ class Game :
         else:
             self.winner_team = "red"
         
-        # Suivre les statistiques pour les succès
-        if self.achievements_system:
-            self.achievements_system.track_platform_destroyed()
-            self.achievements_system.track_game_won()
+        # Suivre les statistiques pour les succès de l'équipe gagnante
+        if self.winner_team == "red" and hasattr(self, 'achievements_system_rouge') and self.achievements_system_rouge:
+            self.achievements_system_rouge.track_platform_destroyed()
+            self.achievements_system_rouge.track_game_won()
+        elif self.winner_team == "green" and hasattr(self, 'achievements_system_vert') and self.achievements_system_vert:
+            self.achievements_system_vert.track_platform_destroyed()
+            self.achievements_system_vert.track_game_won()
         
         self.game_won = True
         self.paused = True  # Mettre le jeu en pause
@@ -565,16 +574,32 @@ class Game :
         running = True
         self.game_running = True  # Variable pour contrôler le retour au menu
         
-        # Réinitialiser les statistiques de jeu pour les succès
-        if self.achievements_system:
-            self.achievements_system.reset_game_stats()
+        # Initialiser les systèmes de succès pour les deux équipes si ils ne sont pas déjà assignés
+        if not hasattr(self, 'achievements_system_rouge') or not self.achievements_system_rouge:
+            self.achievements_system_rouge = AchievementsSystemRouge(self)
+            self.achievements_system_vert = AchievementsSystemVert(self)
+        
+        # Sélectionner le bon système de succès selon l'équipe du joueur pour l'affichage
+        if self.hud.player_team == 'red':
+            self.achievements_system = self.achievements_system_rouge
+        else:
+            self.achievements_system = self.achievements_system_vert
+        
+        # Réinitialiser les statistiques de jeu pour les succès des deux équipes
+        if self.achievements_system_rouge:
+            self.achievements_system_rouge.reset_game_stats()
+        
+        if self.achievements_system_vert:
+            self.achievements_system_vert.reset_game_stats()
         
         while running and self.game_running: 
             dt = clock.tick(FPS) / TIME_STEP
             
-            # Mettre à jour le temps de jeu pour les succès
-            if self.achievements_system:
-                self.achievements_system.update_playtime(dt / 1000)  # Convertir en secondes
+            # Mettre à jour le temps de jeu pour les succès des deux équipes
+            if hasattr(self, 'achievements_system_rouge') and self.achievements_system_rouge:
+                self.achievements_system_rouge.update_playtime(dt / 1000)  # Convertir en secondes
+            if hasattr(self, 'achievements_system_vert') and self.achievements_system_vert:
+                self.achievements_system_vert.update_playtime(dt / 1000)  # Convertir en secondes
 
             
             # Gestion des événements
@@ -587,9 +612,14 @@ class Game :
             # Mise à jour des systèmes
             self.updater.update_systems(dt, self)
 
-            # Vérifier s'il y a de nouvelles notifications de succès
-            if self.achievements_system:
-                new_notifications = self.achievements_system.get_pending_notifications()
+            # Vérifier s'il y a de nouvelles notifications de succès pour les DEUX équipes
+            if self.achievements_system_rouge:
+                new_notifications = self.achievements_system_rouge.get_pending_notifications()
+                for notification in new_notifications:
+                    self.notification_manager.add_notification(notification['achievement'])
+            
+            if self.achievements_system_vert:
+                new_notifications = self.achievements_system_vert.get_pending_notifications()
                 for notification in new_notifications:
                     self.notification_manager.add_notification(notification['achievement'])
             
@@ -604,6 +634,13 @@ class Game :
                 self.draw_victory_screen()
             
             pygame.display.flip()
+        
+        # Sauvegarder les succès des deux équipes en sortant de la boucle
+        if self.achievements_system_rouge:
+            self.achievements_system_rouge.save_achievements()
+        
+        if self.achievements_system_vert:
+            self.achievements_system_vert.save_achievements()
         
         if not self.game_running:
             return  # Retourner au menu

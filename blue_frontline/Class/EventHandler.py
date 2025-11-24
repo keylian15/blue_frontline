@@ -416,12 +416,19 @@ class EventHandler:
         def succes():
             """Fonction interne pour gérer les succès liés aux unités créées."""
 
-            # Suivre les statistiques pour les succès
-            if self.game.achievements_system:
-                self.game.achievements_system.track_unit_created(config_key, cost)
+            # Suivre les statistiques pour les succès selon l'équipe qui crée l'unité
+            if team_key == 'red' and hasattr(self.game, 'achievements_system_rouge') and self.game.achievements_system_rouge:
+                self.game.achievements_system_rouge.track_unit_created(config_key, cost)
                 # Mettre à jour le nombre maximum d'unités vivantes
                 alive_units = len([u for u in self.game.units if u.is_alive and hasattr(u, 'unit_type')])
-                self.game.achievements_system.update_max_units_alive(alive_units)
+                self.game.achievements_system_rouge.update_max_units_alive(alive_units)
+            elif team_key == 'green' and hasattr(self.game, 'achievements_system_vert') and self.game.achievements_system_vert:
+                self.game.achievements_system_vert.track_unit_created(config_key, cost)
+                # Mettre à jour le nombre maximum d'unités vivantes
+                alive_units = len([u for u in self.game.units if u.is_alive and hasattr(u, 'unit_type')])
+                self.game.achievements_system_vert.update_max_units_alive(alive_units)
+            else:
+                pass
             
             # Marquer le type d'unité comme créé dans cette partie
             self.game.units_created_this_game.add(config_key)

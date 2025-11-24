@@ -367,9 +367,12 @@ class CombatSystem:
         if not shooter.is_alive or not target.is_alive:
             return None
         
-        # Suivre le tir pour les succès
-        if hasattr(shooter, 'game') and hasattr(shooter.game, 'achievements_system') and shooter.game.achievements_system:
-            shooter.game.achievements_system.track_bullet_fired()
+        # Suivre le tir pour les succès selon l'équipe du tireur
+        if hasattr(shooter, 'game') and hasattr(shooter, 'team'):
+            if shooter.team == 'red' and hasattr(shooter.game, 'achievements_system_rouge') and shooter.game.achievements_system_rouge:
+                shooter.game.achievements_system_rouge.track_bullet_fired()
+            elif shooter.team == 'green' and hasattr(shooter.game, 'achievements_system_vert') and shooter.game.achievements_system_vert:
+                shooter.game.achievements_system_vert.track_bullet_fired()
 
             
         # Créer le projectile
