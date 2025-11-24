@@ -390,3 +390,104 @@ class EventHandler:
         world_y = camera_center[1] + offset_y
         
         return world_x, world_y
+    
+    def check_cost(self, team_key: str, cost: int ):
+        """Fonction permettant de vérifier le coût d'une unité.
+        
+        Args:
+            team_key (str): Clé de l'équipe.
+            cost (int): Coût de l'unité.
+        
+        Returns:
+            bool: True si le coût est valide, False sinon.
+        """
+        
+        # S'il n'y a pas assez de pétrole.
+        if team_key == "red"  :
+            if self.game.hud.petrole_red.count < cost:
+                return False
+            else : 
+                # self.game.hud.petrole_red.count -= cost
+                # succes()
+                return True
+        else : 
+            if self.game.hud.petrole_green.count < cost: 
+                return False
+            else :
+                # self.game.hud.petrole_green.count -= cost
+                # succes()
+                return True
+        
+    def apply_cost(self, config_key: str, team_key: str, cost:int):
+        """Applique le coût de l'unité.
+
+        Args:
+            config_key (str): Clé de configuration de l'unité.
+            team_key (str): Clé de l'équipe.
+            cost (int): Coût de l'unité.
+        """
+        
+        def succes():
+            """Fonction interne pour gérer les succès liés aux unités créées."""
+
+            # Suivre les statistiques pour les succès selon l'équipe qui crée l'unité
+            if team_key == 'red' and hasattr(self.game, 'achievements_system_rouge') and self.game.achievements_system_rouge:
+                self.game.achievements_system_rouge.track_unit_created(config_key, cost)
+                # Mettre à jour le nombre maximum d'unités vivantes
+                alive_units = len([u for u in self.game.units if u.is_alive and hasattr(u, 'unit_type')])
+                self.game.achievements_system_rouge.update_max_units_alive(alive_units)
+            elif team_key == 'green' and hasattr(self.game, 'achievements_system_vert') and self.game.achievements_system_vert:
+                self.game.achievements_system_vert.track_unit_created(config_key, cost)
+                # Mettre à jour le nombre maximum d'unités vivantes
+                alive_units = len([u for u in self.game.units if u.is_alive and hasattr(u, 'unit_type')])
+                self.game.achievements_system_vert.update_max_units_alive(alive_units)
+            else:
+                pass
+            
+            # Marquer le type d'unité comme créé dans cette partie
+            self.game.units_created_this_game.add(config_key)
+
+        if team_key == "red"  :
+            self.game.hud.petrole_red.count -= cost
+        else : 
+            self.game.hud.petrole_green.count -= cost
+        succes()
+
+    def spawn_unit(self, config_key: str, team_key: str):
+        """Génère une unité.
+
+        Args:
+            config_key (str): Clé de configuration de l'unité.
+            team_key (str): Clé de l'équipe.
+        """
+    
+        # Créer l'unité
+        # Mapping type + équipe -> classe
+        class_map = {
+            'chaloupe': {'red': ChaloupeRouge, 'green': ChaloupeVerte},
+            'bateau': {'red': BateauRouge, 'green': BateauVert},
+            'paquebot': {'red': PaquebotRouge, 'green': PaquebotVert},
+            'eclaireur': {'red': EclaireurRouge, 'green': EclaireurVert},
+            'sousmarin': {'red': SousMarinRouge, 'green': SousMarinVert},
+            'pompe_petroliere': {'red': PompePetroliereRouge, 'green': PompePetroliereVert},
+        }
+        unit_class = class_map.get(config_key)[team_key]
+        
+        # On instancie l'unité
+        from Global import GAMEPLAY_SETTINGS
+        unit = unit_class(self.game, is_ia=GAMEPLAY_SETTINGS["AI_ACTIVATION"][unit_class.__name__])
+        
+        if config_key == "pompe_petroliere" :
+            if team_key == "red" : 
+                self.game.nbPompePetroliereRouge += 1
+            else : 
+                self.game.nbPompePetroliereVert += 1
+        
+        # Ajouter au système de combat et au groupe de sprites
+        self.game.combat_system.add_unit(unit)
+        self.game.units.append(unit)
+        self.game.group.add(unit)
+        
+        # On envoi la map a toutes les instances
+        self.game.refresh_all_references(self.game)
+        return True

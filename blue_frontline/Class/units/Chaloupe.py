@@ -4,6 +4,16 @@ from Class.Combat import CombatSystem
 from Global import UNIT_CONFIGS
 from Utils import point_in_many_polygons
 
+<<<<<<< Updated upstream
+=======
+# Import de l'IA séparée
+try:
+    from Class.units.IA.ChaloupeAI import ChaloupeAI
+    AI_AVAILABLE = True
+except ImportError:
+    AI_AVAILABLE = False
+
+>>>>>>> Stashed changes
 class Chaloupe(Unit):
     """Classe unifiée pour les unités Chaloupe (Rouge et Verte)."""
     
@@ -57,6 +67,10 @@ class Chaloupe(Unit):
         self.path_found = False
         self.new_path = []
         self.need_recalculate_path = False
+        # Variables manquantes pour le suivi du chemin 
+        self.path_to_follow = []
+        self.current_path_index = 0
+        self.manual_override = False
 
         # IA activée par défaut
         self.ia_enabled = True
@@ -111,62 +125,37 @@ class Chaloupe(Unit):
             if not self.ai_system : 
                 self.init_ia()
             
-            # Vérification périodique des unités ennemies
-            now = time.time()
-            if now - self.last_enemy_check > self.enemy_check_interval:
-                self.last_enemy_check = now    
-            
-                # Utiliser le système de base
-                self.check_for_enemies(all_units)
+            # === UTILISER LE SYSTÈME D'IA AVANCÉ AVEC MACHINE À ÉTATS ===
+            # Le système d'IA avancé gère automatiquement :
+            # - La recherche d'ennemis
+            # - Le positionnement tactique  
+            # - Les attaques éclairs
+            # - La retraite
+            # - Le retour à la base
+            self.ai_system.update(dt, all_units)
 
-            # === COMPORTEMENT DE BASE === 
-            # Suivi direct de la cible (chaque frame pour fluidité maximale)
-            if self.target_enemy and self.target_enemy.is_alive:
-                self.direct_follow_target()
+        # Suivi du chemin pathfinding dans le thread
+        if self.path_thread and self.path_thread.is_alive():
+            # Le thread calcule encore, on attend
+            pass
+        else:
+            # Si nouveau chemin calculé, on le charge
+            if self.path_found:
+                self.path_to_follow = self.new_path
+                self.current_path_index = 0
+                if self.path_to_follow:
+                    self.move_to_position(self.path_to_follow[0])
+                self.path_found = False
 
-            # Suivi du chemin pathfinding dans le thread
-            if self.path_thread and self.path_thread.is_alive():
-                # Le thread calcule encore, on attend
-                pass
-            else:
-                # Si nouveau chemin calculé, on le charge
-                if self.path_found:
-                    self.path_to_follow = self.new_path
+        # Suivi du déplacement sur chemin
+        if hasattr(self, 'path_to_follow') and self.path_to_follow and not getattr(self, 'manual_override', False):
+            if not self.is_moving:
+                self.current_path_index += 1
+                if self.current_path_index < len(self.path_to_follow):
+                    self.move_to_position(self.path_to_follow[self.current_path_index])
+                else:
+                    self.path_to_follow = []
                     self.current_path_index = 0
-                    if self.path_to_follow:
-                        self.move_to_position(self.path_to_follow[0])
-                    self.path_found = False
-
-            # Suivi du déplacement sur chemin
-            if self.path_to_follow :
-                if not self.is_moving:
-                    self.current_path_index += 1
-                    if self.current_path_index < len(self.path_to_follow):
-                        self.move_to_position(self.path_to_follow[self.current_path_index])
-                    else:
-                        self.path_to_follow = []
-                        self.current_path_index = 0
-
-            # Détection blocage simple
-            now = time.time()
-            if now - self._last_block_check_time > self._block_check_interval:
-                self._last_block_check_time = now
-                self._last_positions.append(self.position)
-                if len(self._last_positions) > 5:
-                    self._last_positions.pop(0)
-                if len(self._last_positions) == 5:
-                    dist_moved = math.sqrt(
-                        (self._last_positions[-1][0] - self._last_positions[0][0]) ** 2 +
-                        (self._last_positions[-1][1] - self._last_positions[0][1]) ** 2
-                    )
-                    if dist_moved < 5:
-                        # Blocage détecté, recalculer chemin dans un thread
-                        if not self.need_recalculate_path:
-                            self.need_recalculate_path = True
-                            if self.target_enemy:
-                                self.start_pathfinding_thread(lambda: self.compute_path_to_target(self.target_enemy.position))
-                            else:
-                                self.start_pathfinding_thread(self.compute_path)
 
         # Dessiner la portée en permanence
         if screen:
@@ -250,7 +239,6 @@ class Chaloupe(Unit):
         
         if need_pathfinding and (current_time - self.last_pathfinding_time > self.pathfinding_cooldown):
             # Pathfinding seulement si obstacles ET cooldown écoulé
-            print(f"Obstacle détecté - Pathfinding vers {self.target_enemy.unit_type}")
             self.last_pathfinding_time = current_time
             self.direct_follow_mode = False
             self.start_pathfinding_thread(lambda: self.compute_path_to_target(current_target_position))
@@ -377,6 +365,7 @@ class Chaloupe(Unit):
         min_other_distance = float('inf')
         closest_other = None
         
+        fire_range = self.range * 32  # Portée de tir réelle en pixels
         detection_range = 800  # Portée de détection étendue pour chercher activement
         
         for unit in all_units:
@@ -395,15 +384,26 @@ class Chaloupe(Unit):
             # Vérifier le type d'unité
             unit_type = getattr(unit, 'unit_type', '')
             
-            # Si c'est une cible prioritaire (gros navire)
-            if unit_type in priority_targets and distance <= detection_range:
-                if distance < min_priority_distance:
-                    min_priority_distance = distance
+            # PRIORISER ABSOLUMENT les ennemis à portée de tir
+            if distance <= fire_range:
+                if unit_type in priority_targets:
+                    # Cible prioritaire à portée de tir = choix immédiat
                     best_target = unit
-            # Sinon, garder comme cible secondaire
-            elif distance <= detection_range and distance < min_other_distance:
-                min_other_distance = distance
-                closest_other = unit
+                    min_priority_distance = distance
+                    break  # Arrêter la recherche, on a trouvé le meilleur
+                elif not best_target or distance < min_priority_distance:
+                    # Pas de cible prioritaire trouvée, prendre cette cible à portée
+                    best_target = unit
+                    min_priority_distance = distance
+            elif distance <= detection_range:
+                # Cible hors de portée de tir mais dans la portée de détection
+                if unit_type in priority_targets and distance < min_priority_distance:
+                    if not best_target:  # Seulement si on n'a pas déjà une cible à portée de tir
+                        min_priority_distance = distance
+                        best_target = unit
+                elif distance < min_other_distance and not best_target:
+                    min_other_distance = distance
+                    closest_other = unit
         
         # Prioriser les gros navires, sinon prendre la cible la plus proche
         new_target = best_target if best_target else closest_other
@@ -411,10 +411,11 @@ class Chaloupe(Unit):
         # Mettre à jour la cible
         if new_target != self.target_enemy:
             self.target_enemy = new_target
+            # IMPORTANT: Synchroniser avec self.target pour que combat_update() fonctionne
+            self.target = new_target
             if new_target:
                 # Aller vers la nouvelle cible
                 self.aller_vers_unite_ennemie(new_target)
-                print(f"Chaloupe {self.team} cible maintenant: {new_target.unit_type}")
             else:
                 # Plus d'ennemis dans la zone, patrouiller sans aller vers la base
                 self.patrol_area()
@@ -470,6 +471,7 @@ class Chaloupe(Unit):
         """
         if not enemy_unit or not enemy_unit.is_alive:
             self.target_enemy = None
+            self.target = None  # Synchroniser avec self.target
             self.target_last_position = None
             self.patrol_area()
             return
@@ -686,32 +688,8 @@ class Chaloupe(Unit):
         else:
             # Pas de cible valide, chercher activement ou patrouiller
             self.target_enemy = None
+            self.target = None  # Synchroniser avec self.target
             self.patrol_area()
-
-    def patrol_area(self):
-        """Fait patrouiller la Chaloupe dans une zone pour chercher des ennemis."""
-        if not hasattr(self, '_patrol_points') or not self._patrol_points:
-            # Créer des points de patrouille autour de la position de spawn
-            spawn_x, spawn_y = self.position
-            patrol_radius = 400
-            
-            self._patrol_points = [
-                (spawn_x + patrol_radius, spawn_y),
-                (spawn_x, spawn_y + patrol_radius),
-                (spawn_x - patrol_radius, spawn_y),
-                (spawn_x, spawn_y - patrol_radius),
-                (spawn_x + patrol_radius//2, spawn_y + patrol_radius//2),
-                (spawn_x - patrol_radius//2, spawn_y + patrol_radius//2),
-                (spawn_x - patrol_radius//2, spawn_y - patrol_radius//2),
-                (spawn_x + patrol_radius//2, spawn_y - patrol_radius//2)
-            ]
-            self._current_patrol_index = 0
-        
-        # Si on n'est pas en mouvement, aller au prochain point de patrouille
-        if not self.is_moving:
-            target_point = self._patrol_points[self._current_patrol_index]
-            self.start_pathfinding_thread(lambda: self.compute_path_to_target(target_point))
-            self._current_patrol_index = (self._current_patrol_index + 1) % len(self._patrol_points)
 
     def draw_path(self, screen, camera_offset):
         """Dessine le chemin de pathfinding pour le débogage.
@@ -854,7 +832,6 @@ class Chaloupe(Unit):
         
         except Exception as e:
             # En cas d'erreur, ne pas crasher le jeu
-            print(f"Erreur debug IA: {e}")
             pass
             
             # === INFORMATIONS Q-LEARNING ===
@@ -922,7 +899,6 @@ class Chaloupe(Unit):
                                      (target_screen_x, target_screen_y), enemy_range, 1)
         
         except Exception as e:
-            print(f"Erreur debug IA: {e}")
             pass
     
     # ==========================================

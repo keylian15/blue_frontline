@@ -49,12 +49,15 @@ class ChaloupeAI:
         self.target = None
         self.last_state_change = time.time()
         
+        # Forcer la patrouille initiale
+        self._last_patrol_time = 0  # Force la patrouille dès le premier update
+        
         # État de combat et timing
         self.last_strike_time = 0
-        self.strike_cooldown = 3.0          # Attendre 3s entre les attaques
+        self.strike_cooldown = 2.0          # Attendre 2s entre les attaques (réduit de 3s)
         self.retreat_position = None
         self.retreat_start_time = 0
-        self.min_retreat_duration = 1.5    # Retraite minimum 1.5s
+        self.min_retreat_duration = 1.0    # Retraite minimum 1s (réduit de 1.5s)
         
         # === Q-LEARNING INTEGRATION ===
         self.qlearning_enabled = False  # DÉSACTIVÉ PAR DÉFAUT - Activer avec F1
@@ -70,6 +73,12 @@ class ChaloupeAI:
         self.orbit_direction = 1            # 1 = horaire, -1 = anti-horaire
         self.orbit_speed = 0.05             # Vitesse de rotation autour de la cible
         self.last_enemy_position = None     # Dernière position de l'ennemi
+        
+        # Surveillance de l'immobilité ennemie
+        self.enemy_position_checks = []     # Historique des positions
+        self.enemy_stationary_threshold = 5  # Nombre de vérifications avant attaque
+        self.enemy_position_check_interval = 0.3  # Vérifier toutes les 0.3s
+        self.last_enemy_position_check = 0
         
         # Portées de tir des unités ennemies (depuis Global.py, en pixels)
         self.enemy_ranges = {
@@ -89,7 +98,7 @@ class ChaloupeAI:
         self.detection_range = 800  # Portée de détection étendue
         
         # Debug et logs
-        self.debug_enabled = False  # Désactivé pour éviter le spam de logs
+        self.debug_enabled = False  # DÉSACTIVÉ en production
         self.decision_log = []
     
     def log_decision(self, message: str):
@@ -122,6 +131,9 @@ class ChaloupeAI:
         # Vérifier si la cible actuelle est toujours valide
         if self.target and not self.target.is_alive:
             self.target = None
+            # Synchroniser avec l'unité
+            self.unit.target_enemy = None
+            self.unit.target = None
             self._change_state(ChaloupeState.SEARCHING, "Cible détruite")
         
         # Machine à états (peut être influencée par Q-Learning)
@@ -149,8 +161,9 @@ class ChaloupeAI:
         
         if best_target:
             self.target = best_target
-            # Mettre à jour la cible dans l'unité aussi
+            # Mettre à jour la cible dans l'unité aussi - IMPORTANT: synchroniser target et target_enemy
             self.unit.target_enemy = best_target
+            self.unit.target = best_target  # Pour que combat_update() fonctionne
             distance = self._calculate_distance(self.unit.position, best_target.position)
             
             # IMPORTANT: Toujours passer par POSITIONING d'abord (pas d'attaque directe)
@@ -162,8 +175,9 @@ class ChaloupeAI:
             self.current_orbit_angle = random.uniform(0, 2 * math.pi)
             self.orbit_direction = random.choice([1, -1])  # Direction aléatoire
         else:
-            # Aucune cible trouvée, patrouiller
+            # Aucune cible trouvée, patrouiller avec temporisation pour éviter les mouvements erratiques
             if not hasattr(self, '_last_patrol_time') or time.time() - self._last_patrol_time > 2.0:
+                self.log_decision("Aucune cible détectée - Patrouille active")
                 self.unit.patrol_area()
                 self._last_patrol_time = time.time()
     
@@ -176,7 +190,8 @@ class ChaloupeAI:
         current_distance = self._calculate_distance(self.unit.position, self.target.position)
         safe_distance = self._get_safe_distance()
         
-        # Détecter si l'ennemi nous poursuit (se rapproche)
+        # Détecter si l'ennemi bouge ou nous approche
+        enemy_is_moving = self._is_enemy_moving()
         enemy_is_approaching = self._is_enemy_approaching()
         
         if enemy_is_approaching:
@@ -188,14 +203,27 @@ class ChaloupeAI:
         if self._is_at_safe_distance():
             self.log_decision(f"En position sécurisée ({int(current_distance)}px >= {int(safe_distance)}px)")
             
-            # Vérifier s'il faut attaquer
-            if self._should_trigger_strike():
-                # Changer d'angle avant l'attaque pour surprendre
-                self._rotate_orbit_angle()
-                self._change_state(ChaloupeState.STRIKE, "Opportunité d'attaque détectée")
-            else:
-                # Continuer à orbiter en changeant constamment de position
+            # Si l'ennemi bouge, calquer ses déplacements (orbite dynamique)
+            if enemy_is_moving:
+                self.log_decision("Ennemi en mouvement - Orbite pour rester hors de portée")
                 self._dynamic_orbit()
+                # Réinitialiser la surveillance de position quand l'ennemi bouge
+                self.enemy_position_checks = []
+            # Si l'ennemi est immobile, surveiller sa position
+            else:
+                # Vérifier si l'ennemi est resté immobile assez longtemps
+                if self._check_enemy_stationary():
+                    # Ennemi immobile trop longtemps - ATTAQUER!
+                    self._rotate_orbit_angle()
+                    self._change_state(ChaloupeState.STRIKE, "Ennemi immobile détecté - Attaque!")
+                elif self._should_trigger_strike():
+                    # Cooldown écoulé - attaquer
+                    self._rotate_orbit_angle()
+                    self._change_state(ChaloupeState.STRIKE, "Cooldown écoulé - Attaque!")
+                else:
+                    # Attendre en orbite
+                    self._dynamic_orbit()
+                
         else:
             # Pas encore à distance de sécurité, s'y rendre rapidement
             self.log_decision(f"Approche sécurisée ({int(current_distance)}px -> {int(safe_distance)}px)")
@@ -233,12 +261,20 @@ class ChaloupeAI:
             
             self.last_strike_time = time.time()
             
-            # Calculer la position de retraite et commencer la retraite
+            # ARRÊTER LE MOUVEMENT VERS LA CIBLE puis inverser immédiatement
+            self.unit.target_position = None  # Annuler le mouvement vers la cible
+            self.unit.path_to_follow = []  # Vider le chemin
+            self.unit.is_moving = False  # Stopper le flag de mouvement
+            
+            # Calculer la position de retraite
             self.retreat_position = self._calculate_retreat_position()
             self.retreat_start_time = time.time()
             self._change_state(ChaloupeState.RETREAT, "Attaque effectuée")
+            
+            # Battre en retraite IMMÉDIATEMENT
+            self._dynamic_retreat()
         else:
-            # Continuer à foncer vers la cible
+            # Continuer à foncer vers la cible SEULEMENT si on n'a pas encore tiré
             attack_range = self.unit.range * 32  # Portée en pixels
             self.log_decision(f"Fonce vers cible ({int(current_distance)}px -> {attack_range}px)")
             self._move_directly_to_target()
@@ -253,22 +289,18 @@ class ChaloupeAI:
         retreat_duration = current_time - self.retreat_start_time
         current_distance = self._calculate_distance(self.unit.position, self.target.position)
         
-        # Toujours maintenir la distance de sécurité pendant la retraite
+        # TOUJOURS continuer la retraite jusqu'à distance de sécurité
         if not self._is_at_safe_distance():
             self.log_decision(f"RETRAITE ACTIVE! Distance: {int(current_distance)}px")
             self._dynamic_retreat()
             return
         
-        # Vérifier si la retraite est terminée
+        # Distance de sécurité atteinte - Repositionnement stratégique
         if retreat_duration >= self.min_retreat_duration:
-            # Retraite terminée, changer d'angle d'attaque et retour au positionnement
-            self._rotate_orbit_angle(large_rotation=True)  # Grand changement d'angle
-            self.retreat_position = None
-            self.log_decision("Retraite terminée - Nouveau positionnement")
-            self._change_state(ChaloupeState.POSITIONING, "Retraite terminée")
+            self._change_state(ChaloupeState.POSITIONING, "Distance sécurisée atteinte - Repositionnement")
+            self._rotate_orbit_angle()  # Changer l'angle pour la prochaine attaque
         else:
-            # Continuer la retraite en mouvement
-            self.log_decision(f"Retraite en cours ({retreat_duration:.1f}s)")
+            # Continuer la retraite dynamique
             self._dynamic_retreat()
     
 
@@ -279,7 +311,7 @@ class ChaloupeAI:
             return None
         
         # Types d'unités prioritaires pour les Chaloupes
-        priority_targets = ["paquebot", "bateau"]
+        priority_targets = ["paquebot", "bateau", "plateformePetroliere"]
         
         best_priority_target = None
         best_other_target = None
@@ -287,10 +319,9 @@ class ChaloupeAI:
         min_other_distance = float('inf')
         
         for unit in all_units:
-            # Ignorer les unités de la même équipe, mortes ou plateformes
+            # Ignorer les unités de la même équipe ou mortes
             if (unit.team == self.unit.team or 
-                not unit.is_alive or 
-                getattr(unit, 'is_platform', False)):
+                not unit.is_alive):
                 continue
             
             distance = self._calculate_distance(self.unit.position, unit.position)
@@ -358,12 +389,10 @@ class ChaloupeAI:
         
         # Vérifier le cooldown
         if current_time - self.last_strike_time < self.strike_cooldown:
-            self.log_decision(f"Cooldown actif: {self.strike_cooldown - (current_time - self.last_strike_time):.1f}s restant")
             return False
         
-        # Attendre au moins 2 secondes en position avant d'attaquer
-        if current_time - self.last_state_change < 2.0:
-            self.log_decision("Positionnement en cours...")
+        # Attaque QUASI-IMMÉDIATE - attendre seulement 0.1 secondes
+        if current_time - self.last_state_change < 0.1:
             return False
         
         # Vérifier si la cible bouge (opportunité d'attaque)
@@ -371,12 +400,11 @@ class ChaloupeAI:
             self.log_decision("Cible en mouvement - ATTAQUE!")
             return True
         
-        # Ou si on attend depuis longtemps (8 secondes au lieu de 5)
-        if current_time - self.last_state_change > 8.0:
-            self.log_decision("Attaque par timeout")
+        # Si la cible est stationnaire, attaquer IMMÉDIATEMENT après 0.5s
+        if current_time - self.last_state_change > 0.5:
+            self.log_decision("Cible stationnaire - ATTAQUE IMMÉDIATE!")
             return True
         
-        self.log_decision("Attente d'opportunité...")
         return False
     
     def _calculate_orbit_position(self, angle_override=None):
@@ -396,6 +424,28 @@ class ChaloupeAI:
         
         return (orbit_x, orbit_y)
     
+    def _is_enemy_moving(self):
+        """Détecte si l'ennemi est en mouvement."""
+        if not self.target:
+            return False
+        
+        # Vérifier l'attribut is_moving de l'ennemi
+        if hasattr(self.target, 'is_moving') and self.target.is_moving:
+            return True
+        
+        # Vérifier le changement de position
+        if not self.last_enemy_position:
+            self.last_enemy_position = self.target.position
+            return False
+        
+        # Calculer le déplacement depuis la dernière vérification
+        dx = self.target.position[0] - self.last_enemy_position[0]
+        dy = self.target.position[1] - self.last_enemy_position[1]
+        movement = math.sqrt(dx*dx + dy*dy)
+        
+        # Si déplacement > 5px, l'ennemi bouge
+        return movement > 5
+    
     def _is_enemy_approaching(self):
         """Détecte si l'ennemi se rapproche de nous."""
         if not self.target or not self.last_enemy_position:
@@ -412,6 +462,47 @@ class ChaloupeAI:
         
         # Si l'ennemi se rapproche de plus de 10px
         return current_distance < old_distance - 10
+    
+    def _check_enemy_stationary(self):
+        """Vérifie si l'ennemi est resté immobile assez longtemps.
+        
+        Returns:
+            bool: True si l'ennemi est immobile depuis assez longtemps, False sinon
+        """
+        if not self.target:
+            return False
+        
+        current_time = time.time()
+        
+        # Vérifier seulement toutes les 0.3 secondes
+        if current_time - self.last_enemy_position_check < self.enemy_position_check_interval:
+            return False
+        
+        self.last_enemy_position_check = current_time
+        
+        # Ajouter la position actuelle à l'historique
+        self.enemy_position_checks.append(self.target.position)
+        
+        # Garder seulement les N dernières positions
+        if len(self.enemy_position_checks) > self.enemy_stationary_threshold:
+            self.enemy_position_checks.pop(0)
+        
+        # Si on n'a pas assez d'échantillons, continuer à surveiller
+        if len(self.enemy_position_checks) < self.enemy_stationary_threshold:
+            return False
+        
+        # Vérifier si toutes les positions sont identiques (ou très proches)
+        first_pos = self.enemy_position_checks[0]
+        for pos in self.enemy_position_checks[1:]:
+            distance = self._calculate_distance(first_pos, pos)
+            if distance > 10:  # Si mouvement > 10px détecté
+                # Ennemi a bougé, réinitialiser
+                self.enemy_position_checks = []
+                return False
+        
+        # Ennemi immobile depuis assez longtemps!
+        self.log_decision(f"Ennemi IMMOBILE détecté sur {len(self.enemy_position_checks)} vérifications!")
+        return True
     
     def _evasive_positioning(self):
         """Positionnement évasif quand l'ennemi nous poursuit."""
