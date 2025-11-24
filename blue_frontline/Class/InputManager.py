@@ -21,8 +21,26 @@ class InputManager:
             self.handle_hud_toggle(pressed)
 
         self._handle_shooting(pressed)
+        
+    def handle_continuous_input_tuto(self):
+        """Gère les entrées continues (touches maintenues) pour le tuto"""
+        pressed = pygame.key.get_pressed()
 
-    
+        if self.game.tutorial.step < len(self.game.tutorial.messages):
+                
+            seq = self.game.tutorial.messages[self.game.tutorial.step]
+            if "restriction" in seq : 
+                if seq["restriction"]["name"] == "zqsd":
+                    self.handle_camera_movement(pressed)
+                elif seq["restriction"]["name"] == "fire_chaloupe":
+                    if pressed[get_action_key("SHOOT")]: 
+                        self.trigger_shooting()
+                        self.game.tutorial.next_step()
+        else : 
+            from Class.menu import Menu
+            menu = Menu()
+            menu.run()
+        
     def handle_camera_movement(self, pressed: tuple[bool]):
         """Gère le déplacement de la caméra avec les touches directionnelles.
 

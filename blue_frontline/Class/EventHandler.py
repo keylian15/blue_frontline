@@ -65,6 +65,149 @@ class EventHandler:
         
         return True
     
+    def handle_events_tuto(self):
+        
+        for event in pygame.event.get(): 
+            if event.type == pygame.QUIT: 
+                return False
+            
+            seq = self.game.tutorial.messages[self.game.tutorial.step]
+            if "function" in seq : 
+                self.game.tutorial.do_function = True
+
+            # Gestion des touches
+            if event.type == pygame.KEYDOWN:
+                if not self.handle_keydown_events_tuto(event):
+                    continue
+
+            # Gestion des clics souris
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                self.handle_mouse_events_tuto(event)
+        
+        return True
+    
+    def handle_keydown_events_tuto(self, event: pygame.event):
+        """Gère les événements de touches pressées dans le tuto.
+
+        Args:
+            event (pygame.event): Événement pygame.
+
+        Returns:
+            bool: True si l'événement a été traité, False sinon.
+        """
+        
+        if event.key == pygame.K_ESCAPE:
+            options_menu = OptionsMenu(self.game.screen)
+            retour = options_menu.run()
+            if type(retour) == tuple and len(retour) == 2:
+                changed, new_gameplay_settings = retour
+                if changed:
+                    # Appliquer les nouveaux paramètres de gameplay au jeu
+                    from Global import set_gameplay_setting
+                    set_gameplay_setting(new_gameplay_settings)
+            
+            return True
+        
+        seq = self.game.tutorial.messages[self.game.tutorial.step]
+        if "restriction" in seq : 
+            if event.key in seq["restriction"]["keys"] :
+                if seq["count"] : 
+                    self.game.tutorial.count_to_next_step()
+                    if seq["restriction"]["name"] == "navigation" : 
+                        if event.key == get_action_key("HUD_LEFT") :
+                            self.game.hud.popup_selection = (self.game.hud.popup_selection - 1) % len(self.game.hud.unit_names)
+                        elif event.key == get_action_key("HUD_RIGHT") :
+                            self.game.hud.popup_selection = (self.game.hud.popup_selection + 1) % len(self.game.hud.unit_names)
+                else : 
+                    if seq["restriction"]["name"] == "spawn_chaloupe" :
+                        self.spawn_unit("chaloupe", "red")
+                        self.game.units[-1].position = self.game.get_base_position("red")
+                        self.game.units[-1].position = self.game.units[-1].position[0] + 100, self.game.units[-1].position[1]
+                        self.apply_cost("chaloupe", "red", 20)
+                        self.game.tutorial.next_step()
+    
+                    elif seq["restriction"]["name"] ==  "fire_mine" : 
+                        x, y = self.game.selected_unit.position
+                        self.game.selected_unit.place_mine(x, y)
+                        self.game.selected_unit.position = (x + 50, y)
+                        self.game.tutorial.next_step()  
+
+        return
+    
+    def handle_mouse_events_tuto(self, event: pygame.event):
+        """Gère les événements de souris dans le tuto.
+
+        Args:
+            event (pygame.event): Événement de souris à traiter.
+        """
+
+        # Passer le tuto avec clic gauche par défaut
+        seq = self.game.tutorial.messages[self.game.tutorial.step]
+        if "restriction" not in seq : 
+            if event.button == 1 :
+                self.game.tutorial.next_step()
+        else : 
+            if event.button in seq["restriction"]["keys"] : 
+                if seq["count"] != 0 :
+                        
+                    self.game.tutorial.count_to_next_step()
+                    if seq["restriction"]["name"] == "zoom" : 
+                        if event.button == get_action_key("ZOOM_IN"):
+                            self.game.camera.zoom_in()
+                        
+                        # Molette bas
+                        elif event.button == get_action_key("ZOOM_OUT"):
+                            self.game.camera.zoom_out()
+                else : 
+                    if seq["restriction"]["name"] == "select_chaloupe" : 
+                        rects = self.game.hud.popup_icon_rects
+                        if rects:
+                            pos = getattr(event, 'pos', None)
+                            if pos:
+                                for i, rect in enumerate(rects):
+                                    if rect is None:
+                                        continue
+                                    if rect.collidepoint(pos):
+                                        # Mettre à jour la sélection dans le HUD
+                                        self.game.hud.popup_selection = i
+                                        # Appeler le callback si défini
+                                        callback = getattr(self.game.hud, 'unit_select_callback', None)
+                                        if callable(callback):
+                                            callback(i, self.game.hud.popup_team)
+                                        if i == 0:
+                                            self.game.tutorial.next_step()
+                                        break
+        
+                    elif seq["restriction"]["name"] == "move_chaloupe" :
+                        world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
+                        # Chercher une unité à cette position
+                        clicked_unit = self.game.find_unit_at_position(world_x, world_y)
+
+                        if clicked_unit:
+                            # Sélectionner l'unité 
+                            if clicked_unit.team == self.game.hud.player_team:
+                                self.game.select_unit(clicked_unit)
+                        elif self.game.selected_unit and self.game.selected_unit.is_alive:
+                            # Déplacer l'unité sélectionnée vers la position cliquée 
+                            if hasattr(self.game.selected_unit, 'move_to_position'):
+                                # Déplacement direct pour les autres unités
+                                self.game.selected_unit.move_to_position((world_x, world_y))
+                                self.game.tutorial.next_step() 
+        
+                    elif seq["restriction"]["name"] == "select_base" : 
+                        world_x, world_y = self.screen_to_world_coordinates(pygame.mouse.get_pos())
+                        # Chercher une unité à cette position
+                        clicked_unit = self.game.find_unit_at_position(world_x, world_y)
+
+                        if clicked_unit:
+                            # Sélectionner l'unité 
+                            if clicked_unit.team == self.game.hud.player_team:
+                                if hasattr(clicked_unit, 'is_platform') : 
+                                    self.game.select_unit(clicked_unit)
+                                    self.game.tutorial.next_step()
+                        
+        return
+
     def handle_keydown_events(self, event: pygame.event):
         """Gère les événements de touches pressées.
 
