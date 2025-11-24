@@ -263,6 +263,7 @@ class Game :
             if unit.unit_type != "pompe_petroliere":  # Ne pas sélectionner la pompe pétrolière
                 unit.is_selected = True
                 self.selected_unit = unit
+                self.hud.update_selected_unit(unit)
         else:
             self.selected_unit = None
 

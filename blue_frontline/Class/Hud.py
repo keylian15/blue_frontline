@@ -311,3 +311,10 @@ class Hud:
         
         self.player_team = 'green' if self.player_team == 'red' else 'red'
         
+    def update_selected_unit(self, unit:"unit"):
+        """Met à jour l'unité sélectionnée."""
+        # if unit.unit_type
+        # On récupere le type de l'unité
+        for i, nom in enumerate(self.unit_config_keys) : 
+            if nom == unit.unit_type :
+                self.popup_selection = i

@@ -134,8 +134,9 @@ class EventHandler:
                 # Verification sur l'entité
                 if hasattr(unit, 'is_moving') and unit.is_moving:
                     # unit.speed * new_speed
-                    unit.move_to(
-                        unit.target_position[0], unit.target_position[1])
+                    if unit.target_position:
+                        unit.move_to(
+                            unit.target_position[0], unit.target_position[1])
 
         # Team
         elif event.key == get_action_key("SWITCH_TEAM"):
@@ -156,7 +157,7 @@ class EventHandler:
                     self.game.selected_unit.special_ability == "mines"):
 
                 x, y = self.game.selected_unit.position
-                
+
                 # Vérifier que la position n'est pas dans un obstacle
                 from Utils import point_in_many_polygons
                 if not point_in_many_polygons(self.game.obstacles, (x, y)):
@@ -221,8 +222,9 @@ class EventHandler:
                     self.game.select_unit(clicked_unit)
             elif self.game.selected_unit and self.game.selected_unit.is_alive:
                 # Déplacement direct pour les autres unités
-                self.game.selected_unit.move_to_position(
-                    (world_x, world_y))
+                if hasattr(self.game.selected_unit, 'move_to_position'):
+                    self.game.selected_unit.move_to_position(
+                        (world_x, world_y))
             else:
                 # Si le HUD est visible et qu'aucune unité n'a été cliquée, désélectionner
                 if hud_visible:
@@ -237,6 +239,10 @@ class EventHandler:
         elif event.button == get_action_key("ZOOM_OUT"):
             if not getattr(self.game, 'paused', False):
                 self.game.camera.zoom_out()
+
+        # Désélectionner l'unité
+        elif event.button == 3:
+            self.game.selected_unit = None
 
     def handle_continuous_input(self):
         """Gère les entrées continues (touches maintenues)."""
