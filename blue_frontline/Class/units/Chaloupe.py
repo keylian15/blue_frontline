@@ -1,28 +1,18 @@
 import pygame, math, time, threading
 from Class.units.Unit import Unit
 from Class.Combat import CombatSystem
+from Class.units.IA.ChaloupeAI import ChaloupeAI
 from Global import UNIT_CONFIGS
 from Utils import point_in_many_polygons
 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-=======
-=======
->>>>>>> 7e1a3efa5a193eee92cda04c8860fd15245bc8a1
 # Import de l'IA séparée
 try:
     from Class.units.IA.ChaloupeAI import ChaloupeAI
     AI_AVAILABLE = True
 except ImportError:
-<<<<<<< HEAD
-    AI_AVAILABLE = False
-
->>>>>>> Stashed changes
-=======
     print("IA ChaloupeAI non disponible, utilisation du comportement de base")
     AI_AVAILABLE = False
 
->>>>>>> 7e1a3efa5a193eee92cda04c8860fd15245bc8a1
 class Chaloupe(Unit):
     """Classe unifiée pour les unités Chaloupe (Rouge et Verte)."""
     
@@ -109,7 +99,6 @@ class Chaloupe(Unit):
             self.init_ia()
 
     def init_ia(self):
-        from Class.units.IA.ChaloupeAI import ChaloupeAI
         self.ai_system = ChaloupeAI(self)
         self.visual_debug_enabled = True  # Debug visuel activé par défaut
 
@@ -248,6 +237,7 @@ class Chaloupe(Unit):
         
         if need_pathfinding and (current_time - self.last_pathfinding_time > self.pathfinding_cooldown):
             # Pathfinding seulement si obstacles ET cooldown écoulé
+            print(f"Obstacle détecté - Pathfinding vers {self.target_enemy.unit_type}")
             self.last_pathfinding_time = current_time
             self.direct_follow_mode = False
             self.start_pathfinding_thread(lambda: self.compute_path_to_target(current_target_position))
@@ -425,6 +415,7 @@ class Chaloupe(Unit):
             if new_target:
                 # Aller vers la nouvelle cible
                 self.aller_vers_unite_ennemie(new_target)
+                print(f"Chaloupe {self.team} cible maintenant: {new_target.unit_type}")
             else:
                 # Plus d'ennemis dans la zone, patrouiller sans aller vers la base
                 self.patrol_area()
@@ -841,6 +832,7 @@ class Chaloupe(Unit):
         
         except Exception as e:
             # En cas d'erreur, ne pas crasher le jeu
+            print(f"Erreur debug IA: {e}")
             pass
             
             # === INFORMATIONS Q-LEARNING ===
@@ -908,6 +900,7 @@ class Chaloupe(Unit):
                                      (target_screen_x, target_screen_y), enemy_range, 1)
         
         except Exception as e:
+            print(f"Erreur debug IA: {e}")
             pass
     
     # ==========================================

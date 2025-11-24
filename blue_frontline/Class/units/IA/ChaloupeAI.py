@@ -4,8 +4,7 @@ Implémente le comportement "Attaque Éclair" avec machine à états + Q-Learnin
 États : SEARCHING, POSITIONING, STRIKE, RETREAT
 """
 
-import math
-import time
+import math, time, random
 from enum import Enum
 
 # Import du module Q-Learning
@@ -98,7 +97,7 @@ class ChaloupeAI:
         self.detection_range = 800  # Portée de détection étendue
         
         # Debug et logs
-        self.debug_enabled = False  # DÉSACTIVÉ en production
+        self.debug_enabled = False 
         self.decision_log = []
     
     def log_decision(self, message: str):
@@ -161,7 +160,7 @@ class ChaloupeAI:
         
         if best_target:
             self.target = best_target
-            # Mettre à jour la cible dans l'unité aussi - IMPORTANT: synchroniser target et target_enemy
+            # Mettre à jour la cible dans l'unité aussi
             self.unit.target_enemy = best_target
             self.unit.target = best_target  # Pour que combat_update() fonctionne
             distance = self._calculate_distance(self.unit.position, best_target.position)
@@ -171,11 +170,10 @@ class ChaloupeAI:
                              f"Cible trouvée: {best_target.unit_type} à {int(distance)}px")
                              
             # Choisir un angle d'approche aléatoire pour varier les attaques
-            import random
             self.current_orbit_angle = random.uniform(0, 2 * math.pi)
             self.orbit_direction = random.choice([1, -1])  # Direction aléatoire
         else:
-            # Aucune cible trouvée, patrouiller avec temporisation pour éviter les mouvements erratiques
+            # Aucune cible trouvée, patrouiller
             if not hasattr(self, '_last_patrol_time') or time.time() - self._last_patrol_time > 2.0:
                 self.log_decision("Aucune cible détectée - Patrouille active")
                 self.unit.patrol_area()
@@ -261,7 +259,7 @@ class ChaloupeAI:
             
             self.last_strike_time = time.time()
             
-            # ARRÊTER LE MOUVEMENT VERS LA CIBLE puis inverser immédiatement
+            # stopper mouvement vers la cible puis inverser immédiatement
             self.unit.target_position = None  # Annuler le mouvement vers la cible
             self.unit.path_to_follow = []  # Vider le chemin
             self.unit.is_moving = False  # Stopper le flag de mouvement
@@ -271,10 +269,10 @@ class ChaloupeAI:
             self.retreat_start_time = time.time()
             self._change_state(ChaloupeState.RETREAT, "Attaque effectuée")
             
-            # Battre en retraite IMMÉDIATEMENT
+            # Battre en retraite immédiatement
             self._dynamic_retreat()
         else:
-            # Continuer à foncer vers la cible SEULEMENT si on n'a pas encore tiré
+            # Continuer à foncer vers la cible seulement si on n'a pas encore tiré
             attack_range = self.unit.range * 32  # Portée en pixels
             self.log_decision(f"Fonce vers cible ({int(current_distance)}px -> {attack_range}px)")
             self._move_directly_to_target()
@@ -289,7 +287,7 @@ class ChaloupeAI:
         retreat_duration = current_time - self.retreat_start_time
         current_distance = self._calculate_distance(self.unit.position, self.target.position)
         
-        # TOUJOURS continuer la retraite jusqu'à distance de sécurité
+        # toujours continuer la retraite jusqu'à distance de sécurité
         if not self._is_at_safe_distance():
             self.log_decision(f"RETRAITE ACTIVE! Distance: {int(current_distance)}px")
             self._dynamic_retreat()
@@ -391,7 +389,7 @@ class ChaloupeAI:
         if current_time - self.last_strike_time < self.strike_cooldown:
             return False
         
-        # Attaque QUASI-IMMÉDIATE - attendre seulement 0.1 secondes
+        # Attaque immédiate 
         if current_time - self.last_state_change < 0.1:
             return False
         
@@ -400,7 +398,7 @@ class ChaloupeAI:
             self.log_decision("Cible en mouvement - ATTAQUE!")
             return True
         
-        # Si la cible est stationnaire, attaquer IMMÉDIATEMENT après 0.5s
+        # Si la cible est stationnaire, attaquer immédiatement après 0.5s
         if current_time - self.last_state_change > 0.5:
             self.log_decision("Cible stationnaire - ATTAQUE IMMÉDIATE!")
             return True
@@ -567,7 +565,6 @@ class ChaloupeAI:
     
     def _rotate_orbit_angle(self, large_rotation=False):
         """Change l'angle d'orbite pour varier les angles d'attaque."""
-        import random
         if large_rotation:
             # Grand changement d'angle (60-180 degrés)
             angle_change = random.uniform(math.pi/3, math.pi)

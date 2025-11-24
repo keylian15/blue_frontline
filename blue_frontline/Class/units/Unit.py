@@ -359,12 +359,6 @@ class Unit(pygame.sprite.Sprite):
             unit_type = getattr(self, 'unit_type', None)
 
             if self.team == "red" : 
-<<<<<<< HEAD
-<<<<<<< Updated upstream
-                self.game.hud.piece_green.count += 1
-            else :
-                self.game.hud.piece_red.count += 1
-=======
                 self.game.hud.piece_green.add_piece()
                 # Suivi des succès pour l'équipe verte (qui a tué l'unité rouge)
                 if hasattr(self.game, 'achievements_system_vert') and self.game.achievements_system_vert:
@@ -377,13 +371,6 @@ class Unit(pygame.sprite.Sprite):
                     if unit_type:
                         self.game.achievements_system_rouge.track_unit_killed(unit_type)
                 
->>>>>>> Stashed changes
-=======
-                self.game.hud.piece_green.add_piece()
-            else :
-                self.game.hud.piece_red.add_piece()
-                
->>>>>>> 7e1a3efa5a193eee92cda04c8860fd15245bc8a1
         self.kill()  # Retire l'unité du groupe pygame
         self.game.units.remove(self)  # Retire l'unité de la liste des unités
         
@@ -466,7 +453,6 @@ class Unit(pygame.sprite.Sprite):
         if self.target and self.target.is_alive:
             if self.is_in_range(self.target):
                 self.attack(self.target, combat_system)
-            # NE PAS supprimer la cible, la chaloupe doit continuer à la poursuivre
         
     def draw_health_bar(self, screen: pygame.Surface, camera_offset: tuple[int, int]=(0, 0), zoom: float=1.0):
         """Dessine une barre de vie au-dessus de l'unité, qui suit le zoom et la caméra.
