@@ -434,6 +434,184 @@ class EventHandler:
             menu = Menu()
             menu.run()
 
+    def handle_camera_movement(self, pressed: tuple[bool]):
+        """Gère le déplacement de la caméra avec les touches directionnelles.
+
+        Args:
+            pressed (tuple[bool]): Un tuple de booléens indiquant si les touches sont enfoncées.
+        """
+
+        dx, dy = 0, 0
+        if pressed[get_action_key("CAMERA_UP")]:  # Haut
+            dy -= self.game.camera.camera_move
+        if pressed[get_action_key("CAMERA_DOWN")]:  # Bas
+            dy += self.game.camera.camera_move
+        if pressed[get_action_key("CAMERA_LEFT")]:  # Gauche
+            dx -= self.game.camera.camera_move
+        if pressed[get_action_key("CAMERA_RIGHT")]:  # Droite
+            dx += self.game.camera.camera_move
+
+        # Déplacer la caméra seulement s'il y a un déplacement
+        if dx or dy:
+            self.game.camera.move(dx, dy)
+
+    # === Utilitaires
+    def screen_to_world_coordinates(self, mouse_pos: tuple[int, int]):
+        """Convertit les coordonnées écran en coordonnées monde.
+
+        Args:
+            mouse_pos (tuple[int, int]): Coordonnées écran.
+
+        Returns:
+            tuple[int, int]: Coordonnées monde.
+        """
+
+        mouse_x, mouse_y = mouse_pos
+        camera_center = self.game.camera.rect.center
+        screen_center_x = self.game.screen.get_width() // 2
+        screen_center_y = self.game.screen.get_height() // 2
+
+        # Transformation inverse adaptée au zoom
+        offset_x = (mouse_x - screen_center_x) / self.game.camera.zoom_level
+        offset_y = (mouse_y - screen_center_y) / self.game.camera.zoom_level
+        world_x = camera_center[0] + offset_x
+        world_y = camera_center[1] + offset_y
+
+        return world_x, world_y
+
+    def check_cost(self, team_key: str, cost: int):
+        """Fonction permettant de vérifier le coût d'une unité.
+
+        Args:
+            team_key (str): Clé de l'équipe.
+            cost (int): Coût de l'unité.
+
+        Returns:
+            bool: True si le coût est valide, False sinon.
+        """
+
+        # S'il n'y a pas assez de pétrole.
+        if team_key == "red":
+            if self.game.hud.petrole_red.count < cost:
+                return False
+            else:
+                # self.game.hud.petrole_red.count -= cost
+                # succes()
+                return True
+        else:
+            if self.game.hud.petrole_green.count < cost:
+                return False
+            else:
+                # self.game.hud.petrole_green.count -= cost
+                # succes()
+                return True
+
+    def apply_cost(self, config_key: str, team_key: str, cost: int):
+        """Applique le coût de l'unité.
+
+        Args:
+            config_key (str): Clé de configuration de l'unité.
+            team_key (str): Clé de l'équipe.
+            cost (int): Coût de l'unité.
+        """
+
+        def succes():
+            """Fonction interne pour gérer les succès liés aux unités créées."""
+
+            # Suivre les statistiques pour les succès
+            if self.game.achievements_system:
+                self.game.achievements_system.track_unit_created(
+                    config_key, cost)
+                # Mettre à jour le nombre maximum d'unités vivantes
+                alive_units = len(
+                    [u for u in self.game.units if u.is_alive and hasattr(u, 'unit_type')])
+                self.game.achievements_system.update_max_units_alive(
+                    alive_units)
+
+            # Marquer le type d'unité comme créé dans cette partie
+            self.game.units_created_this_game.add(config_key)
+
+        if team_key == "red":
+            self.game.hud.petrole_red.count -= cost
+        else:
+            self.game.hud.petrole_green.count -= cost
+        succes()
+
+    def spawn_unit(self, config_key: str, team_key: str):
+        """Génère une unité.
+
+        Args:
+            config_key (str): Clé de configuration de l'unité.
+            team_key (str): Clé de l'équipe.
+        """
+
+        # Créer l'unité
+        # Mapping type + équipe -> classe
+        class_map = {
+            'chaloupe': {'red': ChaloupeRouge, 'green': ChaloupeVerte},
+            'bateau': {'red': BateauRouge, 'green': BateauVert},
+            'paquebot': {'red': PaquebotRouge, 'green': PaquebotVert},
+            'eclaireur': {'red': EclaireurRouge, 'green': EclaireurVert},
+            'sousmarin': {'red': SousMarinRouge, 'green': SousMarinVert},
+            'pompe_petroliere': {'red': PompePetroliereRouge, 'green': PompePetroliereVert},
+        }
+        unit_class = class_map.get(config_key)[team_key]
+
+        # On instancie l'unité
+        from Global import GAMEPLAY_SETTINGS
+        is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(
+            unit_class.__name__, None)
+        if is_ia is None:
+            unit = unit_class(self.game)
+        else:
+            unit = unit_class(self.game, is_ia=is_ia)
+        if config_key == "pompe_petroliere":
+            if team_key == "red":
+                self.game.nbPompePetroliereRouge += 1
+            else:
+                self.game.nbPompePetroliereVert += 1
+
+        # Ajouter au système de combat et au groupe de sprites
+        self.game.combat_system.add_unit(unit)
+        self.game.units.append(unit)
+        self.game.group.add(unit)
+        return True
+
+    def trigger_shooting(self):
+        """Déclenche le tir si toutes les conditions sont remplies."""
+
+        # Vérifier s'il y a une unité sélectionnée
+        if not hasattr(self.game, 'selected_unit') or not self.game.selected_unit:
+            return
+
+        selected_unit = self.game.selected_unit
+
+        # Vérifier que l'unité sélectionnée est vivante
+        if not selected_unit.is_alive:
+            return
+
+        # Vérifier s'il y a des ennemis dans la portée
+        if not hasattr(selected_unit, 'enemies_in_range') or not selected_unit.enemies_in_range:
+            return
+
+        # Obtenir l'ennemi le plus proche
+        target = selected_unit.get_closest_enemy_in_range()
+        if not target:
+            return
+
+        # Vérifier le cooldown de tir
+        current_time = pygame.time.get_ticks()
+        if not selected_unit.can_shoot(current_time):
+            return
+
+        # Mettre à jour immédiatement le temps du dernier tir pour empêcher le spam
+        selected_unit.last_shot_time = current_time
+
+        # Tirer sur la cible en utilisant le système de combat
+        if hasattr(self.game, 'combat_system'):
+            projectile = self.game.combat_system.fire_projectile(
+                selected_unit, target)
+
     # ==========================================
     # MÉTHODES Q-LEARNING DEBUG
     # ==========================================
@@ -562,180 +740,3 @@ class EventHandler:
             f"[Visual Debug] Debug visuel {state_text} pour {debug_count} chaloupes")
 
         return True
-
-    def screen_to_world_coordinates(self, mouse_pos: tuple[int, int]):
-        """Convertit les coordonnées écran en coordonnées monde.
-
-        Args:
-            mouse_pos (tuple[int, int]): Coordonnées écran.
-
-        Returns:
-            tuple[int, int]: Coordonnées monde.
-        """
-
-        mouse_x, mouse_y = mouse_pos
-        camera_center = self.game.camera.rect.center
-        screen_center_x = self.game.screen.get_width() // 2
-        screen_center_y = self.game.screen.get_height() // 2
-
-        # Transformation inverse adaptée au zoom
-        offset_x = (mouse_x - screen_center_x) / self.game.camera.zoom_level
-        offset_y = (mouse_y - screen_center_y) / self.game.camera.zoom_level
-        world_x = camera_center[0] + offset_x
-        world_y = camera_center[1] + offset_y
-
-        return world_x, world_y
-
-    def check_cost(self, team_key: str, cost: int):
-        """Fonction permettant de vérifier le coût d'une unité.
-
-        Args:
-            team_key (str): Clé de l'équipe.
-            cost (int): Coût de l'unité.
-
-        Returns:
-            bool: True si le coût est valide, False sinon.
-        """
-
-        # S'il n'y a pas assez de pétrole.
-        if team_key == "red":
-            if self.game.hud.petrole_red.count < cost:
-                return False
-            else:
-                # self.game.hud.petrole_red.count -= cost
-                # succes()
-                return True
-        else:
-            if self.game.hud.petrole_green.count < cost:
-                return False
-            else:
-                # self.game.hud.petrole_green.count -= cost
-                # succes()
-                return True
-
-    def apply_cost(self, config_key: str, team_key: str, cost: int):
-        """Applique le coût de l'unité.
-
-        Args:
-            config_key (str): Clé de configuration de l'unité.
-            team_key (str): Clé de l'équipe.
-            cost (int): Coût de l'unité.
-        """
-
-        def succes():
-            """Fonction interne pour gérer les succès liés aux unités créées."""
-
-            # Suivre les statistiques pour les succès
-            if self.game.achievements_system:
-                self.game.achievements_system.track_unit_created(
-                    config_key, cost)
-                # Mettre à jour le nombre maximum d'unités vivantes
-                alive_units = len(
-                    [u for u in self.game.units if u.is_alive and hasattr(u, 'unit_type')])
-                self.game.achievements_system.update_max_units_alive(
-                    alive_units)
-
-            # Marquer le type d'unité comme créé dans cette partie
-            self.game.units_created_this_game.add(config_key)
-
-        if team_key == "red":
-            self.game.hud.petrole_red.count -= cost
-        else:
-            self.game.hud.petrole_green.count -= cost
-        succes()
-
-    def spawn_unit(self, config_key: str, team_key: str):
-        """Génère une unité.
-
-        Args:
-            config_key (str): Clé de configuration de l'unité.
-            team_key (str): Clé de l'équipe.
-        """
-
-        # Créer l'unité
-        # Mapping type + équipe -> classe
-        class_map = {
-            'chaloupe': {'red': ChaloupeRouge, 'green': ChaloupeVerte},
-            'bateau': {'red': BateauRouge, 'green': BateauVert},
-            'paquebot': {'red': PaquebotRouge, 'green': PaquebotVert},
-            'eclaireur': {'red': EclaireurRouge, 'green': EclaireurVert},
-            'sousmarin': {'red': SousMarinRouge, 'green': SousMarinVert},
-            'pompe_petroliere': {'red': PompePetroliereRouge, 'green': PompePetroliereVert},
-        }
-        unit_class = class_map.get(config_key)[team_key]
-
-        # On instancie l'unité
-        from Global import GAMEPLAY_SETTINGS
-        is_ia = GAMEPLAY_SETTINGS["AI_ACTIVATION"].get(
-            unit_class.__name__, None)
-        if is_ia is None:
-            unit = unit_class(self.game)
-        else:
-            unit = unit_class(self.game, is_ia=is_ia)
-        if config_key == "pompe_petroliere":
-            if team_key == "red":
-                self.game.nbPompePetroliereRouge += 1
-            else:
-                self.game.nbPompePetroliereVert += 1
-
-        # Ajouter au système de combat et au groupe de sprites
-        self.game.combat_system.add_unit(unit)
-        self.game.units.append(unit)
-        self.game.group.add(unit)
-        return True
-
-    def handle_camera_movement(self, pressed: tuple[bool]):
-        """Gère le déplacement de la caméra avec les touches directionnelles.
-
-        Args:
-            pressed (tuple[bool]): Un tuple de booléens indiquant si les touches sont enfoncées.
-        """
-
-        dx, dy = 0, 0
-        if pressed[get_action_key("CAMERA_UP")]:  # Haut
-            dy -= self.game.camera.camera_move
-        if pressed[get_action_key("CAMERA_DOWN")]:  # Bas
-            dy += self.game.camera.camera_move
-        if pressed[get_action_key("CAMERA_LEFT")]:  # Gauche
-            dx -= self.game.camera.camera_move
-        if pressed[get_action_key("CAMERA_RIGHT")]:  # Droite
-            dx += self.game.camera.camera_move
-
-        # Déplacer la caméra seulement s'il y a un déplacement
-        if dx or dy:
-            self.game.camera.move(dx, dy)
-
-    def trigger_shooting(self):
-        """Déclenche le tir si toutes les conditions sont remplies."""
-
-        # Vérifier s'il y a une unité sélectionnée
-        if not hasattr(self.game, 'selected_unit') or not self.game.selected_unit:
-            return
-
-        selected_unit = self.game.selected_unit
-
-        # Vérifier que l'unité sélectionnée est vivante
-        if not selected_unit.is_alive:
-            return
-
-        # Vérifier s'il y a des ennemis dans la portée
-        if not hasattr(selected_unit, 'enemies_in_range') or not selected_unit.enemies_in_range:
-            return
-
-        # Obtenir l'ennemi le plus proche
-        target = selected_unit.get_closest_enemy_in_range()
-        if not target:
-            return
-
-        # Vérifier le cooldown de tir
-        current_time = pygame.time.get_ticks()
-        if not selected_unit.can_shoot(current_time):
-            return
-
-        # Mettre à jour immédiatement le temps du dernier tir pour empêcher le spam
-        selected_unit.last_shot_time = current_time
-
-        # Tirer sur la cible en utilisant le système de combat
-        if hasattr(self.game, 'combat_system'):
-            projectile = self.game.combat_system.fire_projectile(
-                selected_unit, target)
