@@ -52,7 +52,7 @@ class TutorialManager:
         ]
 
         default_sub_text = "Clic gauche pour continuer..."
-        pos_center = (self.width * 0.4, self.height * 0.4)
+        pos_center = (self.width * 0.4, self.height * 0.5)
         self.current_indice = -3
         self.messages = [
             {
@@ -148,7 +148,7 @@ class TutorialManager:
                 "count": 0
             },
             {
-                "message": "Par la c'est pétrole dont vous disposez, elle vous permetra de poser des troupes.",
+                "message": "Par la c'est pétrole dont vous disposez, elle vous permettra de poser des troupes.",
                 "sub_text": default_sub_text,
                 "anchor_pos": (self.width * 0.84, self.height * 0.9),
                 "orientation": "bd",
@@ -157,7 +157,7 @@ class TutorialManager:
                 "count": 0
             },
             {
-                "message": "Et ici les pièces obtenues par les morts, elle vous permetra d'améliorer le plateforme pétroliére.",
+                "message": "Et ici les pièces obtenues par les morts, elle vous permettra d'améliorer le plateforme pétroliére.",
                 "sub_text": default_sub_text,
                 "anchor_pos": (self.width * 0.84, self.height * 0.8),
                 "orientation": "bd",
@@ -183,7 +183,7 @@ class TutorialManager:
                 "orientation": "hg",
                 "arrow": False,
                 "phase": 2,
-                "count": 30,
+                "count": 20,
                 "restriction": {"name": "zoom", "keys": [get_action_key("ZOOM_IN"), get_action_key("ZOOM_OUT")]}
             },
             {
@@ -287,7 +287,7 @@ class TutorialManager:
                 "count": 0
             },
             {
-                "message": "Les pièces ont les voles qu'aux morts, tuées le plus d'énnemies pour en avoir.",
+                "message": "Les pièces ont les voles qu'aux morts, tuez le plus d'énnemies pour en avoir.",
                 "sub_text": default_sub_text,
                 "anchor_pos": pos_center,
                 "orientation": "hg",
@@ -315,40 +315,44 @@ class TutorialManager:
                 "count": 0
             },
             {
-                "message": self.get_alien_message(50),
-                "sub_text": self.get_alien_message(20),
+                "message": "{ALIEN}",
+                "sub_text": "{ALIEN}",
                 "anchor_pos": pos_center,
                 "orientation": "hg",
                 "arrow": False,
                 "phase": 2,
-                "count": 0
+                "count": 0,
+                "function": [{"name": "alien", "args": (50, 20)}]
             },
             {
                 "message": "Rentrez mes enfants, venez à Moi... le Grand Océan vous appelle... JE VOUS APPPELLE...",
-                "sub_text": self.get_alien_message(20),
+                "sub_text": "{ALIEN}",
                 "anchor_pos": pos_center,
                 "orientation": "hg",
                 "arrow": False,
                 "phase": 2,
-                "count": 0
+                "count": 0,
+                "function": [{"name": "alien", "args": (20,)}]
             },
             {
-                "message": self.get_alien_message(50),
-                "sub_text": self.get_alien_message(20),
+                "message": "{ALIEN}",
+                "sub_text": "{ALIEN}",
                 "anchor_pos": pos_center,
                 "orientation": "hg",
                 "arrow": False,
                 "phase": 2,
-                "count": 0
+                "count": 0,
+                "function": [{"name": "alien", "args": (50, 20)}]
             },
             {
-                "message": "Un dernier conseil : gardez un oeil sur la marée, " + self.get_alien_message(25) + "    et les récifs.",
+                "message": "Un dernier conseil : gardez un oeil sur la marée, {ALIEN} et les récifs.",
                 "sub_text": default_sub_text,
                 "anchor_pos": pos_center,
                 "orientation": "hg",
                 "arrow": False,
                 "phase": 2,
-                "count": 0
+                "count": 0,
+                "function": [{"name": "alien", "args": (20,)}]
             },
             {
                 "message": "Maintenant, vous savez tout. Allez, allez, allez ! Vous pouvez maintenant vous aventurer dans le monde de Blue Frontline !",
@@ -363,7 +367,7 @@ class TutorialManager:
         ]
 
     def update(self):
-        """Appelée chaque frame depuis ta boucle principale"""
+        """Permettant d'afficher le didacticiel a chaque frame."""
         if not self.active:
             return
         if self.step > len(self.messages) - 1:
@@ -383,13 +387,31 @@ class TutorialManager:
         if self.do_function and "function" in self.messages[self.step]:
             for function in self.messages[self.step]["function"]:
                 fn = function["name"]
-                args = function.get("args", ())
-                if args is None:
-                    if fn():
-                        self.do_function = False
+                if fn == "alien":
+                    args = function.get("args", ())
+                    alien = self.get_alien_message(args[0])
+                    self.message = self.messages[self.step]["message"].replace(
+                        "{ALIEN}", alien)
+                    self.sub_text = self.messages[self.step]["sub_text"].replace(
+                        "{ALIEN}", alien)
+                    if len(args) == 2:
+                        alien = self.get_alien_message(args[1])
+                        self.sub_text = self.messages[self.step]["sub_text"].replace(
+                            "{ALIEN}", alien)
+
                 else:
-                    if fn(*args):
-                        self.do_function = False
+                    if function.get("done", False):
+                        self.zoom_is_done = True
+                        return
+                    self.zoom_is_done = False
+                        
+                    args = function.get("args", ())
+                    if args is None:
+                        if fn():
+                            self.do_function = False
+                    else:
+                        if fn(*args):
+                            self.do_function = False
 
     def draw_arrow_towards(self, pop_up, pop_up_size, target_pos, color=(255, 255, 255)):
         import pygame
