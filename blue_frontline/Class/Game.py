@@ -5,7 +5,6 @@ from Class.Perlin import Perlin
 # Importation des modules gestionnaires
 from Class.EventHandler import EventHandler
 from Class.Renderer import Renderer
-from Class.InputManager import InputManager
 from Class.GameUpdater import GameUpdater
 from Class.GameInitializer import GameInitializer
 from Class.Petrole import Petrole
@@ -14,7 +13,6 @@ from Class.Timer import Timer
 from Class.units import Unit
 from Class.AchievementNotification import AchievementNotificationManager
 from Class.units.IA.IA_Eclaireur import SimpleGrid, make_grid_adapter_from_simplegrid
-from Utils import point_in_many_polygons
 from Class.units import PlateformePetroliere
 
 
@@ -66,7 +64,6 @@ class Game :
         # Initialiser les gestionnaires après que les composants soient créés
         self.event_handler = EventHandler(self)
         self.renderer = Renderer(self)
-        self.input_manager = InputManager(self)
         self.updater = GameUpdater(self)
 
         # État de pause
@@ -539,104 +536,58 @@ class Game :
         
         self.game_running = False
 
-    def run(self): 
+    def run(self):
         """
         Boucle principale du jeu.
-        
-        Gère le game loop principal avec les étapes suivantes :
-        - Gestion des événements (pause, quit, inputs)
-        - Mise à jour des systèmes de jeu (physique, IA, collisions)
-        - Rendu graphique
-        - Affichage de l'écran de victoire si nécessaire
-        
-        La boucle s'exécute à 60 FPS et se termine quand :
-        - Le joueur quitte le jeu (fermeture de fenêtre)
-        - Le joueur retourne au menu (self.game_running = False)
-        
-        Returns:
-            None: Retourne au menu si game_running est False, sinon quitte Pygame
         """
         clock = pygame.time.Clock()
         running = True
-        self.game_running = True  # Variable pour contrôler le retour au menu
-        
+        self.game_running = True
+
+        # Mode tuto : désactiver les IA
         if self.mode == "tuto":
             self.paused = True
-            # Passer toutes les ia en False
             from Global import GAMEPLAY_SETTINGS
-            for valeur in GAMEPLAY_SETTINGS["AI_ACTIVATION"] : 
-                GAMEPLAY_SETTINGS["AI_ACTIVATION"][valeur] = False
-            
-            while running and self.game_running: 
-                dt = clock.tick(FPS) / TIME_STEP
-                                
-                # Gestion des événements
+            for key in GAMEPLAY_SETTINGS["AI_ACTIVATION"]:
+                GAMEPLAY_SETTINGS["AI_ACTIVATION"][key] = False
+
+        while running and self.game_running:
+            dt = clock.tick(FPS) / TIME_STEP
+
+            # Gestion des événements si pas en pause
+            if self.mode == "tuto":
                 running = self.event_handler.handle_events_tuto()
+                self.event_handler.handle_continuous_input_tuto()
                 
-                # Gestion des entrées continues
-                if not self.paused or self.tutorial.phase == 2:
-                    self.input_manager.handle_continuous_input_tuto()
-                
-                # Mise à jour des systèmes
-                self.updater.update_systems(dt, self)
-                
-                # Rendu
-                self.renderer.render()
+            else:
+                running = self.event_handler.handle_events()
+                self.event_handler.handle_continuous_input()
+
+            # Mise à jour des systèmes de jeu
+            self.updater.update_systems(dt, self)
+
+            # Gestion achievements et notifications
+            if self.mode != "tuto" and self.achievements_system:
+                self.achievements_system.update_playtime(dt / 1000)
+                for notification in self.achievements_system.get_pending_notifications():
+                    self.notification_manager.add_notification(notification['achievement'])
+                self.notification_manager.update(dt)
+
+            # Rendu
+            self.renderer.render()
+
+            # Tutoriel
+            if self.mode == "tuto":
                 self.tutorial.update()
                 self.tutorial.draw()
-            
-                pygame.display.flip()
-                
-            if not self.game_running:
-                return  # Retourner au menu
-            
-            pygame.quit()
-        
-        else : 
-            # Réinitialiser les statistiques de jeu pour les succès
-            if self.achievements_system:
-                self.achievements_system.reset_game_stats()
-            
-            while running and self.game_running: 
-                dt = clock.tick(FPS) / TIME_STEP
-                
-                # Mettre à jour le temps de jeu pour les succès
-                if self.achievements_system:
-                    self.achievements_system.update_playtime(dt / 1000)  # Convertir en secondes
-                
-                # Gestion des événements
-                running = self.event_handler.handle_events()
-                
-                # Gestion des entrées continues
-                if not self.paused:
-                    self.input_manager.handle_continuous_input()
-                
-                # Mise à jour des systèmes
-                self.updater.update_systems(dt, self)
 
-                # Vérifier s'il y a de nouvelles notifications de succès
-                if self.achievements_system:
-                    new_notifications = self.achievements_system.get_pending_notifications()
-                    for notification in new_notifications:
-                        self.notification_manager.add_notification(notification['achievement'])
-                
-                    # Mettre à jour le gestionnaire de notifications
-                    self.notification_manager.update(dt)
-                
-                # Rendu
-                self.renderer.render()
-                
-                if self.mode == "tuto" :                
-                    self.tutorial.update()
-                    self.tutorial.draw()
-                    
-                # Afficher l'écran de victoire si le jeu est gagné
-                if self.game_won:
-                    self.draw_victory_screen()
-                
-                pygame.display.flip()
-        
-            if not self.game_running:
-                return  # Retourner au menu
-            
-            pygame.quit()
+            # Écran de victoire
+            if self.game_won:
+                self.draw_victory_screen()
+
+            pygame.display.flip()
+
+        # Quitter ou retourner au menu
+        if not self.game_running:
+            return
+        pygame.quit()

@@ -370,12 +370,6 @@ class TutorialManager:
         """Permettant d'afficher le didacticiel a chaque frame."""
         if not self.active:
             return
-        if self.step > len(self.messages) - 1:
-            from Class.menu import Menu
-            menu = Menu()
-            menu.run()
-            self.active = False
-            return
         self.message = self.messages[self.step]["message"]
         self.sub_text = self.messages[self.step]["sub_text"]
         self.anchor_pos = self.messages[self.step]["anchor_pos"]
