@@ -49,6 +49,14 @@ class Game :
         # Variables de base
         self.mode = mode
         self.screen = screen
+    
+        # Systèmes de succès (seront assignés par le menu)
+        self.achievements_system = None
+        self.achievements_system_rouge = None
+        self.achievements_system_vert = None
+        
+        # Gestionnaire de notifications de succès
+        self.notification_manager = AchievementNotificationManager(screen)
             
         # La liste des iles quantiques GRAPHIQUES
         self.quantum_islands = [] 
@@ -564,6 +572,24 @@ class Game :
             from Global import GAMEPLAY_SETTINGS
             for key in GAMEPLAY_SETTINGS["AI_ACTIVATION"]:
                 GAMEPLAY_SETTINGS["AI_ACTIVATION"][key] = False
+        else : 
+            # Initialiser les systèmes de succès pour les deux équipes si ils ne sont pas déjà assignés
+            if not hasattr(self, 'achievements_system_rouge') or not self.achievements_system_rouge:
+                self.achievements_system_rouge = AchievementsSystemRouge(self)
+                self.achievements_system_vert = AchievementsSystemVert(self)
+            
+            # Sélectionner le bon système de succès selon l'équipe du joueur pour l'affichage
+            if self.hud.player_team == 'red':
+                self.achievements_system = self.achievements_system_rouge
+            else:
+                self.achievements_system = self.achievements_system_vert
+            
+            # Réinitialiser les statistiques de jeu pour les succès des deux équipes
+            if self.achievements_system_rouge:
+                self.achievements_system_rouge.reset_game_stats()
+            
+            if self.achievements_system_vert:
+                self.achievements_system_vert.reset_game_stats()
 
         while running and self.game_running:
             dt = clock.tick(FPS) / TIME_STEP
@@ -582,9 +608,24 @@ class Game :
 
             # Gestion achievements et notifications
             if self.mode != "tuto" and self.achievements_system:
-                self.achievements_system.update_playtime(dt / 1000)
-                for notification in self.achievements_system.get_pending_notifications():
-                    self.notification_manager.add_notification(notification['achievement'])
+                # Mettre à jour le temps de jeu pour les succès des deux équipes
+                if hasattr(self, 'achievements_system_rouge') and self.achievements_system_rouge:
+                    self.achievements_system_rouge.update_playtime(dt / 1000)  # Convertir en secondes
+                if hasattr(self, 'achievements_system_vert') and self.achievements_system_vert:
+                    self.achievements_system_vert.update_playtime(dt / 1000)  # Convertir en secondes
+                    
+                # Vérifier s'il y a de nouvelles notifications de succès pour les DEUX équipes
+                if self.achievements_system_rouge:
+                    new_notifications = self.achievements_system_rouge.get_pending_notifications()
+                    for notification in new_notifications:
+                        self.notification_manager.add_notification(notification['achievement'])
+                
+                if self.achievements_system_vert:
+                    new_notifications = self.achievements_system_vert.get_pending_notifications()
+                    for notification in new_notifications:
+                        self.notification_manager.add_notification(notification['achievement'])
+                
+                # Mettre à jour le gestionnaire de notifications
                 self.notification_manager.update(dt)
 
             # Rendu
