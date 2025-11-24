@@ -426,7 +426,7 @@ class EventHandler:
                 if seq["restriction"]["name"] == "zqsd":
                     self.handle_camera_movement(pressed)
                 elif seq["restriction"]["name"] == "fire_chaloupe":
-                    if pressed[get_action_key("SHOOT")]:
+                    if pressed[get_action_key("SHOOT")] and len(self.game.units) == 4:
                         self.trigger_shooting()
                         self.game.tutorial.next_step()
         else:
