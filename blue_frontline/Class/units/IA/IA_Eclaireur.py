@@ -22,7 +22,6 @@ Convention :
 
 import csv
 import heapq
-import logging
 import math
 import random
 import time
@@ -31,17 +30,6 @@ from typing import (Callable, Dict, Iterable, List, Optional, Sequence, Tuple,
                     Union)
 
 import Global
-
-# -----------z----------------------------------------------------------------
-# LOGGER
-# ---------------------------------------------------------------------------
-LOGGER_NAME = "EclaireurAI"
-logger = logging.getLogger(LOGGER_NAME)
-if not logger.handlers:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="[%(levelname)s] %(name)s: %(message)s",
-    )
 
 Vec2 = Tuple[float, float]
 Cell = Tuple[int, int]
@@ -140,10 +128,6 @@ class AStar:
 
             expansions += 1
             if expansions > max_expansions:
-                logger.warning(
-                    "A*: expansions max atteintes (%d). Abandon.",
-                    max_expansions,
-                )
                 return []
 
             for nxt in self.neighbors(current):
@@ -356,17 +340,6 @@ class ScoutAI:
             self._accum = 0.0
             self._ensure_objective_and_path()
 
-        # debug log toutes les ~2s
-        self._last_debug_tick += dt
-        if self._last_debug_tick >= 2.0:
-            self._last_debug_tick = 0.0
-            logger.debug(
-                "ScoutAI DEBUG TICK: pos=%s goal=%s path_len=%d wander_dir=%s",
-                self.unit.position,
-                self.current_goal_world,
-                len(self._path_world),
-                self._wander_dir,
-            )
         # (No periodic diagnostic or teleport detection here in the simplified
         # version — keep the tick loop light and deterministic.)
 
@@ -392,12 +365,10 @@ class ScoutAI:
         # Pré-calculer les centroïdes pour éviter plusieurs calculs
         centroid_list: List[Vec2] = []
         if hidden:
-            logger.info("ScoutAI DEBUG: %d zones cachées reçues par l'IA", len(hidden))
             for i, poly in enumerate(hidden):
                 c = self._compute_centroid_from_polygon_like(poly)
                 if c:
                     centroid_list.append(c)
-                    logger.info("  -> zone[%d] centroïde vu=(%.1f, %.1f)", i, c[0], c[1])
 
         # cible = zone cachée la plus proche (parmi les centroïdes valides)
         target: Optional[Vec2] = None
@@ -408,7 +379,6 @@ class ScoutAI:
         # ancien comportement = rentrer à la base.
         # maintenant : NON, on reste en patrouille.
         if target is None:
-            logger.info("ScoutAI: aucune zone cachée -> rester en patrouille.")
             self.current_goal_world = None
             # si on est déjà en patrouille, juste s'assurer qu'on a un WP
             if self._wander_dir is None:
@@ -424,19 +394,6 @@ class ScoutAI:
         # If zones are currently closed by schedule, don't attempt pathing;
         # fallback to patrol but keep current_goal_world so we can retry later
         if not self._zones_open_now():
-            # Log the configured period so we can see runtime changes from options
-            period = float(Global.TIME_MAREE) if getattr(Global, 'TIME_MAREE', 0) > 0 else 180.0
-            ts = getattr(self.unit, 'game_time', None)
-            try:
-                window = int(math.floor(float(ts) / period)) if ts is not None else None
-            except Exception:
-                window = None
-
-            logger.info(
-                "ScoutAI: zones fermées par schedule (%ds ON/OFF) time=%s -> éviter d'essayer d'y aller maintenant.",
-                int(period),
-                str(window) if window is not None else "n/a",
-            )
             self._enter_or_update_patrol()
             return
 
@@ -451,10 +408,6 @@ class ScoutAI:
         # Ne pas forcer l'unité à y aller directement : on passe en patrouille,
         # mais on conserve `current_goal_world` pour pouvoir réessayer plus tard
         # quand la grille aura changé ou que la cible deviendra atteignable.
-        logger.warning(
-            "ScoutAI: aucun chemin local vers (%.1f, %.1f) -> zone temporairement inaccessible, patrouille (réessaiera).",
-            target[0], target[1],
-        )
         # enter patrol mode (keeps current_goal_world so future replans will retry)
         self._enter_or_update_patrol()
         return
@@ -558,12 +511,6 @@ class ScoutAI:
         if best_goal is None:
             return None
 
-        logger.info(
-            "ScoutAI DEBUG: meilleure zone choisie = (%.1f, %.1f) dist=%.1f px",
-            best_goal[0],
-            best_goal[1],
-            math.sqrt(best_d2),
-        )
         return best_goal
 
     def _report_accessible_hidden_zones(self) -> None:
@@ -597,23 +544,11 @@ class ScoutAI:
                 )
 
         if not path_cells:
-            logger.warning(
-                "ScoutAI: aucun chemin local vers %s -> échec A*.",
-                world_goal,
-            )
             return False
         # (Simplified) accept the found path immediately.
 
         # convertit en points monde
         self._path_world = [self.grid.cell_to_world(c) for c in path_cells]
-
-        if self._path_world:
-            logger.info(
-                "ScoutAI: chemin LOCAL planifié (%d steps), 1er WP=(%.1f, %.1f)",
-                len(self._path_world),
-                self._path_world[0][0],
-                self._path_world[0][1],
-            )
 
         # on n'est plus en patrouille aveugle
         self._wander_dir = None
@@ -641,9 +576,6 @@ class ScoutAI:
                 candidates.append(cand)
 
         if not candidates:
-            logger.warning(
-                "ScoutAI: _find_reachable_cell_near abandon (aucune cellule candidate walkable)",
-            )
             return None
 
         # Si le start est déjà une candidate -> OK
@@ -669,10 +601,6 @@ class ScoutAI:
 
             expansions += 1
             if expansions > max_expansions:
-                logger.warning(
-                    "A* multi-goal: expansions max atteintes (%d). Abandon.",
-                    max_expansions,
-                )
                 return None
 
             for nxt in self.grid.neighbors(current):
@@ -686,9 +614,6 @@ class ScoutAI:
                     frontier.push(priority, nxt)
                     came_from[nxt] = current
 
-        logger.warning(
-            "ScoutAI: _find_reachable_cell_near abandon (aucune cellule atteignable proche)"
-        )
         return None
 
     # ------------------------------------------------------------------
@@ -702,20 +627,10 @@ class ScoutAI:
         """
         if self._wander_dir is None:
             self._wander_dir = self._pick_new_wander_dir()
-            logger.info(
-                "ScoutAI: patrouille activée. direction=(%.2f, %.2f)",
-                self._wander_dir[0],
-                self._wander_dir[1],
-            )
 
         wp = self._make_forward_waypoint(self._wander_dir)
         self._path_world = [wp]
         self._just_assigned_wp_timer = 0.5
-        logger.info(
-            "ScoutAI: patrouille -> WP=(%.1f, %.1f) (1 step).",
-            wp[0],
-            wp[1],
-        )
         self._push_move_order_if_any()
 
     def _pick_new_wander_dir(self) -> Vec2:
@@ -823,24 +738,12 @@ class ScoutAI:
                 self._wander_dir = new_dir
                 self._path_world = [wp]
                 self._just_assigned_wp_timer = 0.5
-                logger.info(
-                    "ScoutAI: blocage -> nouvelle dir=(%.2f, %.2f), nouveau WP=(%.1f, %.1f)",
-                    self._wander_dir[0],
-                    self._wander_dir[1],
-                    wp[0],
-                    wp[1],
-                )
                 return
 
         # si rien trouvé -> au moins rester dans la carte
         wp_fallback = self._make_forward_waypoint(self._wander_dir)
         self._path_world = [wp_fallback]
         self._just_assigned_wp_timer = 0.5
-        logger.info(
-            "ScoutAI: blocage -> fallback patrouille WP=(%.1f, %.1f)",
-            wp_fallback[0],
-            wp_fallback[1],
-        )
 
     # ------------------------------------------------------------------
     # SUIVI DES WAYPOINTS / ANTI-BLOCAGE
@@ -890,13 +793,6 @@ class ScoutAI:
             return  # pas encore déclaré bloqué
 
         # BLOQUÉ
-        logger.warning(
-            "ScoutAI: unité bloquée sur WP (%.1f, %.1f) depuis %.2fs -> réorientation.",
-            wx,
-            wy,
-            self._block_timer,
-        )
-
         # retire le WP actuel
         if self._path_world:
             self._path_world.pop(0)
@@ -933,11 +829,6 @@ class ScoutAI:
             wp = self._make_forward_waypoint(self._wander_dir)
             self._path_world = [wp]
             self._just_assigned_wp_timer = 0.5
-            logger.debug(
-                "ScoutAI: patrouille continue -> nouveau WP=(%.1f, %.1f)",
-                wp[0],
-                wp[1],
-            )
             self._push_move_order_if_any()
         else:
             self.unit.stop()
@@ -961,13 +852,8 @@ class ScoutAI:
         # underlying unit API misbehaves.
         try:
             self.unit.move_to_position((wx, wy))
-            logger.debug(
-                "ScoutAI DEBUG MOVE ORDER -> (%.1f, %.1f)",
-                wx,
-                wy,
-            )
         except Exception:
-            logger.exception("ScoutAI: erreur en envoyant l'ordre de mouvement")
+            pass
 
     def _clear_path(self) -> None:
         self._path_world = []
@@ -1045,12 +931,8 @@ def update_all_scout_ai(game, dt: float):
 
         try:
             ai_controller.ia_tick(dt)
-        except Exception as e:
-            ux, uy = getattr(unit, "position", (None, None))
-            logger.error(
-                "Erreur ia_tick sur %s (pos=%s,%s) : %s",
-                unit, ux, uy, e
-            )
+        except Exception:
+            pass
 
 
 # ---------------------------------------------------------------------------
