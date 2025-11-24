@@ -56,7 +56,7 @@ class TutorialManager:
         self.current_indice = -3
         self.messages = [
             {
-                "message": "Bienvenue dans le didactitiel de Blue Frontline ! Je suis le Commandant Capitaine, votre guide pour vous préparez a cette guerre navale. Je vais vous expliquer comment jouer.",
+                "message": "Bienvenue dans le didactitiel de Blue Frontline ! Je suis le Commandant Capitaine, votre guide pour vous préparer a cette guerre navale. Je vais vous expliquer comment jouer.",
                 "sub_text": default_sub_text,
                 "anchor_pos": pos_center,
                 "orientation": "hg",
@@ -74,7 +74,7 @@ class TutorialManager:
                 "count": 0
             },
             {
-                "message": "Dans ce jeu, plusieurs modes de jeu sont disponibles. Vous pouvez jouer en solo contre l'IA, en multijoueur local (en utilisant la touche J pour changer d'équipe) ou même IA contre IA. Tout est possible ! Je vous laisserais jetter un oeil aux paramétres plus tard.",
+                "message": "Dans ce jeu, plusieurs modes de jeu sont disponibles. Vous pouvez jouer en solo contre l'IA, en multijoueur local (en utilisant la touche J pour changer d'équipe) ou même IA contre IA. Tout est possible ! Je vous laisserais jetter un oeil aux paramètres plus tard.",
                 "sub_text": default_sub_text,
                 "anchor_pos": pos_center,
                 "orientation": "hg",
@@ -139,7 +139,7 @@ class TutorialManager:
                 "function": [{"name": self.move_to_base, "args": ("green",)}]
             },
             {
-                "message": "La c'est l'indicateur de votre équipe",
+                "message": "Là c'est l'indicateur de votre équipe",
                 "sub_text": default_sub_text,
                 "anchor_pos": (self.width * 0.05, self.height * 0.05),
                 "orientation": "hg",
@@ -148,7 +148,7 @@ class TutorialManager:
                 "count": 0
             },
             {
-                "message": "Par la c'est pétrole dont vous disposez, elle vous permettra de poser des troupes.",
+                "message": "Par là  c'est pétrole dont vous disposez, elle vous permettra de poser des troupes.",
                 "sub_text": default_sub_text,
                 "anchor_pos": (self.width * 0.84, self.height * 0.9),
                 "orientation": "bd",
@@ -157,7 +157,7 @@ class TutorialManager:
                 "count": 0
             },
             {
-                "message": "Et ici les pièces obtenues par les morts, elle vous permettra d'améliorer le plateforme pétroliére.",
+                "message": "Et ici les pièces obtenues par les morts, elle vous permettra d'améliorer la plateforme pétrolière.",
                 "sub_text": default_sub_text,
                 "anchor_pos": (self.width * 0.84, self.height * 0.8),
                 "orientation": "bd",
@@ -178,7 +178,7 @@ class TutorialManager:
             },
             {
                 "message": "Et si on se rapprochait un peu ?",
-                "sub_text": "Utilisez le zoom pour continuer...",
+                "sub_text": "Utilisez la molette de la souris pour zoomer et dézoomer et continuer...",
                 "anchor_pos": pos_center,
                 "orientation": "hg",
                 "arrow": False,
@@ -207,7 +207,7 @@ class TutorialManager:
                 "restriction": {"name": "select_chaloupe", "keys": [get_action_key("SELECT_MOVE")]}
             },
             {
-                "message": "A l'attaque ! Faites apparaîte l'unité.",
+                "message": "À l'attaque ! Faites apparaîte l'unité.",
                 "sub_text": "Appuyez sur la touche entrée pour continuer...",
                 "anchor_pos": pos_center,
                 "orientation": "hg",
@@ -268,7 +268,7 @@ class TutorialManager:
                 "count": 0
             },
             {
-                "message": "Jetons un oeil à la défense, cliquez sur la Plateforme Pétroliére",
+                "message": "Jetons un oeil à la défense, cliquez sur la Plateforme Pétrolière",
                 "sub_text": "Cliquez sur la plateforme pétroliére pour continuer...",
                 "anchor_pos": pos_center,
                 "orientation": "hg",
@@ -287,7 +287,7 @@ class TutorialManager:
                 "count": 0
             },
             {
-                "message": "Les pièces ont les voles qu'aux morts, tuez le plus d'énnemies pour en avoir.",
+                "message": "Les pièces ont ne les voles qu'aux morts, tuez le plus d'énnemies pour en avoir.",
                 "sub_text": default_sub_text,
                 "anchor_pos": pos_center,
                 "orientation": "hg",
