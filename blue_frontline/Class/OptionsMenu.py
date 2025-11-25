@@ -440,10 +440,6 @@ class OptionsMenu:
 
             # Texte
             text_color = WHITE
-            # # Si l'unité commence par Eclaireur
-            # if unit.startswith("Eclaireur"):
-            #     text_color = (120, 120, 120)
-            #     active = True
 
             text_surf = self.font.render(f"{unit}", True, text_color)
             self.screen.blit(text_surf, (x, y + button_height //
@@ -556,6 +552,41 @@ class OptionsMenu:
             is_active
         )
         interactive_rects["PIECE_PER_KILL"] = piece_rect
+        
+        # Avancer x et y pour la grille
+        param_y += button_height + 2 * spacing_y
+        param_x = ia_x + ia_width + spacing_x 
+        
+        # --- Taille Unités (slider) ---
+        slider_width = self.MIN_BUTTON_WIDTH
+        slider_height = 20
+        slider_x = param_x 
+        slider_y = param_y + button_height // 2 - slider_height // 2
+
+        # Track
+        scale_track_rect = pygame.Rect(
+            slider_x, slider_y, slider_width, slider_height)
+        pygame.draw.rect(self.screen, OCEAN_BLUE, scale_track_rect, border_radius=10)
+
+        # Récupérer la valeur depuis gameplay_settings
+        scale_val = gameplay_settings.get('SCALE', 32)
+        scale_min = 16
+        scale_max = 64
+        cursor_pos = int(slider_x + ((scale_val - scale_min) /
+                        (scale_max - scale_min)) * slider_width)
+        cursor_rect = pygame.Rect(
+            cursor_pos - 10, slider_y - 5, 20, slider_height + 10)
+        pygame.draw.rect(self.screen, LIGHT_BLUE, cursor_rect, border_radius=5)
+
+        # Texte
+        text_surf = self.font.render(f"Taille Unités : {scale_val}", True, WHITE)
+        self.screen.blit(text_surf, (slider_x, slider_y - 30))
+        interactive_rects["SCALE"] = scale_track_rect
+        interactive_rects["SCALE_CURSOR"] = cursor_rect
+
+        # Avancer x et y pour la grille
+        param_y += button_height + 2 * spacing_y
+        param_x = ia_x + ia_width + spacing_x 
 
         # Bouton Appliquer
         apply_rect = pygame.Rect(
@@ -719,6 +750,8 @@ class OptionsMenu:
                                         self.dragging_slider = "TIME_MAREE"
                                     elif key == "OCTAVES":
                                         self.dragging_slider = "OCTAVES"
+                                    elif key == "SCALE" : 
+                                        self.dragging_slider = "SCALE"
                                     elif key in ["OIL_PER_SECOND", "PIECE_PER_KILL"]:
                                         self.active_input = key
                                     elif key == "back":
@@ -736,7 +769,7 @@ class OptionsMenu:
 
                 elif event.type == pygame.MOUSEBUTTONUP:
                     # Relâchement de la souris
-                    if self.dragging_slider in ["TIME_MAREE", "OCTAVES"]:
+                    if self.dragging_slider in ["TIME_MAREE", "OCTAVES", "SCALE"]:
                         self.dragging_slider = None
 
                 elif event.type == pygame.MOUSEMOTION:
@@ -767,6 +800,20 @@ class OptionsMenu:
                         gameplay_settings = Global.get_gameplay_settings()
                         gameplay_settings["OCTAVES"] = int(
                             octaves_min + proportion * (octaves_max - octaves_min))
+                        
+                    if self.dragging_slider == "SCALE" and interactive_rects:
+                        mouse_x = pygame.mouse.get_pos()[0]
+                        slider_x = interactive_rects["SCALE"].x
+                        slider_width = interactive_rects["SCALE"].width
+                        mouse_x = max(slider_x, min(slider_x + slider_width, mouse_x))
+                        
+                        # CORRIGÉ : Bonnes valeurs pour les octaves
+                        scale_min = 16
+                        scale_max = 64
+                        proportion = (mouse_x - slider_x) / slider_width
+                        gameplay_settings = Global.get_gameplay_settings()
+                        gameplay_settings["SCALE"] = int(
+                            scale_min + proportion * (scale_max - scale_min))
 
 
         return True

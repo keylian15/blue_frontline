@@ -219,6 +219,9 @@ MASK_MAPPING = {
 
 # === Unités ===
 
+RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
+GREEN_TEAM_PATH = resource_path(
+    'assets/Green_team/png/Green_team_spritesheet.png')
 RED_TEAM_PATH_BIG = resource_path('assets/Red_team/png/red_team_spritesheet_big.png')
 GREEN_TEAM_PATH_BIG = resource_path(
     'assets/Green_team/png/Green_team_spritesheet_big.png')

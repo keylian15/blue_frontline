@@ -1,6 +1,6 @@
 import pygame
 from Class.OptionsMenu import OptionsMenu
-from Global import get_action_key
+from Global import get_action_key, get_gameplay_settings
 from Global import UNIT_CONFIGS
 from Class.units.Chaloupe import ChaloupeRouge, ChaloupeVerte
 from Class.units.Bateau import BateauRouge, BateauVert
@@ -81,7 +81,12 @@ class EventHandler:
         # Menu Options
         if event.key == get_action_key("OPTIONS"):
             options_menu = OptionsMenu(self.game.screen)
-            options_menu.run()
+            if options_menu.run() :
+                settings = get_gameplay_settings()
+                if self.game.scale_unit != settings["SCALE"]: 
+                    self.game.scale_unit = settings["SCALE"]
+                    if len(self.game.units) > 2 : # On ignore les plateformes pétrolieres
+                        self.game.units[2].reload_sprites()
 
         # Création d'unité
         elif event.key == get_action_key("CREATE_UNIT"):

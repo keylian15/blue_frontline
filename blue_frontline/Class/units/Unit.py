@@ -45,7 +45,14 @@ class Unit(pygame.sprite.Sprite):
         self.last_shot_time = 0
         
         # Image et sprite
+        # On met d'abord a jour le scale du jeu
+        scale = get_gameplay_settings()["SCALE"]
+        if scale != self.game.scale_unit : 
+            self.game.scale_unit = scale
+            self.reload_sprites()
+
         self.load_sprite_from_tileset(team, unit_type)
+        
         self.rect = self.image.get_rect()
         self.rect.center = (self.position[0], self.position[1])
         self.angle = 0 
@@ -90,19 +97,26 @@ class Unit(pygame.sprite.Sprite):
             # Charger le tileset et sélectionner la bonne tuile
             self.tileset = load_tileset(tileset_path, 64)
             if tile_index < len(self.tileset):
-                self.image = self.tileset[tile_index]
+                sprite = self.tileset[tile_index]
             else:
                 # Si l'index est invalide, utiliser la première tuile
-                self.image = self.tileset[0]
+                sprite = self.tileset[0]
             
         else:
             # Fallback vers l'ancien système si unit_type n'est pas fourni
-            self.tileset = load_tileset(RED_TEAM_PATH_BIG if team == "red" else GREEN_TEAM_PATH_BIG, 64)
-            self.image = self.tileset[0]
-        self.image_original = self.image
-             
+            self.tileset = load_tileset(RED_TEAM_PATH if team == "red" else GREEN_TEAM_PATH)
+            sprite = self.tileset[0]
+        scale = self.game.scale_unit
+        self.image = pygame.transform.scale(sprite, (scale, scale))
+        self.rect = self.image.get_rect(center=self.image.get_rect().center)
+        self.image_original = self.image     
 
-        
+    def reload_sprites(self):
+        """Recharge les sprites de toutes les unités."""
+        for unit in self.game.units:
+            if hasattr(unit, "load_sprite_from_tileset"):
+                unit.load_sprite_from_tileset(unit.team, unit.unit_type)
+
     
     def update(self, dt: int = 0, combat_system: "CombatSystem" = None, screen: pygame.Surface = None, camera_offset: tuple[float, float] =(0, 0), all_units: list["Unit"] = None):
         """Met à jour l'unité en fonction de son état actuel.
