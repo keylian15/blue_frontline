@@ -1,6 +1,6 @@
 import sys, pygame, random, os
 
-def load_tileset(path: str):
+def load_tileset(path: str, size:int = 32):
     """
     Charge un spritesheet et le découpe en tuiles.
     
@@ -10,7 +10,7 @@ def load_tileset(path: str):
     Returns:
         tiles (list[pygame.Surface]): liste de tuiles découpées
     """
-    tile_width  = tile_height = 32
+    tile_width  = tile_height = size
     image = pygame.image.load(path).convert_alpha()
     tiles = []
     sheet_width, sheet_height = image.get_size()

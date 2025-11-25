@@ -1,7 +1,6 @@
 import pygame, math
 from Class.units.Unit import Unit
-from Utils import resource_path
-from Global import RED_TEAM_PATH, GREEN_TEAM_PATH
+from Global import RED_TEAM_PATH_BIG, GREEN_TEAM_PATH_BIG
 from Utils import load_tileset
 from Class.ExplosionRenderer import ExplosionRenderer
 
@@ -227,10 +226,10 @@ class Mine(pygame.sprite.Sprite):
         try:
             # Charger le spritesheet de l'équipe appropriée
             if self.team == "red":
-                team_spritesheet = load_tileset(RED_TEAM_PATH)
+                team_spritesheet = load_tileset(RED_TEAM_PATH_BIG, 64)
                 mine_image = team_spritesheet[5]  # Utiliser l'index 5 pour la mine
             else:
-                team_spritesheet = load_tileset(GREEN_TEAM_PATH)
+                team_spritesheet = load_tileset(GREEN_TEAM_PATH_BIG, 64)
                 mine_image = team_spritesheet[5]  # Utiliser l'index 5 pour la mine
 
             # Redimensionner l'image

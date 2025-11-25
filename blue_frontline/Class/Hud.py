@@ -114,8 +114,8 @@ class Hud:
         maree_haute = pygame.image.load(MAREE_HAUTE_IMAGE_PATH).convert_alpha()
         marre_basse = pygame.image.load(MAREE_BASSE_IMAGE_PATH).convert_alpha()
         
-        red_team = load_tileset(RED_TEAM_PATH)
-        green_team = load_tileset(GREEN_TEAM_PATH)
+        red_team = load_tileset(RED_TEAM_PATH_BIG, 64)
+        green_team = load_tileset(GREEN_TEAM_PATH_BIG, 64)
         
         red_chaloupe = pygame.transform.scale(red_team[0], (80, 80))
         red_bateau = pygame.transform.scale(red_team[1], (80, 80))

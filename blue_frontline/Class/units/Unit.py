@@ -88,7 +88,7 @@ class Unit(pygame.sprite.Sprite):
             tile_index = config["tile_index"][team]
             
             # Charger le tileset et sélectionner la bonne tuile
-            self.tileset = load_tileset(tileset_path)
+            self.tileset = load_tileset(tileset_path, 64)
             if tile_index < len(self.tileset):
                 self.image = self.tileset[tile_index]
             else:
@@ -97,7 +97,7 @@ class Unit(pygame.sprite.Sprite):
             
         else:
             # Fallback vers l'ancien système si unit_type n'est pas fourni
-            self.tileset = load_tileset(RED_TEAM_PATH if team == "red" else GREEN_TEAM_PATH)
+            self.tileset = load_tileset(RED_TEAM_PATH_BIG if team == "red" else GREEN_TEAM_PATH_BIG, 64)
             self.image = self.tileset[0]
         self.image_original = self.image
              

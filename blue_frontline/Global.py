@@ -219,9 +219,9 @@ MASK_MAPPING = {
 
 # === Unités ===
 
-RED_TEAM_PATH = resource_path('assets/Red_team/png/red_team_spritesheet.png')
-GREEN_TEAM_PATH = resource_path(
-    'assets/Green_team/png/Green_team_spritesheet.png')
+RED_TEAM_PATH_BIG = resource_path('assets/Red_team/png/red_team_spritesheet_big.png')
+GREEN_TEAM_PATH_BIG = resource_path(
+    'assets/Green_team/png/Green_team_spritesheet_big.png')
 
 # === BASE ===
 RED_BASE_TEAM_PATH = resource_path('assets/Red_team/png/red_base.png')
@@ -242,12 +242,8 @@ UNIT_CONFIGS = {
             "green": 0   # Index de la tuile pour équipe verte
         },
         "tileset_paths": {
-            "red": RED_TEAM_PATH,
-            "green": GREEN_TEAM_PATH
-        },
-        "image_paths": {
-            "red": RED_TEAM_PATH,
-            "green": GREEN_TEAM_PATH
+            "red": RED_TEAM_PATH_BIG,
+            "green": GREEN_TEAM_PATH_BIG
         },
         "range_color": {
             "red": (255, 0, 0, 50),    # Rouge semi-transparent
@@ -267,12 +263,8 @@ UNIT_CONFIGS = {
             "green": 1   # Index de la tuile pour équipe verte
         },
         "tileset_paths": {
-            "red": RED_TEAM_PATH,
-            "green": GREEN_TEAM_PATH
-        },
-        "image_paths": {
-            "red": RED_TEAM_PATH,
-            "green": GREEN_TEAM_PATH
+            "red": RED_TEAM_PATH_BIG,
+            "green": GREEN_TEAM_PATH_BIG
         },
         "range_color": {
             "red": (255, 0, 0, 50),
@@ -292,12 +284,8 @@ UNIT_CONFIGS = {
             "green": 3   # Index de la tuile pour équipe verte
         },
         "tileset_paths": {
-            "red": RED_TEAM_PATH,
-            "green": GREEN_TEAM_PATH
-        },
-        "image_paths": {
-            "red": RED_TEAM_PATH,
-            "green": GREEN_TEAM_PATH
+            "red": RED_TEAM_PATH_BIG,
+            "green": GREEN_TEAM_PATH_BIG
         },
         "range_color": {
             "red": (255, 0, 0, 50),
@@ -317,12 +305,8 @@ UNIT_CONFIGS = {
             "green": 2   # Index de la tuile pour équipe verte
         },
         "tileset_paths": {
-            "red": RED_TEAM_PATH,
-            "green": GREEN_TEAM_PATH
-        },
-        "image_paths": {
-            "red": RED_TEAM_PATH,
-            "green": GREEN_TEAM_PATH
+            "red": RED_TEAM_PATH_BIG,
+            "green": GREEN_TEAM_PATH_BIG
         },
         "range_color": {
             "red": (255, 0, 0, 50),
@@ -343,12 +327,8 @@ UNIT_CONFIGS = {
             "green": 4   # Index de la tuile pour équipe verte
         },
         "tileset_paths": {
-            "red": RED_TEAM_PATH,
-            "green": GREEN_TEAM_PATH
-        },
-        "image_paths": {
-            "red": RED_TEAM_PATH,
-            "green": GREEN_TEAM_PATH
+            "red": RED_TEAM_PATH_BIG,
+            "green": GREEN_TEAM_PATH_BIG
         },
         "range_color": {
             "red": (255, 0, 0, 50),
@@ -368,12 +348,8 @@ UNIT_CONFIGS = {
             "green": 6   # Index de la tuile pour équipe verte
         },
         "tileset_paths": {
-            "red": RED_TEAM_PATH,
-            "green": GREEN_TEAM_PATH
-        },
-        "image_paths": {
-            "red": RED_TEAM_PATH,
-            "green": GREEN_TEAM_PATH
+            "red": RED_TEAM_PATH_BIG,
+            "green": GREEN_TEAM_PATH_BIG
         },
         "range_color": {
             "red": (255, 0, 0, 50),
