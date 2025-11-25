@@ -378,7 +378,8 @@ class Unit(pygame.sprite.Sprite):
                         self.game.achievements_system_rouge.track_unit_killed(unit_type)
                 
         self.kill()  # Retire l'unité du groupe pygame
-        self.game.units.remove(self)  # Retire l'unité de la liste des unités
+        if self in self.game.units:
+            self.game.units.remove(self)  # Retire l'unité de la liste des unités
                     
         # Créer une explosion au moment de la mort
         if hasattr(self, 'game') and hasattr(self.game, 'combat_system'):
