@@ -807,13 +807,21 @@ class OptionsMenu:
                         slider_width = interactive_rects["SCALE"].width
                         mouse_x = max(slider_x, min(slider_x + slider_width, mouse_x))
                         
-                        # CORRIGÉ : Bonnes valeurs pour les octaves
                         scale_min = 16
                         scale_max = 64
                         proportion = (mouse_x - slider_x) / slider_width
                         gameplay_settings = Global.get_gameplay_settings()
-                        gameplay_settings["SCALE"] = int(
-                            scale_min + proportion * (scale_max - scale_min))
+                        # Valeurs autorisées
+                        allowed_values = [16, 32, 48, 64]
+
+                        # Valeur continue (normalement entre 16 et 64)
+                        raw_value = scale_min + proportion * (scale_max - scale_min)
+
+                        # Trouver la valeur autorisée la plus proche
+                        snap_value = min(allowed_values, key=lambda v: abs(v - raw_value))
+                        
+                        gameplay_settings["SCALE"] = snap_value
+
 
 
         return True
