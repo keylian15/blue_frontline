@@ -53,7 +53,11 @@ class AchievementsSystem:
         self.load_achievements()
 
     def get_save_filename(self):
-        """Retourne le nom du fichier de sauvegarde selon l'équipe."""
+        """Retourne le nom du fichier de sauvegarde selon l'équipe.
+        
+        Returns:
+            (str): Le chemin du fichier de sauvegarde.
+        """
         if self.team_name:
             return user_data_path(f"data/achievements_{self.team_name.lower()}.json")
         return user_data_path("data/achievements.json")
@@ -62,7 +66,7 @@ class AchievementsSystem:
         """Initialise la liste des succès avec leurs conditions.
 
         Returns:
-            dict: Un dictionnaire des succès avec leurs conditions.
+            (dict): Un dictionnaire des succès avec leurs conditions.
         """
         return {
             # === CONSTRUCTION & ÉCONOMIE ===
@@ -404,7 +408,11 @@ class AchievementsSystem:
         return categories
 
     def get_completion_percentage(self):
-        """Retourne le pourcentage de succès complétés."""
+        """Retourne le pourcentage de succès complétés.
+        
+        Returns:
+            (float): Le pourcentage de succès complétés.
+        """
         total = len(self.achievements)
         completed = len(self.unlocked_achievements)
         return (completed / total * 100) if total > 0 else 0
@@ -460,7 +468,11 @@ class AchievementsSystem:
         self.stats["max_units_alive"] = 0
 
     def get_pending_notifications(self):
-        """Retourne et supprime les notifications en attente."""
+        """Retourne et supprime les notifications en attente.
+        
+        Returns:
+            notifications (list): Liste des notifications en attente.
+        """
         notifications = self.pending_notifications.copy()
         self.pending_notifications.clear()
         return notifications

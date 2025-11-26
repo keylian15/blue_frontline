@@ -41,7 +41,7 @@ class Perlin:
                 sont douces. Defaults to 30.0.
 
         Returns:
-            list[list[int]]: Matrice de hauteur (line * column).
+            (list[list[int]]): Matrice de hauteur (line * column).
         """
 
         matrice = []
@@ -73,7 +73,7 @@ class Perlin:
             x (int): Coordonnée x.
 
         Returns:
-            int: Valeur de la matrice aux coordonnées (y, x).
+            (int): Valeur de la matrice aux coordonnées (y, x).
         """
 
         height = len(matrice)
@@ -93,7 +93,7 @@ class Perlin:
             zone_recherche (int): Valeur pour la zone de recherche.
 
         Returns:
-            int: Mask binaire mis à jour.
+            (int): Mask binaire mis à jour.
         """
 
         # Voir Global.py pour le MASK_MAPPING.
@@ -268,7 +268,7 @@ class Perlin:
             tilesets (list): liste de tilesets par biome. ([deep_tileset, shallow_tileset, island_tileset])
 
         Returns:
-            pygame.Surface: Surface avec les transitions.
+            (pygame.Surface): Surface avec les transitions.
         """
 
         height = len(matrice)
@@ -324,7 +324,7 @@ class Perlin:
             island (IslandSprite): La zone quantique.
 
         Returns:
-            int: Type de zone (0 = eau profonde, 1 = eau peu profonde, 2 = île, 3 = terre).
+            (int): Type de zone (0 = eau profonde, 1 = eau peu profonde, 2 = île, 3 = terre).
         """
         # Conversion monde -> local
         local_x = x_pixel - island.rect.x
