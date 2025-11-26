@@ -47,7 +47,7 @@ class Camera(pygame.sprite.Sprite):
         """Calcule le niveau de zoom minimum nécessaire pour voir toute la map.
 
         Returns:
-            float: Le niveau de zoom minimum.
+            (float): Le niveau de zoom minimum.
         """
 
         # Calculer les ratios pour voir toute la map dans chaque dimension
@@ -106,7 +106,7 @@ class Camera(pygame.sprite.Sprite):
         """Retourne la taille effective de l'écran selon le niveau de zoom.
 
         Returns:
-            tuple[int, int]: La taille effective de l'écran.
+            (tuple[int, int]): La taille effective de l'écran.
         """
 
         return (
