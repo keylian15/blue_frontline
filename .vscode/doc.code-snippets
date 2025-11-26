@@ -2,7 +2,7 @@
     "Get Types Shortcut": {
         "prefix": "doc",               
         "body": [
-            "from Utils import get_types",
+            "from src.utils.Utils import get_types",
             "print('Affichage de test :')",
             "get_types(${1:param})"
         ],

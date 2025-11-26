@@ -1,0 +1,24 @@
+# Longueur de ligne
+line-length = 120
+
+# Version Python cible
+target-version = "py311"
+
+[lint]
+# Règles activées
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "UP",  # pyupgrade
+    "B",   # flake8-bugbear
+]
+
+# Règles ignorées si besoin
+ignore = []
+
+[format]
+# Formatage similaire à black
+quote-style = "double"
+indent-style = "space"
