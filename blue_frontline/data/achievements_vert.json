@@ -1,7 +1,5 @@
 {
-  "unlocked_achievements": [
-    "first_blood"
-  ],
+  "unlocked_achievements": [],
   "stats": {
     "units_created": {
       "chaloupe": 0,
@@ -14,7 +12,7 @@
       "chaloupe": 0,
       "bateau": 0,
       "eclaireur": 0,
-      "paquebot": 1,
+      "paquebot": 0,
       "sousmarin": 0
     },
     "games_won": 0,
@@ -22,9 +20,9 @@
     "total_petrole_spent": 0,
     "total_coins_earned": 0,
     "platforms_destroyed": 0,
-    "bullets_fired": 5,
-    "quantum_islands_activated": 1,
-    "total_playtime_seconds": 0.1542489999999973,
+    "bullets_fired": 0,
+    "quantum_islands_activated": 0,
+    "total_playtime_seconds": 0,
     "units_created_same_game": [],
     "max_units_alive": 0,
     "different_unit_types_created": []

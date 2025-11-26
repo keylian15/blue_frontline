@@ -8,7 +8,7 @@ a = Analysis(
     binaries=[],
     datas=[
         ('assets', 'assets'),
-        ('blue_frontline_sounds', 'blue_frontline_sounds'),
+        ('sounds', 'sounds'),
         ('map.tmx', '.'),
         ('data', 'data'),
     ],
