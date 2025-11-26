@@ -60,7 +60,7 @@ blue_frontline/
 │   ├── units/             # Unités de combat
 │   └── ...
 ├── assets/                # Ressources graphiques
-├── blue_frontline_sounds/ # Ressources audio
+├── sounds/ # Ressources audio
 └── dist/                  # Builds compilés
 ```
 
@@ -170,7 +170,7 @@ BLUE = (0, 0, 255)
 
 # Chemins des assets
 ASSETS_PATH = "assets/"
-SOUNDS_PATH = "blue_frontline_sounds/"
+SOUNDS_PATH = "sounds/"
 ```
 
 #### map.tmx

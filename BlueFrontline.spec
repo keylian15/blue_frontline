@@ -5,7 +5,7 @@ a = Analysis(
     ['blue_frontline\\main.py'],
     pathex=[],
     binaries=[],
-    datas=[('blue_frontline/assets', 'assets'), ('blue_frontline/blue_frontline_sounds', 'blue_frontline_sounds'), ('blue_frontline/data', 'data'), ('blue_frontline/map.tmx', '.')],
+    datas=[('blue_frontline/assets', 'assets'), ('blue_frontline/sounds', 'sounds'), ('blue_frontline/data', 'data'), ('blue_frontline/map.tmx', '.')],
     hiddenimports=[],
     hookspath=[],
     hooksconfig={},

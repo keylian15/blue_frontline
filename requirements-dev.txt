@@ -4,3 +4,5 @@
 # pyinstaller BlueFrontline.spec
 # ==============================================
 pyinstaller==6.3.0
+ruff== 0.14.6
+pre-commit==4.5.0
