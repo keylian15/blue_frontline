@@ -2,37 +2,17 @@
 import math
 
 import pygame
+from Class import SoundAPI
 from Global import DROP_CHALOUPE  # chemins; volumes / params; master volume
-from Global import (
-    APPARITION_QUANTIQUE,
-    BASE_BED,
-    BASE_COOLDOWN_MS,
-    BASE_FOCUS_RADIUS_MULT,
-    BASE_ONE_SHOT_VOL,
-    BASE_TRIGGER_THRESHOLD,
-    DROP_BATEAU,
-    DROP_COIN,
-    DROP_ECLAIREURS,
-    DROP_MINE,
-    DROP_PAQUEBOT,
-    DROP_SOUSMARIN,
-    EXPLOSION_MINE,
-    FOCUS_RADIUS_MULT,
-    ISLAND_BASE_CURVE,
-    ISLAND_BED,
-    MASTER_VOL_DEFAULT,
-    MASTER_VOL_MAX,
-    MASTER_VOL_MIN,
-    MASTER_VOL_STEP,
-    MUSIC_GAME,
-    SEA_BED,
-    SEA_ON_ISLAND_FACTOR,
-    VOL_BASE,
-    VOL_DROPS,
-    VOL_ISLAND,
-    VOL_MUSIC,
-    VOL_SEA,
-)
+from Global import (APPARITION_QUANTIQUE, BASE_BED, BASE_COOLDOWN_MS,
+                    BASE_FOCUS_RADIUS_MULT, BASE_ONE_SHOT_VOL,
+                    BASE_TRIGGER_THRESHOLD, DROP_BATEAU, DROP_COIN,
+                    DROP_ECLAIREURS, DROP_MINE, DROP_PAQUEBOT, DROP_SOUSMARIN,
+                    EXPLOSION_MINE, FOCUS_RADIUS_MULT, ISLAND_BASE_CURVE,
+                    ISLAND_BED, MASTER_VOL_DEFAULT, MASTER_VOL_MAX,
+                    MASTER_VOL_MIN, MASTER_VOL_STEP, MUSIC_GAME, SEA_BED,
+                    SEA_ON_ISLAND_FACTOR, VOL_BASE, VOL_DROPS, VOL_ISLAND,
+                    VOL_MUSIC, VOL_SEA)
 from Utils import resource_path
 
 
@@ -77,6 +57,10 @@ class SpatialAudioManager:
         # --- volume maître (0..1) ---
         self._master = clamp(MASTER_VOL_DEFAULT, MASTER_VOL_MIN, MASTER_VOL_MAX)
 
+        # flags de mute
+        self._global_muted = False    # coupe tout le son (SOUND_ENABLED)
+        self._music_muted = False     # coupe uniquement la musique de fond (MUSIC_ENABLED)
+
         # musique de fond
         try:
             pygame.mixer.music.load(MUSIC_GAME)
@@ -89,7 +73,7 @@ class SpatialAudioManager:
         self.chan_island = pygame.mixer.Channel(1)
         self.chan_sea = pygame.mixer.Channel(2)
         self.chan_base = pygame.mixer.Channel(3)  # one-shot base
-        self.chan_fx = pygame.mixer.Channel(4)  # one-shots gameplay (tir, drop, etc.)
+        self.chan_fx = pygame.mixer.Channel(4)    # one-shots gameplay (tir, drop, etc.)
 
         # états
         self.static_islands = None
@@ -106,12 +90,21 @@ class SpatialAudioManager:
         # init détection d'îles statiques
         self._init_static_islands_from_tmx()
 
-    # ---- API volume maître ----
+        # enregistrement pour SoundAPI (OptionsMenu)
+        try:
+            SoundAPI.register_audio_manager(self)
+        except Exception as e:
+            print("Impossible d'enregistrer le gestionnaire audio :", e)
+
+    # ---- API volume maître / mute ----
     def set_master_volume(self, value_0_1: float):
+        """Définit le volume maître (0..1) et recalcule immédiatement les volumes."""
         self._master = clamp(value_0_1, MASTER_VOL_MIN, MASTER_VOL_MAX)
-        # l'update() recalcule à chaque frame; nudge pour prise en compte immédiate:
-        cur = pygame.mixer.music.get_volume()
-        pygame.mixer.music.set_volume(clamp(cur, 0.0, 1.0))
+        # Recalcule immédiatement les volumes en fonction du zoom / focus courant
+        try:
+            self.update()
+        except Exception:
+            pass
 
     def adjust_master_volume(self, direction: int):
         """direction: +1 (increase) / -1 (decrease)"""
@@ -120,6 +113,28 @@ class SpatialAudioManager:
 
     def get_master_volume(self) -> float:
         return self._master
+
+    def set_global_mute(self, muted: bool):
+        """
+        Coupe ou réactive tous les sons (musique + SFX).
+        Utilisé par SOUND_ENABLED dans les options.
+        """
+        self._global_muted = bool(muted)
+        try:
+            self.update()
+        except Exception:
+            pass
+
+    def set_music_mute(self, muted: bool):
+        """
+        Coupe ou réactive seulement la musique de fond.
+        Utilisé par MUSIC_ENABLED dans les options.
+        """
+        self._music_muted = bool(muted)
+        try:
+            self.update()
+        except Exception:
+            pass
 
     # ---- chargement sons ----
     def _load_sounds(self):
@@ -243,10 +258,12 @@ class SpatialAudioManager:
         had = len(self.quantum_islands) > 0
         self.quantum_islands = list(centers or [])
         have_now = len(self.quantum_islands) > 0
-        if not had and have_now and self.sfx_quantum:
+        if not had and have_now and self.sfx_quantum and not self._global_muted:
             self.chan_fx.play(self.sfx_quantum)
 
     def play_drop_for_unit(self, unit_class_name: str, pos=None):
+        if self._global_muted:
+            return
         key = None
         low = (unit_class_name or "").lower()
         if "chaloupe" in low:
@@ -265,6 +282,8 @@ class SpatialAudioManager:
             self._play_spatial_one_shot(sfx, world_pos=pos, base_vol=VOL_DROPS)
 
     def play_one_shot_named(self, const_name: str, world_pos=None):
+        if self._global_muted:
+            return
         sfx = self.sfx_drop.get(const_name)
         if sfx:
             self._play_spatial_one_shot(sfx, world_pos=world_pos, base_vol=VOL_DROPS)
@@ -273,6 +292,9 @@ class SpatialAudioManager:
         """
         Joue le son de tir associé à l'unité (chaloupe / bateau / paquebot).
         """
+        if self._global_muted:
+            return
+
         low = (unit_class_name or "").lower()
         if "chaloupe" in low:
             key = "chaloupe"
@@ -287,6 +309,8 @@ class SpatialAudioManager:
 
     def play_victory(self):
         """Joue le son de victoire (non-spatial, centré)."""
+        if self._global_muted:
+            return
         if not self.sfx_victory:
             return
         vol = clamp(self._master, 0.0, 1.0)
@@ -295,6 +319,8 @@ class SpatialAudioManager:
 
     def play_defeat(self):
         """Joue le son de défaite (non-spatial, centré)."""
+        if self._global_muted:
+            return
         if not self.sfx_defeat:
             return
         vol = clamp(self._master, 0.0, 1.0)
@@ -307,6 +333,8 @@ class SpatialAudioManager:
         - si pos est fourni → spatial
         - sinon → centré
         """
+        if self._global_muted:
+            return
         if not self.sfx_horn:
             return
         if pos is None:
@@ -324,6 +352,9 @@ class SpatialAudioManager:
         if not cam or not screen:
             return
 
+        # Volume maître effectif (global mute)
+        effective_master = 0.0 if self._global_muted else self._master
+
         # Normalise le zoom entre [0..1] où 0 = min_zoom, 1 = max_zoom
         try:
             zmin = getattr(cam, "min_zoom", None)
@@ -336,8 +367,10 @@ class SpatialAudioManager:
         except Exception:
             zoom_norm = 0.0
 
-        # musique : 0 => 0.9 ; 1 => 0.0 puis * master
-        music_vol = lerp(0.9, 0.0, zoom_norm) * self._master
+        # musique : 0 => 0.9 ; 1 => 0.0 puis * effective_master
+        music_vol = lerp(0.9, 0.0, zoom_norm) * effective_master
+        if self._music_muted:
+            music_vol = 0.0
         pygame.mixer.music.set_volume(clamp(music_vol, 0.0, 1.0))
 
         # focus île/base
@@ -349,7 +382,7 @@ class SpatialAudioManager:
         # island bed (spatial)
         if self.sfx_island:
             il_raw = smoothstep(island_focus) if ISLAND_BASE_CURVE == "smooth" else island_focus
-            il_vol = clamp(il_raw * VOL_ISLAND * self._master, 0.0, 1.0)
+            il_vol = clamp(il_raw * VOL_ISLAND * effective_master, 0.0, 1.0)
             left, right = self._pan_to_lr(il_vol, island_pan)
             self.chan_island.set_volume(left, right)
 
@@ -357,11 +390,11 @@ class SpatialAudioManager:
         if self.sfx_sea:
             focus_all = max(island_focus, base_focus)
             sea_scale = (1.0 - focus_all) + SEA_ON_ISLAND_FACTOR * focus_all
-            sea_vol = clamp(VOL_SEA * sea_scale * self._master, 0.0, 1.0)
+            sea_vol = clamp(VOL_SEA * sea_scale * effective_master, 0.0, 1.0)
             self.chan_sea.set_volume(sea_vol, sea_vol)
 
-        # base one-shot
-        self._maybe_trigger_base_oneshot(base_focus, base_pan)
+        # base one-shot (affecté par global mute mais pas par music_mute)
+        self._maybe_trigger_base_oneshot(base_focus, base_pan, effective_master)
 
     # --- helpers spatialisation ---
     def _world_to_screen(self, wx, wy, cam, screen):
@@ -421,26 +454,26 @@ class SpatialAudioManager:
         f, pan = self._best_focus_pan(centers, cam, screen, BASE_FOCUS_RADIUS_MULT)
         return f, pan
 
-    def _maybe_trigger_base_oneshot(self, base_focus, base_pan):
-        if not self.sfx_base:
+    def _maybe_trigger_base_oneshot(self, base_focus, base_pan, effective_master):
+        if not self.sfx_base or self._global_muted:
             return
         now = pygame.time.get_ticks()
         if (
             base_focus >= BASE_TRIGGER_THRESHOLD
             and (now - self._last_base_trigger_time) >= BASE_COOLDOWN_MS
         ):
-            vol = clamp(BASE_ONE_SHOT_VOL * base_focus * self._master, 0.0, 1.0)
+            vol = clamp(BASE_ONE_SHOT_VOL * base_focus * effective_master, 0.0, 1.0)
             left, right = self._pan_to_lr(vol, base_pan)
             self.chan_base.set_volume(left, right)
             self.chan_base.play(self.sfx_base)
             self._last_base_trigger_time = now
 
     def _play_spatial_one_shot(self, sfx, world_pos=None, base_vol=1.0):
-        if not sfx:
+        if not sfx or self._global_muted:
             return
         cam = getattr(self.game, "camera", None)
         screen = getattr(self.game, "screen", None)
-        vol = clamp(base_vol * self._master, 0.0, 1.0)
+        vol = clamp(base_vol * (0.0 if self._global_muted else self._master), 0.0, 1.0)
         if not cam or not screen or not world_pos:
             self.chan_fx.set_volume(vol, vol)
             self.chan_fx.play(sfx)
@@ -509,6 +542,12 @@ class Sound:
 
     def get_master_volume(self) -> float:
         return self._engine.get_master_volume()
+
+    def set_global_mute(self, muted: bool):
+        self._engine.set_global_mute(muted)
+
+    def set_music_mute(self, muted: bool):
+        self._engine.set_music_mute(muted)
 
     # --- événements de gameplay (one-shots) ---
     def on_unit_dropped(self, unit_class_name: str, pos=None):

@@ -1,21 +1,22 @@
-import pygame, math
-from Global import *
-from Class.Perlin import Perlin
+import math
 
-# Importation des modules gestionnaires
-from Class.EventHandler import EventHandler
-from Class.Renderer import Renderer
-from Class.GameUpdater import GameUpdater
-from Class.GameInitializer import GameInitializer
-from Class.Petrole import Petrole
-from Class.Piece import Piece
-from Class.Timer import Timer
-from Class.units import Unit
+import pygame
 from Class.AchievementNotification import AchievementNotificationManager
-from Class.units.IA.IA_Eclaireur import SimpleGrid, make_grid_adapter_from_simplegrid
-from Class.units import PlateformePetroliere
 from Class.AchievementsSystemRouge import AchievementsSystemRouge
 from Class.AchievementsSystemVert import AchievementsSystemVert
+# Importation des modules gestionnaires
+from Class.EventHandler import EventHandler
+from Class.GameInitializer import GameInitializer
+from Class.GameUpdater import GameUpdater
+from Class.Perlin import Perlin
+from Class.Petrole import Petrole
+from Class.Piece import Piece
+from Class.Renderer import Renderer
+from Class.Timer import Timer
+from Class.units import PlateformePetroliere, Unit
+from Class.units.IA.IA_Eclaireur import (SimpleGrid,
+                                         make_grid_adapter_from_simplegrid)
+from Global import *
 
 
 class IslandSprite(pygame.sprite.Sprite):
@@ -642,6 +643,10 @@ class Game :
 
             # Mise à jour des systèmes de jeu
             self.updater.update_systems(dt, self)
+            
+            # Mise à jour de l'audio spatial
+            if hasattr(self, "sound") and self.sound:
+                self.sound.update()
 
             # Gestion achievements et notifications
             if self.mode != "tuto" and self.achievements_system:

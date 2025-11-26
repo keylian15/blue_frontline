@@ -1,6 +1,7 @@
 # Fichier des variables globales (Chemin, variables, etc.)
 import json
 import os
+
 import pygame
 from Utils import resource_path, user_data_path
 
@@ -43,7 +44,7 @@ TIMER_EVENT = pygame.USEREVENT + 2
 # === Ile Quantique ===
 WATER_PATH = resource_path('assets/water/png/water.png')
 
-# === SONS – système historique ===
+# === SONS ===
 # (on remet SOUND sur la musique du jeu pour compatibilité éventuelle)
 SOUND = resource_path('blue_frontline_sounds/son_jeu.mp3')
 VOLUME_SOUND = 0.5  # Volume du son (0.0 à 1.0)
@@ -53,38 +54,41 @@ MASTER_VOL_MIN = 0.0
 MASTER_VOL_STEP = 0.1
 
 # === SONS – nouveau système spatial ===
-# Musique / beds / one-shots / drops (tout en .mp3)
-MUSIC_GAME = resource_path(
-    'blue_frontline_sounds/son_jeu.mp3')             # musique de fond
-# ambiance îles "normales" (bed)
+MUSIC_GAME = resource_path('blue_frontline_sounds/son_jeu.mp3')
 ISLAND_BED = resource_path('blue_frontline_sounds/son_iles.mp3')
-# ambiance mer (bed)
 SEA_BED = resource_path('blue_frontline_sounds/sea-waves-169411.mp3')
-# son court base (one-shot ~3s)
 BASE_BED = resource_path('blue_frontline_sounds/son_base.mp3')
-APPARITION_QUANTIQUE = resource_path(
-    'blue_frontline_sounds/apparition_ile_quantique.mp3')
+
+APPARITION_QUANTIQUE = resource_path('blue_frontline_sounds/apparition_ile_quantique.mp3')
 DROP_MINE = resource_path('blue_frontline_sounds/drop_mine.mp3')
 DROP_COIN = resource_path('blue_frontline_sounds/drop_coin.mp3')
 EXPLOSION_MINE = resource_path('blue_frontline_sounds/explosion_mine.mp3')
 DROP_ECLAIREURS = resource_path('blue_frontline_sounds/drop_eclaireurs.mp3')
 
-# Drops unités
-# (nom d'origine conservé)
 DROP_CHALOUPe = resource_path('blue_frontline_sounds/drop_chaloupe.mp3')
-# alias propre, pour compatibilité
 DROP_CHALOUPE = DROP_CHALOUPe
 DROP_BATEAU = resource_path('blue_frontline_sounds/drop_bateau.mp3')
 DROP_PAQUEBOT = resource_path('blue_frontline_sounds/drop_paquebot.mp3')
 DROP_SOUSMARIN = resource_path('blue_frontline_sounds/drop_sous_marin.mp3')
 
-# Volumes (0.0–1.0)
-# volume nominal de la musique (capé par la règle zoom -> 0)
+# Volumes par défaut pour les sources spatiales
 VOL_MUSIC = VOLUME_SOUND
 VOL_ISLAND = 0.8
 VOL_BASE = 0.8
 VOL_SEA = 0.2
 VOL_DROPS = 0.8
+
+# === PARAMÈTRES AUDIO pour OptionsMenu.py ============
+AUDIO_SETTINGS = {
+    "VOLUME": MASTER_VOL_DEFAULT,   # Volume global (0.0 → 1.0)
+    "SOUND_ENABLED": True,          # ON/OFF globale du son
+    "MUSIC_ENABLED": True           # ON/OFF musique de fond uniquement
+}
+
+def get_audio_settings():
+    """Retourne le dictionnaire centralisé des paramètres audio."""
+    return AUDIO_SETTINGS
+
 
 # === MIXAGE CONTEXTUEL / COMPORTEMENTS ===
 # La musique est gérée dans Sound.py pour faire : 0% zoom -> 90% ; 100% zoom -> 0%
