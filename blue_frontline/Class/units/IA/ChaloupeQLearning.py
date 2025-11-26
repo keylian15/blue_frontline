@@ -1,8 +1,4 @@
-import random
-import pickle
-import math
-import time
-import os
+import random, pickle, math, time, os
 
 class QLearningAgent:
     """

@@ -5,7 +5,6 @@ Implémente le comportement "Attaque Éclair" avec machine à états + Q-Learnin
 """
 
 import math, time, random
-from typing import List, Tuple, Optional, Dict, Any
 from enum import Enum
 
 # Import du module Q-Learning
@@ -117,7 +116,7 @@ class ChaloupeAI:
             if len(self.decision_log) > 30:
                 self.decision_log.pop(0)
     
-    def update(self, dt: int, all_units: List):
+    def update(self, dt: int, all_units: list):
         """
         Mise à jour principale de l'IA (appelée chaque tick).
         
@@ -163,7 +162,7 @@ class ChaloupeAI:
             self.last_state_change = time.time()
             self.log_decision(f"Transition {old_state.value} -> {new_state.value} ({reason})")
     
-    def _handle_searching(self, all_units: List):
+    def _handle_searching(self, all_units: list):
         """Gère l'état SEARCHING : recherche de cible prioritaire.
         
         Args:
@@ -317,7 +316,7 @@ class ChaloupeAI:
     
 
     # === MÉTHODES UTILITAIRES ===
-    def _find_best_target(self, all_units: List) -> object:
+    def _find_best_target(self, all_units: list) -> object:
         """Trouve la meilleure cible ennemie selon les priorités.
         
         Args:
@@ -361,7 +360,7 @@ class ChaloupeAI:
         
         return best_priority_target if best_priority_target else best_other_target
     
-    def _calculate_distance(self, pos1: Tuple, pos2: Tuple) -> float:
+    def _calculate_distance(self, pos1: tuple, pos2: tuple) -> float:
         """Calcule la distance euclidienne entre deux positions.
         
         Args:
@@ -454,7 +453,7 @@ class ChaloupeAI:
         
         return False
     
-    def _calculate_orbit_position(self, angle_override: Optional[float] = None) -> Tuple:
+    def _calculate_orbit_position(self, angle_override: float = None) -> tuple:
         """Calcule une position d'orbite autour de la cible.
         
         Args:
@@ -791,7 +790,7 @@ class ChaloupeAI:
         
         return False
     
-    def get_debug_info(self) -> Dict[str, Any]:
+    def get_debug_info(self) -> dict:
         """Retourne les informations de debug de l'IA.
         
         Returns:
@@ -843,7 +842,7 @@ class ChaloupeAI:
     # MÉTHODES Q-LEARNING
     # ==========================================
     
-    def _update_qlearning(self, all_units: List):
+    def _update_qlearning(self, all_units: list):
         """Met à jour le système Q-Learning.
         
         Args:
@@ -885,7 +884,7 @@ class ChaloupeAI:
             qtable_filename = f"chaloupe_{self.unit.team}_qtable.pkl"
             self.qlearning_agent.save_q_table(qtable_filename)
     
-    def _apply_qlearning_action(self, action: str, all_units: List):
+    def _apply_qlearning_action(self, action: str, all_units: list):
         """Applique l'action suggérée par Q-Learning.
         
         Args:
@@ -934,7 +933,7 @@ class ChaloupeAI:
         except Exception as e:
             self.log_decision(f"Erreur application action Q-Learning {action}: {e}")
     
-    def get_qlearning_stats(self) -> Dict[str, Any]:
+    def get_qlearning_stats(self) -> dict:
         """Retourne les statistiques Q-Learning.
         
         Returns:
