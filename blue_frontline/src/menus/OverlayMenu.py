@@ -12,6 +12,12 @@ class OverlayMenu:
     """Menu superposé affichable au-dessus du jeu."""
 
     def __init__(self, screen, game: Game):
+        """Initialise le menu.
+        
+        Args:
+            screen (pygame.Surface): La surface d'affichage.
+            game (Game): Instance du jeu.
+        """
         self.screen = screen
         self.width = screen.get_width()
         self.height = screen.get_height()
@@ -70,7 +76,14 @@ class OverlayMenu:
         self.position_buttons()
 
     def create_button(self, label: str, upgrade_name: str, unit: str, action: callable):
-        """Crée un bouton et l'ajoute à la liste."""
+        """Crée un bouton et l'ajoute à la liste.
+        
+        Args:
+            label (str): Texte du bouton.
+            upgrade_name (str): Nom de l'amélioration.
+            unit (str): Unité de l'amélioration.
+            action (callable): Action à effectuer au clic.
+        """
         button = {
             "label": label,
             "upgrade_name": upgrade_name,
@@ -81,7 +94,13 @@ class OverlayMenu:
         self.buttons.append(button)
 
     def get_button_text(self, btn):
-        """Génère le texte à afficher sur un bouton."""
+        """Génère le texte à afficher sur un bouton.
+        
+        Args:
+            btn (dict): Dictionnaire du bouton.
+        Returns:
+            (str): Texte formaté pour le bouton.
+        """
         upgrade = self.upgrades[self.player_team][btn["upgrade_name"]]
         current_level = upgrade["level"]
         current_value = upgrade["values"][current_level - 1]
@@ -100,7 +119,11 @@ class OverlayMenu:
         return text
 
     def upgrade(self, upgrade_name: str):
-        """Effectue une amélioration."""
+        """Effectue une amélioration.
+        
+        Args:
+            upgrade_name (str): Nom de l'amélioration.
+        """
         upgrade = self.upgrades[self.player_team][upgrade_name]
         if upgrade["level"] >= 4:
             return

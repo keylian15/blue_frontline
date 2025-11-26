@@ -9,7 +9,13 @@ from src.config.visuals import BUTTON_BORDER_RADIUS, LIGHT_BLUE, OCEAN_BLUE, WAV
 
 
 class OptionsMenu:
+    """Menu des options du jeu."""
     def __init__(self, screen):
+        """Initialise le menu des options.
+
+        Args:
+            screen (pygame.Surface): Surface de dessin du menu.
+        """
         self.screen = screen
         self.WIDTH, self.HEIGHT = self.screen.get_size()
         self.font = pygame.font.SysFont(None, 40)
@@ -133,7 +139,12 @@ class OptionsMenu:
             print(f"Erreur lors du chargement du fichier keys.json: {e}")
 
     def get_key_string(self, key_value):
-        """Convertit une valeur de touche pygame en chaîne pour la sauvegarde JSON."""
+        """Convertit une valeur de touche pygame en chaîne pour la sauvegarde JSON.
+        Args:
+            key_value (int): Valeur de la touche pygame.
+        Returns:
+            (str): Chaîne représentant la touche.
+        """
         if isinstance(key_value, int):
             for name in dir(pygame):
                 if name.startswith("K_") or name.startswith("BUTTON_"):
@@ -145,7 +156,11 @@ class OptionsMenu:
         return str(key_value)
 
     def save_keys(self):
-        """Sauvegarde les touches de contrôle dans le fichier keys.json."""
+        """Sauvegarde les touches de contrôle dans le fichier keys.json.
+        
+        Returns:
+            (bool): True si la sauvegarde a réussi, False sinon.
+        """
         try:
             controls_keys = get_controls_keys()
             save_data = {}
@@ -219,7 +234,15 @@ class OptionsMenu:
             )
 
     def draw_gradient_button(self, rect, hovered=False):
-        """Dessine un bouton avec dégradé"""
+        """Dessine un bouton avec dégradé
+        
+        Args:
+            rect (pygame.Rect): Le rectangle du bouton.
+            hovered (bool): Si le bouton est survolé par la souris.
+            
+        Returns:
+            button_surf (pygame.Surface): La surface du bouton.
+        """
         button_surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
 
         color1 = LIGHT_BLUE if hovered else OCEAN_BLUE
@@ -288,7 +311,15 @@ class OptionsMenu:
             self.screen.blit(text_surf, text_rect)
 
     def draw_control_button(self, key, rect, action):
-        """Dessine un bouton de contrôle stylisé"""
+        """Dessine un bouton de contrôle stylisé
+        
+        Args:
+            key (str): Nom de la touche.
+            rect (pygame.Rect): Rectangle de base pour le bouton.
+            action (str): Action associée à la touche.
+        Returns:
+            adapted_rect (pygame.Rect): Rectangle ajusté pour le bouton.
+        """
         key_width = self.font.render(key, True, WHITE).get_width()
         button_width = max(self.MIN_BUTTON_WIDTH, key_width + self.BUTTON_PADDING)
         adapted_rect = pygame.Rect(rect.x, rect.y, button_width, rect.height)
@@ -319,7 +350,12 @@ class OptionsMenu:
         return adapted_rect
 
     def draw_controls_menu(self):
-        """Dessine le menu des contrôles"""
+        """Dessine le menu des contrôles
+        
+        Returns:
+            control_rects (dict): Dictionnaire des rectangles interactifs par action.
+            back_button_rect (pygame.Rect): Rectangle du bouton retour.
+        """
         self.screen.fill(self.background)
 
         # Titre
@@ -388,7 +424,11 @@ class OptionsMenu:
         return control_rects, back_button_rect
 
     def draw_gameplay_menu(self):
-        """Dessine le menu Gameplay en grille responsive et retourne les zones interactives"""
+        """Dessine le menu Gameplay en grille responsive et retourne les zones interactives
+        
+        Returns:
+            interactive_rects (dict): Dictionnaire des rectangles interactifs par action.
+        """
         self.screen.fill(self.background)
 
         title = "GAMEPLAY"
@@ -590,7 +630,14 @@ class OptionsMenu:
         return interactive_rects
 
     def handle_key_binding(self, event, control_name):
-        """Gère l'attribution d'une nouvelle touche"""
+        """Gère l'attribution d'une nouvelle touche
+        
+        Args:
+            event (pygame.Event): L'événement pygame.
+            control_name (str): Nom du contrôle à binder.
+        Returns:
+            (bool): True si une touche a été attribuée, False sinon.
+        """
         if event.type == pygame.KEYDOWN:
             self.controls[control_name] = event.key
             self.save_keys()
@@ -604,7 +651,13 @@ class OptionsMenu:
         return False
 
     def get_key_name(self, key_value):
-        """Convertit une valeur de touche en nom lisible"""
+        """Convertit une valeur de touche en nom lisible
+        
+        Args:
+            key_value (int): Valeur de la touche pygame.
+        Returns:
+            (str): Nom de la touche.
+        """
         if isinstance(key_value, int):
             if key_value >= pygame.BUTTON_LEFT and key_value <= pygame.BUTTON_WHEELDOWN:
                 button_names = {
@@ -618,7 +671,11 @@ class OptionsMenu:
         return str(key_value)
 
     def handle_scroll(self, scroll_direction):
-        """Gère le défilement du menu"""
+        """Gère le défilement du menu
+        
+        Args:
+            scroll_direction (int): La direction du scroll (1 pour vers le bas, -1 pour vers le haut).
+        """
         self.scroll_y += scroll_direction * self.scroll_speed
         self.scroll_y = max(0, min(self.scroll_y, self.max_scroll))
 

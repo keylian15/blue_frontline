@@ -147,7 +147,11 @@ class Menu:
         self.screen.blit(txt, txt_rect)
 
     def choose_game_mode(self):
-        """Affiche un sous-menu pour choisir le mode de jeu et retourne le choix."""
+        """Affiche un sous-menu pour choisir le mode de jeu et retourne le choix.
+        
+        Returns:
+            (str): Le mode de jeu choisi.
+        """
         modes = [
             ("Joueur vs Joueur", "PVP"),
             ("Joueur vs IA", "PVE"),

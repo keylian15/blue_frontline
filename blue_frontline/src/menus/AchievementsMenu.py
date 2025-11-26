@@ -231,7 +231,7 @@ class AchievementsMenu:
             start_y (int): La position y de départ de la section.
 
         Returns:
-            int: La position y de fin de la section.
+            (int): La position y de fin de la section.
         """
         current_y = start_y
 
@@ -467,7 +467,7 @@ class AchievementsMenu:
             mouse_pos (tuple[int, int]): La position de la souris.
 
         Returns:
-            str: 'back' si le bouton retour est cliqué, 'reset' si le bouton reset est cliqué, None sinon.
+            (str): 'back' si le bouton retour est cliqué, 'reset' si le bouton reset est cliqué, None sinon.
         """
         if self.back_button["rect"].collidepoint(mouse_pos):
             return "back"
