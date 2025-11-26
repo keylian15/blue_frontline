@@ -28,7 +28,7 @@ class CreditsMenu:
         self.team_members = [
             {"prenom": "Keylian", "nom": "Turbé", "github": "https://github.com/keylian15"},
             {"prenom": "Romain", "nom": "Siame", "github": "https://github.com/rommick59"},
-            {"prenom": "Hippolyte", "nom": "Le Pallec", "github": "https://github.com/Hippolyte-Le-Pallec"},
+            {"prenom": "Hippolyte", "nom": "Le Pallec", "github": "https://github.com/Hippolyte-LePallec"},
             {"prenom": "Antoine", "nom": "Arnoult", "github": "https://github.com/garniik"},
             {"prenom": "Thomas", "nom": "Champy", "github": "https://github.com/tcmy6526512"},
             {"prenom": "Samy", "nom": "Berghol", "github": "https://github.com/BERGHOL"}
