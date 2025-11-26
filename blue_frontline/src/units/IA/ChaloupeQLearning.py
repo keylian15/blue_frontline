@@ -11,13 +11,7 @@ class QLearningAgent:
     Apprend à choisir les meilleures actions selon l'état du jeu.
     """
 
-    def __init__(
-        self,
-        actions: list[str],
-        alpha: float = 0.1,
-        gamma: float = 0.9,
-        epsilon: float = 0.2,
-    ):
+    def __init__(self, actions: list, alpha: float = 0.1, gamma: float = 0.9, epsilon: float = 0.2):
         """
         Initialise l'agent Q-Learning.
 
@@ -46,7 +40,7 @@ class QLearningAgent:
         # Debug
         self.debug_enabled = True
 
-    def discretize_position(self, x: float, y: float, grid_size: int = 64) -> tuple[int, int]:
+    def discretize_position(self, x: float, y: float, grid_size: int = 64) -> tuple:
         """Discrétise les positions pour réduire l'espace d'états."""
         return (int(x // grid_size), int(y // grid_size))
 
@@ -185,12 +179,7 @@ class QLearningAgent:
             self.epsilon *= self.epsilon_decay
 
     def calculate_reward(
-        self,
-        chaloupe,
-        previous_state: tuple,
-        action: str,
-        current_state: tuple,
-        all_units: list = None,
+        self, chaloupe, previous_state: tuple, action: str, current_state: tuple, all_units: list = None
     ) -> float:
         """
         Calcule la récompense basée sur l'action et l'état résultant.
@@ -231,10 +220,7 @@ class QLearningAgent:
             enemy_after = current_state[2] if len(current_state) > 2 else "none"
 
             # Récompense pour se rapprocher d'un ennemi (phase d'attaque)
-            if action in ["move_to_enemy", "attack"] and enemy_after in [
-                "close",
-                "very_close",
-            ]:
+            if action in ["move_to_enemy", "attack"] and enemy_after in ["close", "very_close"]:
                 reward += 3.0
 
             # Récompense pour rester à distance sécurisée
