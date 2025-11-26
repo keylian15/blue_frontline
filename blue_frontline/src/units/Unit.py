@@ -433,7 +433,11 @@ class Unit(pygame.sprite.Sprite):
         self.game.selected_unit = None
 
     def die_when_stuck(self):
-        """Vérifie si l'unité est coincée sur un obstacle et la fait mourir si c'est le cas."""
+        """Vérifie si l'unité est coincée sur un obstacle et la fait mourir si c'est le cas.
+        
+        Returns:
+            (bool): True si l'unité est coincée, False sinon.
+        """
 
         if point_in_many_polygons(self.game.obstacles, self.position):
             self.is_alive = False
@@ -442,7 +446,11 @@ class Unit(pygame.sprite.Sprite):
         return False
 
     def get_health_percentage(self):
-        """Retourne le pourcentage de vie restante."""
+        """Retourne le pourcentage de vie restante.
+        
+        Returns:
+            (float): Pourcentage de vie restante.
+        """
 
         return self.current_health / self.max_health if self.max_health > 0 else 0
 
@@ -467,7 +475,7 @@ class Unit(pygame.sprite.Sprite):
             other_unit (Unit): Autre unité.
 
         Returns:
-            bool: True si l'autre unité est à portée, False sinon.
+            (bool): True si l'autre unité est à portée, False sinon.
         """
 
         distance = self.distance_to(other_unit)
@@ -475,7 +483,11 @@ class Unit(pygame.sprite.Sprite):
         return distance <= range_pixels
 
     def can_attack(self):
-        """Vérifie si l'unité peut attaquer (cooldown respecté)."""
+        """Vérifie si l'unité peut attaquer (cooldown respecté).
+        
+        Returns:
+            (bool): True si l'unité peut attaquer, False sinon.
+        """
         if not hasattr(self, "fire_rate") or self.fire_rate == 0:
             return False
         current_time = time.time()
@@ -492,7 +504,7 @@ class Unit(pygame.sprite.Sprite):
             combat_system (CombatSystem, optional): Le systeme de combat. Defaults to None.
 
         Returns:
-            Bool: True si l'attaque a été effectuée, False sinon.
+            (bool): True si l'attaque a été effectuée, False sinon.
         """
 
         if not self.can_attack() or not self.is_in_range(target):
@@ -652,7 +664,7 @@ class Unit(pygame.sprite.Sprite):
             current_time (int): Temps actuel en millisecondes.
 
         Returns:
-            bool: True si l'unité peut tirer, False sinon.
+            (bool): True si l'unité peut tirer, False sinon.
         """
 
         multiplica = self.game.hud.timer.get_speed_multiplier()
@@ -660,7 +672,11 @@ class Unit(pygame.sprite.Sprite):
         return current_time - self.last_shot_time >= cooldown
 
     def get_closest_enemy_in_range(self):
-        """Retourne l'ennemi le plus proche dans la portée."""
+        """Retourne l'ennemi le plus proche dans la portée.
+        
+        Returns:
+            (Unit): L'ennemi le plus proche, ou None si aucun ennemi n'est dans la portée.
+        """
 
         if not self.enemies_in_range:
             return None

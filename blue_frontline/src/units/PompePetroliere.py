@@ -81,7 +81,7 @@ class PompePetroliere(Unit):
         """La pompe pétrolière ne peut jamais attaquer.
 
         Returns:
-            bool: Toujours False
+            (bool): Toujours False
         """
         return False
 

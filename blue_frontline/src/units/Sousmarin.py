@@ -135,7 +135,11 @@ class SousMarin(Unit):
             self.draw_range(screen, camera_offset)
 
     def can_place_mine(self):
-        """Vérifie si le sous-marin peut poser une mine (cooldown respecté, mais fire_rate ignoré)."""
+        """Vérifie si le sous-marin peut poser une mine (cooldown respecté, mais fire_rate ignoré).
+        
+        Returns:
+            (bool): True si le sous-marin peut poser une mine, False sinon.
+        """
         current_time = time.time()
         time_since_last_shot = current_time - self.last_shot_time
         multiplica = (
@@ -154,7 +158,7 @@ class SousMarin(Unit):
             y (int): La position y de la mine.
 
         Returns:
-            bool : True si la mine a été placée, False sinon.
+            (bool): True si la mine a été placée, False sinon.
         """
         if self.special_ability == "mines":
             # Créer la mine à la position exacte du sous-marin avec référence au combat_system
@@ -177,7 +181,16 @@ class SousMarin(Unit):
         return False
 
     def is_position_valid(self, x, y, treat_platform_as_obstacle: bool = False):
-        """Vérifie si une position est valide (pas dans un obstacle)."""
+        """Vérifie si une position est valide (pas dans un obstacle).
+        
+        Args:
+            x (float): Position x à vérifier
+            y (float): Position y à vérifier
+            treat_platform_as_obstacle (bool): True si la plateforme est considérée comme un obstacle, False sinon
+
+        Returns:
+            (bool): True si la position est valide, False sinon
+        """
         world_pos = (x, y)
 
         # Vérifier si la position est dans les limites de la carte avec une marge
@@ -252,7 +265,7 @@ class SousMarin(Unit):
             num_checks (int): Nombre de points à vérifier le long du trajet
 
         Returns:
-            bool: True si le chemin est dégagé, False sinon
+            (bool): True si le chemin est dégagé, False sinon
         """
         # Vérifier plusieurs points le long de la trajectoire
         for i in range(1, num_checks + 1):
@@ -275,7 +288,7 @@ class SousMarin(Unit):
             detection_range (int): Rayon de détection en pixels (10 cases * 32 pixels = 320)
 
         Returns:
-            list[Unit]: Liste des éclaireurs ennemis détectés
+            (list[Unit]): Liste des éclaireurs ennemis détectés
         """
         nearby_scouts = []
 
@@ -387,7 +400,11 @@ class SousMarin(Unit):
         return False
 
     def broadcast_attack_signal(self, all_units):
-        """Le leader envoie un signal d'attaque à tous les alliés de son groupe."""
+        """Le leader envoie un signal d'attaque à tous les alliés de son groupe.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités.
+        """
         if not self.is_leader or not self.group_id:
             return
         for ally in all_units:
@@ -405,7 +422,11 @@ class SousMarin(Unit):
                         pass
 
     def attack_target(self, target_unit):
-        """Effectue l'attaque vers la target sans redétection (logique similaire à behavior_attack)."""
+        """Effectue l'attaque vers la target sans redétection (logique similaire à behavior_attack).
+        
+        Args:
+            target_unit (Unit): L'unité cible à attaquer.
+        """
         if not target_unit or not target_unit.is_alive:
             return
 
@@ -454,7 +475,11 @@ class SousMarin(Unit):
             self.find_alternative_path_to_target(target_unit.position[0], target_unit.position[1])
 
     def coordinate_retreat(self, all_units):
-        """Ordre de retraite coordonnée: envoie tous les membres du groupe en 'return_to_platform'."""
+        """Ordre de retraite coordonnée: envoie tous les membres du groupe en 'return_to_platform'.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités.
+        """
         if not self.group_id:
             return
         for ally in all_units:
@@ -475,7 +500,7 @@ class SousMarin(Unit):
             detection_range (int): Rayon de détection en pixels (par défaut 600px)
 
         Returns:
-            list[Unit]: Liste des paquebots ennemis détectés
+            (list[Unit]): Liste des paquebots ennemis détectés
         """
         nearby_paquebots = []
 
@@ -505,7 +530,7 @@ class SousMarin(Unit):
             detection_range (int): Rayon de détection en pixels (par défaut 500px)
 
         Returns:
-            list[Unit]: Liste des chaloupes ennemies détectées
+            (list[Unit]): Liste des chaloupes ennemies détectées
         """
         nearby_chaloupes = []
 
@@ -535,7 +560,7 @@ class SousMarin(Unit):
             detection_range (int): Rayon de détection en pixels (par défaut 400px)
 
         Returns:
-            list[Unit]: Liste des bateaux ennemis détectés
+            (list[Unit]): Liste des bateaux ennemis détectés
         """
         nearby_bateaux = []
 
@@ -558,7 +583,14 @@ class SousMarin(Unit):
         return nearby_bateaux
 
     def get_nearby_allied_submarines(self, all_units, radius=600):
-        """Renvoie la liste des sous-marins alliés (vivants) dans un rayon donné (exclut self)."""
+        """Renvoie la liste des sous-marins alliés (vivants) dans un rayon donné (exclut self).
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités.
+            radius (int): Rayon de recherche en pixels.
+        Returns:
+            (list[Unit]): Liste des sous-marins alliés dans le rayon.
+        """
         allies = []
         for u in all_units:
             if u is self:
@@ -579,7 +611,7 @@ class SousMarin(Unit):
             scouts (list[Unit]): Liste des éclaireurs
 
         Returns:
-            Unit: L'éclaireur le plus proche, ou None si la liste est vide
+            (Unit): L'éclaireur le plus proche, ou None si la liste est vide
         """
         if not scouts:
             return None
@@ -608,7 +640,7 @@ class SousMarin(Unit):
             goal (tuple): (x, y) position but
 
         Returns:
-            list de (x,y): chemin en pixels (centre des tuiles) ou None
+            (list of (x,y)): chemin en pixels (centre des tuiles) ou None
         """
 
         def pos_to_grid(pos):
@@ -726,7 +758,15 @@ class SousMarin(Unit):
         return None
 
     def heuristic(self, a, b):
-        """Distance de Manhattan."""
+        """Distance de Manhattan.
+        
+        Args:
+            a (tuple): Position (x, y) 1.
+            b (tuple): Position (x, y) 2.
+
+        Returns:
+            (float): Distance de Manhattan entre a et b.
+        """
         return abs(a[0] - b[0]) + abs(a[1] - b[1])
 
     def recalculate_path(self):
@@ -776,7 +816,11 @@ class SousMarin(Unit):
         self.is_computing_path = False
 
     def update_path_from_thread(self):
-        """Met à jour le chemin depuis le résultat du thread."""
+        """Met à jour le chemin depuis le résultat du thread.
+        
+        Returns:
+            (bool): True si le chemin a été mis à jour, False sinon.
+        """
         if self.path_found and self.new_path:
             self.current_path = self.new_path
             self.path_index = 0
@@ -787,7 +831,10 @@ class SousMarin(Unit):
         return False
 
     def follow_path(self):
-        """Suit le chemin A* calculé."""
+        """Suit le chemin A* calculé.
+        Returns:
+            (bool): True si le chemin n'est pas terminé, False sinon.
+        """
         if not self.current_path or self.path_index >= len(self.current_path):
             return False
 
@@ -827,7 +874,7 @@ class SousMarin(Unit):
             all_units (list[Unit]): Liste de toutes les unités du jeu
 
         Returns:
-            tuple: Position (x, y) de la plateforme ou None si non trouvée
+            (tuple): Position (x, y) de la plateforme ou None si non trouvée
         """
 
         for unit in all_units:
@@ -955,7 +1002,7 @@ class SousMarin(Unit):
             all_units (list[Unit]): Liste de toutes les unités du jeu
 
         Returns:
-            int: Nombre de mines autour de la plateforme
+            (int): Nombre de mines autour de la plateforme
         """
         # Trouver la plateforme si on ne l'a pas encore
         if self.platform_position is None:
@@ -992,6 +1039,9 @@ class SousMarin(Unit):
         2. ATTACK → Poursuite et pose de mine
         3. RETURN_TO_PLATFORM → Retour à la plateforme pétrolière
         4. Retour en PATROL
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
         """
 
         # MODE 0: DEFENSE_BASE - patrouille minière autour de la plateforme (activé au spawn)
@@ -1110,6 +1160,9 @@ class SousMarin(Unit):
 
         Utilise `is_position_valid` pour filtrer et tente de contourner les obstacles en cherchant
         une position proche si un point de la grille est invalide.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
         """
         # Trouver la plateforme si nécessaire
         if self.platform_position is None:
@@ -1211,6 +1264,9 @@ class SousMarin(Unit):
         - Le leader calcule la route vers la cible (A* ou direct) et la suit.
         - Les suiveurs gardent une position en formation relative au leader.
         - Quand le leader est à portée suffisante, il broadcast le signal d'attaque.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
         """
         # PRIORITÉ 1: Vérifier si moins de 15 mines autour de la plateforme
         mine_count = self.count_mines_around_platform(all_units)
@@ -1350,6 +1406,9 @@ class SousMarin(Unit):
         - Générer positions de mines (une fois).
         - Se déplacer vers la position suivante et poser une mine si possible (respect cooldown).
         - Si toutes les mines posées, repasser en `patrol`.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
         """
         # Priorités de sécurité (identiques à patrol)
         nearby_chaloupes = self.find_nearby_chaloupes(all_units, detection_range=500)
@@ -1469,6 +1528,9 @@ class SousMarin(Unit):
         PRIORITÉ: Si paquebot détecté à 300px → passe en mode return_to_platform.
         Poursuit l'éclaireur et pose une mine à proximité.
         Si plus d'éclaireur → passe en mode return_to_platform.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
         """
         # PRIORITÉ 1: Vérifier si moins de 15 mines autour de la plateforme
         mine_count = self.count_mines_around_platform(all_units)
@@ -1619,6 +1681,9 @@ class SousMarin(Unit):
 
         Retourne à une plateforme pétrolière alliée.
         Arrivé à destination → tourne de 180° et repasse en mode patrol.
+        
+        Args:
+            all_units (list[Unit]): Liste de toutes les unités du jeu
         """
         # PRIORITÉ 1: Vérifier si moins de 15 mines autour de la plateforme
         mine_count = self.count_mines_around_platform(all_units)
@@ -1683,6 +1748,7 @@ class SousMarin(Unit):
 
         Args:
             distance_check (int): Distance à vérifier pour chaque direction
+            avoid_platform (bool): Si True, traite la plateforme comme un obstacle. Default is False.
         """
         direction_found = False
 
@@ -1749,6 +1815,7 @@ class SousMarin(Unit):
         Args:
             target_x (float): Position x de la cible
             target_y (float): Position y de la cible
+            avoid_platform (bool): Si True, traite la plateforme comme un obstacle. Default is False.
         """
         # Calculer l'angle vers la cible
         dx = target_x - self.position[0]
@@ -1776,20 +1843,24 @@ class SousMarin(Unit):
 
 # Classes d'alias pour la compatibilité avec l'ancien code
 class SousMarinRouge(SousMarin):
+    """Classe pour le SousMarin Rouge."""
     def __init__(self, game, is_ia: bool = True):
         """Constructeur de SousMarinRouge.
 
         Args:
             game: L'instance de la classe Game.
+            is_ia (bool): Si True, l'IA est activée. Par défaut, True.
         """
         super().__init__(game, team="red", is_ia=is_ia)
 
 
 class SousMarinVert(SousMarin):
+    """Classe pour le SousMarin Vert."""    
     def __init__(self, game, is_ia: bool = True):
         """Constructeur de SousMarinVert.
 
         Args:
             game: L'instance de la classe Game.
+            is_ia (bool): Si True, l'IA est activée. Par défaut, True.
         """
         super().__init__(game, team="green", is_ia=is_ia)

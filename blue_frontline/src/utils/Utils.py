@@ -31,7 +31,14 @@ def load_tileset(path: str, size: int = 32):
 
 
 def resource_path(relative_path: str):
-    """Retourne le chemin absolu vers une ressource depuis la racine du projet."""
+    """Retourne le chemin absolu vers une ressource depuis la racine du projet.
+    
+    Args:
+        relative_path (str): Chemin relatif vers la ressource.
+
+    Returns:
+        (str): Chemin absolu vers la ressource.
+    """
 
     # Si on est dans un EXE PyInstaller
     if hasattr(sys, "_MEIPASS"):
@@ -52,7 +59,7 @@ def user_data_path(filename: str):
         filename (str): Chemin relatif vers la ressource.
 
     Returns:
-        str: Chemin absolu vers la ressource.
+        (str): Chemin absolu vers la ressource.
     """
     if hasattr(sys, "_MEIPASS"):  # si exe PyInstaller
         # D'abord, vérifier si le fichier existe dans le package
@@ -105,7 +112,7 @@ def point_in_polygon(polygon_points, test_point):
         test_point (tuple[float, float]): Coordonnées du point à tester (x, y).
 
     Returns:
-        bool: True si le point est à l'intérieur du polygone, False sinon.
+        (bool): True si le point est à l'intérieur du polygone, False sinon.
     """
 
     # Coordonnées du point à tester
@@ -147,7 +154,7 @@ def point_in_many_polygons(polygons_points: list[list[tuple]], test_point: tuple
         test_point (tuple): Coordonnées du point à tester.
 
     Returns:
-        bool, Polygon: True si le point est dans un polygone ainsi que son polygon, False sinon.
+        (bool, Polygon): True si le point est dans un polygone ainsi que son polygon, False sinon.
     """
     for polygon_points in polygons_points:
         if point_in_polygon(polygon_points, test_point):

@@ -128,7 +128,7 @@ class Paquebot(Unit):
         """Retourne la position de la base ennemie.
 
         Returns:
-            tuple: La position de la base ennemie et l'objet de la plateforme.
+            (tuple): La position de la base ennemie et l'objet de la plateforme.
         """
         if self.team == "red":
             return (
@@ -177,7 +177,7 @@ class Paquebot(Unit):
             goal (tuple): (x, y) position but
 
         Returns:
-            list: Liste de positions (x, y) formant le chemin, ou None si pas de chemin.
+            (list): Liste de positions (x, y) formant le chemin, ou None si pas de chemin.
         """
 
         def pos_to_grid(pos):
@@ -187,7 +187,7 @@ class Paquebot(Unit):
                 pos (tuple): Position (x, y) en pixels.
 
             Returns:
-                tuple: Coordonnées de la grille (x, y).
+                (tuple): Coordonnées de la grille (x, y).
             """
             return (int(pos[0] // 32), int(pos[1] // 32))
 
@@ -198,7 +198,7 @@ class Paquebot(Unit):
                 grid (tuple): Coordonnées de la grille (x, y).
 
             Returns:
-                tuple: Position (x, y) en pixels.
+                (tuple): Position (x, y) en pixels.
             """
             return (grid[0] * 32 + 16, grid[1] * 32 + 16)
 
@@ -381,10 +381,24 @@ class Paquebot(Unit):
 
 
 class PaquebotRouge(Paquebot):
+    """Classe pour le Paquebot Rouge."""
     def __init__(self, game, is_ia: bool = True):
+        """Initialise une instance de Paquebot Rouge.
+
+        Args:
+            game (Game): Instance du jeu.
+            is_ia (bool): Active ou désactive l'IA pour ce paquebot. Defaults to True.
+        """
         super().__init__(game, team="red", is_ia=is_ia)
 
 
 class PaquebotVert(Paquebot):
+    """Classe pour le Paquebot Vert."""
     def __init__(self, game, is_ia: bool = True):
+        """Initialise une instance de Paquebot Vert.
+
+        Args:
+            game (Game): Instance du jeu.
+            is_ia (bool): Active ou désactive l'IA pour ce paquebot. Defaults to True.
+        """
         super().__init__(game, team="green", is_ia=is_ia)

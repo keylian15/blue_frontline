@@ -266,7 +266,7 @@ class Chaloupe(Unit):
             target_position: Position cible (x, y)
 
         Returns:
-            True si des obstacles sont détectés, False sinon
+            (bool): True si des obstacles sont détectés, False sinon.
         """
         # Ligne droite entre position actuelle et cible
         start_x, start_y = self.position
@@ -303,7 +303,7 @@ class Chaloupe(Unit):
             y (float): Coordonnée Y en pixels
 
         Returns:
-            bool: True si le point est dans une île quantique, False sinon
+            (bool): True si le point est dans une île quantique, False sinon.
         """
         if not hasattr(self.game, "quantum_islands"):
             return False
@@ -338,7 +338,7 @@ class Chaloupe(Unit):
             y (float): Coordonnée Y en pixels
 
         Returns:
-            bool: True si le point est dans le brouillard, False sinon
+            (bool): True si le point est dans le brouillard, False sinon.
         """
         # Utiliser les zones de brouillard cachées du jeu (polygones TMX)
         if not hasattr(self.game, "quantique_area_hidden"):
@@ -355,7 +355,7 @@ class Chaloupe(Unit):
         """Mouvement direct vers la cible sans pathfinding.
 
         Args:
-            target_position: Position cible (x, y)
+            target_position (tuple): Position cible (x, y)
         """
         # Arrêter le pathfinding actuel
         self.path_to_follow = []
@@ -553,17 +553,40 @@ class Chaloupe(Unit):
             goal (tuple): (x, y) position but
 
         Returns:
-            list de (x,y): chemin en pixels (centre des tuiles) ou None
+            (list): chemin en pixels (centre des tuiles, tuple de 2 int) ou None
         """
 
         def pos_to_grid(pos):
+            """Convertit une position en coordonnées de grille.
+            
+            Args:
+                pos (tuple): Position (x, y) en pixels.
+
+            Returns:
+                (tuple): Coordonnées de la grille (x, y).
+            """
             return (int(pos[0] // 32), int(pos[1] // 32))
 
         def grid_to_pos(grid):
+            """Convertit des coordonnées de grille en position en pixels.
+
+            Args:
+                grid (tuple): Coordonnées de la grille (x, y).
+
+            Returns:
+                (tuple): Position (x, y) en pixels.
+            """
             return (grid[0] * 32 + 16, grid[1] * 32 + 16)
 
         def is_valid_position(grid_pos):
-            """Vérifie si une position de grille est valide (pas dans un obstacle)."""
+            """Vérifie si une position de grille est valide (pas dans un obstacle).
+            
+            Args:
+                grid_pos (tuple): Coordonnées de la grille (x, y).
+
+            Returns:
+                (bool): True si la position est valide, False sinon.
+            """
             return grid_pos not in obstacles
 
         start_grid = pos_to_grid(start)
@@ -697,7 +720,7 @@ class Chaloupe(Unit):
             b: Position (x, y) de but en grille
 
         Returns:
-            Distance heuristique entre a et b
+            (float): Distance heuristique entre a et b
         """
         dx = abs(a[0] - b[0])
         dy = abs(a[1] - b[1])
@@ -953,7 +976,11 @@ class Chaloupe(Unit):
     # ==========================================
 
     def get_qlearning_stats(self) -> dict:
-        """Retourne les statistiques Q-Learning si disponibles."""
+        """Retourne les statistiques Q-Learning si disponibles.
+        
+        Returns:
+            (dict): Statistiques Q-Learning ou None si non disponibles.
+        """
         if self.ai_system:
             return self.ai_system.get_qlearning_stats()
         return None
@@ -973,17 +1000,35 @@ class Chaloupe(Unit):
             self.ai_system.toggle_qlearning(enabled)
 
     def is_qlearning_enabled(self):
-        """Vérifie si le Q-Learning est activé."""
+        """Vérifie si le Q-Learning est activé.
+        
+        Returns:
+            (bool): True si le Q-Learning est activé, False sinon.
+        """
         if self.ai_system:
             return getattr(self.ai_system, "qlearning_enabled", False)
         return False
 
 
 class ChaloupeRouge(Chaloupe):
+    """Classe pour la Chaloupe Rouge."""
     def __init__(self, game, is_ia: bool = True):
+        """Initialise une instance de Chaloupe Rouge.
+
+        Args:
+            game (Game): Instance du jeu.
+            is_ia (bool): Active ou désactive l'IA pour cette chaloupe.
+        """
         super().__init__(game, team="red", is_ia=is_ia)
 
 
 class ChaloupeVerte(Chaloupe):
+    """Classe pour la Chaloupe Verte."""
     def __init__(self, game, is_ia: bool = True):
+        """Initialise une instance de Chaloupe Verte.
+
+        Args:
+            game (Game): Instance du jeu.
+            is_ia (bool): Active ou désactive l'IA pour cette chaloupe.
+        """
         super().__init__(game, team="green", is_ia=is_ia)
