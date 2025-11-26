@@ -3,7 +3,6 @@ import pickle
 import math
 import time
 import os
-from typing import List, Dict, Tuple, Optional, Any
 
 class QLearningAgent:
     """
@@ -11,7 +10,7 @@ class QLearningAgent:
     Apprend à choisir les meilleures actions selon l'état du jeu.
     """
     
-    def __init__(self, actions: List[str], alpha: float = 0.1, gamma: float = 0.9, epsilon: float = 0.2):
+    def __init__(self, actions: list, alpha: float = 0.1, gamma: float = 0.9, epsilon: float = 0.2):
         """
         Initialise l'agent Q-Learning.
         
@@ -40,7 +39,7 @@ class QLearningAgent:
         # Debug
         self.debug_enabled = True
         
-    def discretize_position(self, x: float, y: float, grid_size: int = 64) -> Tuple[int, int]:
+    def discretize_position(self, x: float, y: float, grid_size: int = 64) -> tuple:
         """Discrétise les positions pour réduire l'espace d'états."""
         return (int(x // grid_size), int(y // grid_size))
     
@@ -67,7 +66,7 @@ class QLearningAgent:
         else:
             return "low"
 
-    def get_state(self, chaloupe, all_units: List = None) -> Tuple:
+    def get_state(self, chaloupe, all_units: list = None) -> tuple:
         """
         Encode l'état courant en tuple discret.
         
@@ -126,7 +125,7 @@ class QLearningAgent:
         
         return state
 
-    def choose_action(self, state: Tuple) -> str:
+    def choose_action(self, state: tuple) -> str:
         """
         Choisit une action selon la politique epsilon-greedy.
         
@@ -145,7 +144,7 @@ class QLearningAgent:
         
         return action
 
-    def update_q_table(self, state: Tuple, action: str, reward: float, next_state: Tuple):
+    def update_q_table(self, state: tuple, action: str, reward: float, next_state: tuple):
         """
         Met à jour la Q-table selon l'équation de Bellman.
         
@@ -175,7 +174,7 @@ class QLearningAgent:
         if self.epsilon > self.epsilon_min:
             self.epsilon *= self.epsilon_decay
 
-    def calculate_reward(self, chaloupe, previous_state: Tuple, action: str, current_state: Tuple, all_units: List = None) -> float:
+    def calculate_reward(self, chaloupe, previous_state: tuple, action: str, current_state: tuple, all_units: list = None) -> float:
         """
         Calcule la récompense basée sur l'action et l'état résultant.
         
@@ -282,7 +281,7 @@ class QLearningAgent:
         except Exception as e:
             print(f"[Q-Learning] Erreur chargement: {e}")
 
-    def _find_closest_enemy(self, chaloupe, all_units: List) -> Optional[Any]:
+    def _find_closest_enemy(self, chaloupe, all_units: list) -> object:
         """Trouve l'ennemi le plus proche."""
         closest_enemy = None
         min_distance = float('inf')
@@ -300,7 +299,7 @@ class QLearningAgent:
         """Détecte s'il y a un obstacle proche (simplifié pour l'instant)."""
         return False
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict:
         """Retourne les statistiques d'apprentissage."""
         return {
             'total_episodes': self.total_episodes,

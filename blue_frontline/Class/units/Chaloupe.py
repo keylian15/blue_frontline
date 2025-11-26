@@ -16,13 +16,13 @@ except ImportError:
 class Chaloupe(Unit):
     """Classe unifiée pour les unités Chaloupe (Rouge et Verte)."""
     
-    def __init__(self, game: "Game", team: str, is_ia: bool = True):
+    def __init__(self, game, team: str, is_ia: bool = True):
         """Initialise une instance de Chaloupe.
 
         Args:
-            game (Game): Instance du jeu.
-            team (str): Équipe de l'unité.
-            is_ia (bool): Active ou désactive l'IA pour cette chaloupe.
+            game: Instance du jeu.
+            team: Équipe de l'unité.
+            is_ia: Active ou désactive l'IA pour cette chaloupe.
         """
         # Récupérer la configuration depuis Global.py
         config = UNIT_CONFIGS["chaloupe"]
@@ -99,6 +99,7 @@ class Chaloupe(Unit):
             self.init_ia()
 
     def init_ia(self):
+        """Initialise le système d'IA avancé pour la Chaloupe."""
         self.ai_system = ChaloupeAI(self)
         self.visual_debug_enabled = True  # Debug visuel activé par défaut
 
@@ -166,22 +167,26 @@ class Chaloupe(Unit):
         if screen and hasattr(self, 'debug_path') and self.debug_path:
             self.draw_path(screen, camera_offset)
 
-    def pos_base_ennemie(self):
-        """Retourne la position de la base ennemie."""
+    def pos_base_ennemie(self) -> tuple:
+        """Retourne la position de la base ennemie.
+        
+        Returns:
+            Position (x, y) de la base ennemie ou None
+        """
         if self.team == "red":
             return self.game.plateformes["green"].position
         elif self.team == "green":
             return self.game.plateformes["red"].position
         return None
 
-    def pos_cible_ennemie(self, all_units):
+    def pos_cible_ennemie(self, all_units: list) -> tuple:
         """Trouve la position de l'unité ennemie la plus proche.
         
         Args:
-            all_units (list[Unit]): Liste de toutes les unités
+            all_units: Liste de toutes les unités
             
         Returns:
-            tuple: Position (x, y) de l'unité ennemie la plus proche ou None
+            Position (x, y) de l'unité ennemie la plus proche ou None
         """
         if not all_units:
             return None
@@ -250,8 +255,15 @@ class Chaloupe(Unit):
             self.direct_follow_mode = True
             self.move_directly_to_target(current_target_position)
 
-    def need_pathfinding_to_target(self, target_position):
-        """Vérifie s'il y a des obstacles entre la Chaloupe et sa cible."""
+    def need_pathfinding_to_target(self, target_position: tuple) -> bool:
+        """Vérifie s'il y a des obstacles entre la Chaloupe et sa cible.
+        
+        Args:
+            target_position: Position cible (x, y)
+
+        Returns:
+            True si des obstacles sont détectés, False sinon
+        """
         # Ligne droite entre position actuelle et cible
         start_x, start_y = self.position
         end_x, end_y = target_position
@@ -278,15 +290,15 @@ class Chaloupe(Unit):
                 
         return False
 
-    def is_point_in_quantum_island(self, x, y):
+    def is_point_in_quantum_island(self, x: float, y: float) -> bool:
         """Vérifie si un point est dans une île quantique.
         
         Args:
-            x (float): Coordonnée X en pixels
-            y (float): Coordonnée Y en pixels
+            x: Coordonnée X en pixels
+            y: Coordonnée Y en pixels
             
         Returns:
-            bool: True si le point est dans une île quantique, False sinon
+            True si le point est dans une île quantique, False sinon
         """
         if not hasattr(self.game, 'quantum_islands'):
             return False
@@ -316,15 +328,15 @@ class Chaloupe(Unit):
         
         return False
 
-    def is_point_in_fog(self, x, y):
+    def is_point_in_fog(self, x: float, y: float) -> bool:
         """Vérifie si un point est dans une zone de brouillard.
         
         Args:
-            x (float): Coordonnée X en pixels
-            y (float): Coordonnée Y en pixels
+            x: Coordonnée X en pixels
+            y: Coordonnée Y en pixels
             
         Returns:
-            bool: True si le point est dans le brouillard, False sinon
+            True si le point est dans le brouillard, False sinon
         """
         # Utiliser les zones de brouillard cachées du jeu (polygones TMX)
         if not hasattr(self.game, 'quantique_area_hidden'):
@@ -337,8 +349,12 @@ class Chaloupe(Unit):
         
         return is_in_fog
 
-    def move_directly_to_target(self, target_position):
-        """Mouvement direct vers la cible sans pathfinding."""
+    def move_directly_to_target(self, target_position: tuple):
+        """Mouvement direct vers la cible sans pathfinding.
+        
+        Args:
+            target_position: Position cible (x, y)
+        """
         # Arrêter le pathfinding actuel
         self.path_to_follow = []
         self.current_path_index = 0
@@ -346,12 +362,12 @@ class Chaloupe(Unit):
         # Mouvement direct vers la cible
         self.move_to_position(target_position)
 
-    def check_for_enemies(self, all_units):
+    def check_for_enemies(self, all_units: list):
         """Vérifie s'il y a des unités ennemies à proximité et met à jour la cible.
         Priorité aux gros navires (bateau, paquebot).
         
         Args:
-            all_units (list[Unit]): Liste de toutes les unités
+            all_units: Liste de toutes les unités
         """
         if not all_units or not self.ia_enabled:
             return
@@ -421,7 +437,9 @@ class Chaloupe(Unit):
                 self.patrol_area()
 
     def patrol_area(self):
-        """Fait patrouiller la Chaloupe dans une zone pour chercher des ennemis."""
+        """Fait patrouiller la Chaloupe dans une zone pour chercher des ennemis.
+        Crée des points de patrouille autour de la position de spawn.
+        """
         if not hasattr(self, '_patrol_points') or not self._patrol_points:
             # Créer des points de patrouille autour de la position de spawn
             spawn_x, spawn_y = self.position
@@ -445,11 +463,11 @@ class Chaloupe(Unit):
             self.start_pathfinding_thread(lambda: self.compute_path_to_target(target_point))
             self._current_patrol_index = (self._current_patrol_index + 1) % len(self._patrol_points)
 
-    def move_to_position(self, target_position):
+    def move_to_position(self, target_position: tuple):
         """Déplace l'unité vers une position cible en utilisant le système de la classe parent.
         
         Args:
-            target_position (tuple): Position cible (x, y)
+            target_position: Position cible (x, y)
         """
         if not target_position:
             return
@@ -467,7 +485,7 @@ class Chaloupe(Unit):
         """Démarre le calcul du chemin vers une unité ennemie spécifique.
         
         Args:
-            enemy_unit (Unit): L'unité ennemie à cibler
+            enemy_unit: L'unité ennemie à cibler
         """
         if not enemy_unit or not enemy_unit.is_alive:
             self.target_enemy = None
@@ -515,11 +533,11 @@ class Chaloupe(Unit):
             self.new_path = path
             self.path_found = True
 
-    def compute_path_to_target(self, target_position):
+    def compute_path_to_target(self, target_position: tuple):
         """Calcule le chemin vers une position cible spécifique.
         
         Args:
-            target_position (tuple): Position cible (x, y)
+            target_position: Position cible (x, y)
         """
         start = self.position
         if not start or not target_position:
@@ -530,14 +548,14 @@ class Chaloupe(Unit):
             self.new_path = path
             self.path_found = True
 
-    def a_star_search(self, start, goal):
+    def a_star_search(self, start: tuple, goal: tuple) -> list:
         """Implémentation A* améliorée sur grille 32x32 pixels avec mouvements diagonaux.
         Args:
-            start (tuple): (x, y) position départ
-            goal (tuple): (x, y) position but
+            start: (x, y) position départ
+            goal: (x, y) position but
 
         Returns:
-            list de (x,y): chemin en pixels (centre des tuiles) ou None
+            Chemin en pixels (centre des tuiles) ou None
         """
         def pos_to_grid(pos):
             return (int(pos[0] // 32), int(pos[1] // 32))
@@ -551,6 +569,8 @@ class Chaloupe(Unit):
 
         start_grid = pos_to_grid(start)
         goal_grid = pos_to_grid(goal)
+        if not is_valid_position(start_grid) or not is_valid_position(goal_grid):
+            return None  # Départ ou but invalide
 
         # Construire l'ensemble des obstacles à partir des polygones
         obstacles = set()
@@ -670,8 +690,16 @@ class Chaloupe(Unit):
 
         return None  # Aucun chemin trouvé
 
-    def heuristic(self, a, b):
-        """Heuristique euclidienne pour A* (meilleure que Manhattan pour les mouvements diagonaux)."""
+    def heuristic(self, a: tuple, b: tuple) -> float:
+        """Heuristique euclidienne pour A* (meilleure que Manhattan pour les mouvements diagonaux).
+        
+        Args:
+            a: Position (x, y) de départ en grille
+            b: Position (x, y) de but en grille
+
+        Returns:
+            Distance heuristique entre a et b
+        """
         dx = abs(a[0] - b[0])
         dy = abs(a[1] - b[1])
         return math.sqrt(dx * dx + dy * dy)
@@ -691,12 +719,12 @@ class Chaloupe(Unit):
             self.target = None  # Synchroniser avec self.target
             self.patrol_area()
 
-    def draw_path(self, screen, camera_offset):
+    def draw_path(self, screen: pygame.Surface, camera_offset: tuple):
         """Dessine le chemin de pathfinding pour le débogage.
         
         Args:
-            screen (pygame.Surface): Surface d'affichage
-            camera_offset (tuple): Décalage de la caméra
+            screen: Surface d'affichage
+            camera_offset: Décalage de la caméra
         """
         if not self.path_to_follow or len(self.path_to_follow) < 2:
             return
@@ -725,8 +753,13 @@ class Chaloupe(Unit):
         """Désactive l'affichage du chemin de débogage."""
         self.debug_path = False
 
-    def draw_ai_debug(self, screen, camera_offset):
-        """Dessine les informations de debug pour l'IA d'attaque éclair."""
+    def draw_ai_debug(self, screen: pygame.Surface, camera_offset: tuple):
+        """Dessine les informations de debug pour l'IA d'attaque éclair.
+        
+        Args:
+            screen (pygame.Surface): Surface d'affichage
+            camera_offset (tuple): Décalage de la caméra
+        """
         if not self.ai_system:
             return
             
@@ -907,8 +940,8 @@ class Chaloupe(Unit):
     # MÉTHODES Q-LEARNING
     # ==========================================
     
-    def get_qlearning_stats(self):
-        """Retourne les statistiques Q-Learning de l'IA."""
+    def get_qlearning_stats(self) -> dict:
+        """Retourne les statistiques Q-Learning si disponibles."""
         if self.ai_system:
             return self.ai_system.get_qlearning_stats()
         return None
@@ -919,7 +952,11 @@ class Chaloupe(Unit):
             self.ai_system.save_qlearning_progress()
     
     def toggle_qlearning(self, enabled: bool):
-        """Active/désactive le Q-Learning."""
+        """Active/désactive le Q-Learning.
+        
+        Args:
+            enabled: True pour activer, False pour désactiver
+        """
         if self.ai_system:
             self.ai_system.toggle_qlearning(enabled)
     

@@ -5,6 +5,7 @@ Implémente le comportement "Attaque Éclair" avec machine à états + Q-Learnin
 """
 
 import math, time, random
+from typing import List, Tuple, Optional, Dict, Any
 from enum import Enum
 
 # Import du module Q-Learning
@@ -101,7 +102,11 @@ class ChaloupeAI:
         self.decision_log = []
     
     def log_decision(self, message: str):
-        """Enregistre une décision pour le debug."""
+        """Enregistre une décision pour le debug.
+        
+        Args:
+            message: Message de décision à logger.
+        """
         if self.debug_enabled:
             timestamp = time.time()
             log_entry = f"[Chaloupe {self.unit.team}] {self.state.value}: {message}"
@@ -112,7 +117,7 @@ class ChaloupeAI:
             if len(self.decision_log) > 30:
                 self.decision_log.pop(0)
     
-    def update(self, dt: int, all_units):
+    def update(self, dt: int, all_units: List):
         """
         Mise à jour principale de l'IA (appelée chaque tick).
         
@@ -146,15 +151,24 @@ class ChaloupeAI:
             self._handle_retreat()
     
     def _change_state(self, new_state: ChaloupeState, reason: str = ""):
-        """Change l'état de l'IA et log la transition."""
+        """Change l'état de l'IA et log la transition.
+        
+        Args:
+            new_state: Nouvel état à adopter.
+            reason: Raison du changement d'état.
+        """
         if new_state != self.state:
             old_state = self.state
             self.state = new_state
             self.last_state_change = time.time()
             self.log_decision(f"Transition {old_state.value} -> {new_state.value} ({reason})")
     
-    def _handle_searching(self, all_units):
-        """Gère l'état SEARCHING : recherche de cible prioritaire."""
+    def _handle_searching(self, all_units: List):
+        """Gère l'état SEARCHING : recherche de cible prioritaire.
+        
+        Args:
+            all_units: Liste de toutes les unités du jeu.
+        """
         # Chercher une cible prioritaire
         best_target = self._find_best_target(all_units)
         
@@ -303,8 +317,15 @@ class ChaloupeAI:
     
 
     # === MÉTHODES UTILITAIRES ===
-    def _find_best_target(self, all_units):
-        """Trouve la meilleure cible ennemie selon les priorités."""
+    def _find_best_target(self, all_units: List) -> object:
+        """Trouve la meilleure cible ennemie selon les priorités.
+        
+        Args:
+            all_units: Liste de toutes les unités du jeu.
+            
+        Returns:
+            Meilleure unité ennemie trouvée, ou None.
+        """
         if not all_units:
             return None
         
@@ -340,25 +361,45 @@ class ChaloupeAI:
         
         return best_priority_target if best_priority_target else best_other_target
     
-    def _calculate_distance(self, pos1, pos2):
-        """Calcule la distance entre deux positions."""
+    def _calculate_distance(self, pos1: Tuple, pos2: Tuple) -> float:
+        """Calcule la distance euclidienne entre deux positions.
+        
+        Args:
+            pos1: Première position (x, y).
+            pos2: Deuxième position (x, y).
+            
+        Returns:
+            Distance en pixels.
+        """
         return math.sqrt((pos1[0] - pos2[0])**2 + (pos1[1] - pos2[1])**2)
     
-    def _get_enemy_range(self):
-        """Retourne la portée de tir de la cible actuelle."""
+    def _get_enemy_range(self) -> int:
+        """Retourne la portée de tir de la cible actuelle.
+        
+        Returns:
+            Portée de tir en pixels.
+        """
         if not self.target:
             return self.enemy_ranges["default"]
         
         unit_type = getattr(self.target, 'unit_type', 'default')
         return self.enemy_ranges.get(unit_type, self.enemy_ranges["default"])
     
-    def _get_safe_distance(self):
-        """Retourne la distance de sécurité par rapport à la cible."""
+    def _get_safe_distance(self) -> float:
+        """Retourne la distance de sécurité par rapport à la cible.
+        
+        Returns:
+            Distance de sécurité en pixels (1.5x la portée ennemie).
+        """
         enemy_range = self._get_enemy_range()
         return enemy_range * self.safe_distance_multiplier
     
-    def _is_at_safe_distance(self):
-        """Vérifie si la chaloupe est à distance de sécurité."""
+    def _is_at_safe_distance(self) -> bool:
+        """Vérifie si la chaloupe est à distance de sécurité.
+        
+        Returns:
+            True si à distance de sécurité, False sinon.
+        """
         if not self.target:
             return True
         
@@ -366,8 +407,12 @@ class ChaloupeAI:
         safe_dist = self._get_safe_distance()
         return distance >= safe_dist
     
-    def _can_attack_target(self):
-        """Vérifie si la chaloupe peut attaquer la cible."""
+    def _can_attack_target(self) -> bool:
+        """Vérifie si la chaloupe peut attaquer la cible.
+        
+        Returns:
+            True si la cible est à portée d'attaque, False sinon.
+        """
         if not self.target:
             return False
         
@@ -381,8 +426,12 @@ class ChaloupeAI:
             
         return can_attack
     
-    def _should_trigger_strike(self):
-        """Détermine s'il faut déclencher une attaque éclair."""
+    def _should_trigger_strike(self) -> bool:
+        """Détermine s'il faut déclencher une attaque éclair.
+        
+        Returns:
+            True si les conditions d'attaque sont remplies, False sinon.
+        """
         current_time = time.time()
         
         # Vérifier le cooldown
@@ -405,8 +454,15 @@ class ChaloupeAI:
         
         return False
     
-    def _calculate_orbit_position(self, angle_override=None):
-        """Calcule une position d'orbite autour de la cible."""
+    def _calculate_orbit_position(self, angle_override: Optional[float] = None) -> Tuple:
+        """Calcule une position d'orbite autour de la cible.
+        
+        Args:
+            angle_override: Angle spécifique à utiliser en radians.
+            
+        Returns:
+            Position d'orbite (x, y) en pixels.
+        """
         if not self.target:
             return self.unit.position
         
@@ -422,8 +478,12 @@ class ChaloupeAI:
         
         return (orbit_x, orbit_y)
     
-    def _is_enemy_moving(self):
-        """Détecte si l'ennemi est en mouvement."""
+    def _is_enemy_moving(self) -> bool:
+        """Détecte si l'ennemi est en mouvement.
+        
+        Returns:
+            True si l'ennemi bouge (>5px de déplacement), False sinon.
+        """
         if not self.target:
             return False
         
@@ -444,8 +504,12 @@ class ChaloupeAI:
         # Si déplacement > 5px, l'ennemi bouge
         return movement > 5
     
-    def _is_enemy_approaching(self):
-        """Détecte si l'ennemi se rapproche de nous."""
+    def _is_enemy_approaching(self) -> bool:
+        """Détecte si l'ennemi se rapproche de nous.
+        
+        Returns:
+            True si l'ennemi se rapproche de >10px, False sinon.
+        """
         if not self.target or not self.last_enemy_position:
             self.last_enemy_position = self.target.position if self.target else None
             return False
@@ -461,7 +525,7 @@ class ChaloupeAI:
         # Si l'ennemi se rapproche de plus de 10px
         return current_distance < old_distance - 10
     
-    def _check_enemy_stationary(self):
+    def _check_enemy_stationary(self) -> bool:
         """Vérifie si l'ennemi est resté immobile assez longtemps.
         
         Returns:
@@ -563,8 +627,12 @@ class ChaloupeAI:
         else:
             self.unit.move_directly_to_target(orbit_pos)
     
-    def _rotate_orbit_angle(self, large_rotation=False):
-        """Change l'angle d'orbite pour varier les angles d'attaque."""
+    def _rotate_orbit_angle(self, large_rotation: bool = False):
+        """Change l'angle d'orbite pour varier les angles d'attaque.
+        
+        Args:
+            large_rotation: Si True, rotation importante (90-180°), sinon (30-60°).
+        """
         if large_rotation:
             # Grand changement d'angle (60-180 degrés)
             angle_change = random.uniform(math.pi/3, math.pi)
@@ -616,8 +684,12 @@ class ChaloupeAI:
             else:
                 self.unit.move_directly_to_target(retreat_pos)
     
-    def _calculate_retreat_position(self):
-        """Calcule la position de retraite optimale."""
+    def _calculate_retreat_position(self) -> tuple:
+        """Calcule la position de retraite optimale.
+        
+        Returns:
+            Position de retraite (x, y) en pixels.
+        """
         if not self.target:
             return self.unit.position
         
@@ -699,7 +771,7 @@ class ChaloupeAI:
         # Utiliser la retraite dynamique plutôt que statique
         self._dynamic_retreat()
     
-    def _is_unit_busy_with_pathfinding(self):
+    def _is_unit_busy_with_pathfinding(self) -> bool:
         """Vérifie si l'unité est occupée avec un pathfinding ou suit un chemin.
         
         Returns:
@@ -719,8 +791,13 @@ class ChaloupeAI:
         
         return False
     
-    def get_debug_info(self):
-        """Retourne les informations de debug de l'IA."""
+    def get_debug_info(self) -> Dict[str, Any]:
+        """Retourne les informations de debug de l'IA.
+        
+        Returns:
+            Dictionnaire contenant l'état, la cible, les distances, et les stats Q-Learning.
+        """
+
         try:
             debug_info = {
                 "state": self.state.value if self.state else "Unknown",
@@ -766,8 +843,12 @@ class ChaloupeAI:
     # MÉTHODES Q-LEARNING
     # ==========================================
     
-    def _update_qlearning(self, all_units):
-        """Met à jour le système Q-Learning."""
+    def _update_qlearning(self, all_units: List):
+        """Met à jour le système Q-Learning.
+        
+        Args:
+            all_units: Liste de toutes les unités du jeu.
+        """
         current_time = time.time()
         
         # Mise à jour périodique pour éviter la surcharge
@@ -804,8 +885,13 @@ class ChaloupeAI:
             qtable_filename = f"chaloupe_{self.unit.team}_qtable.pkl"
             self.qlearning_agent.save_q_table(qtable_filename)
     
-    def _apply_qlearning_action(self, action: str, all_units):
-        """Applique l'action suggérée par Q-Learning."""
+    def _apply_qlearning_action(self, action: str, all_units: List):
+        """Applique l'action suggérée par Q-Learning.
+        
+        Args:
+            action: Action à appliquer.
+            all_units: Liste de toutes les unités du jeu.
+        """
         try:
             if self.state in [ChaloupeState.STRIKE, ChaloupeState.RETREAT]:
                 self.log_decision(f"Q-Learning: Action {action} ignorée (état {self.state.value} prioritaire)")
@@ -848,8 +934,12 @@ class ChaloupeAI:
         except Exception as e:
             self.log_decision(f"Erreur application action Q-Learning {action}: {e}")
     
-    def get_qlearning_stats(self):
-        """Retourne les statistiques Q-Learning."""
+    def get_qlearning_stats(self) -> Dict[str, Any]:
+        """Retourne les statistiques Q-Learning.
+        
+        Returns:
+            Stats Q-Learning si activé, None sinon.
+        """
         if self.qlearning_enabled and self.qlearning_agent:
             return self.qlearning_agent.get_stats()
         return None
@@ -862,7 +952,11 @@ class ChaloupeAI:
             print(f"[ChaloupeAI] Progrès Q-Learning sauvegardé pour {self.unit.team}")
     
     def toggle_qlearning(self, enabled: bool):
-        """Active/désactive le Q-Learning."""
+        """Active/désactive le Q-Learning.
+        
+        Args:
+            enabled: True pour activer, False pour désactiver.
+        """
         if QLEARNING_AVAILABLE:
             self.qlearning_enabled = enabled
             if enabled and not self.qlearning_agent:
