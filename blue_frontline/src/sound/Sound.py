@@ -35,6 +35,7 @@ from src.config.audio import (
     VOL_MUSIC,
     VOL_SEA,
 )
+from src.utils.Utils import resource_path
 
 if TYPE_CHECKING:
     from src.core.Game import Game
@@ -53,6 +54,10 @@ def smoothstep(x):
     return x * x * (3 - 2 * x)
 
 
+# Vertical attenuation default range (1.0 = full falloff to screen edge)
+DEFAULT_VERTICAL_ATTEN_RANGE = 1.0
+
+
 class SpatialAudioManager:
     """
     Moteur audio:
@@ -62,6 +67,8 @@ class SpatialAudioManager:
       - base: one-shot à l'entrée de zone (cooldown)
       - îles quantiques: one-shot d’apparition
       - drops: unités + événements (mine, coin, explosion, éclaireurs)
+      - tirs: chaloupe / bateau / paquebot
+      - victoire / défaite / klaxon de bateau
     """
 
     def __init__(self, game: Game):
@@ -87,12 +94,16 @@ class SpatialAudioManager:
         self.chan_island = pygame.mixer.Channel(1)
         self.chan_sea = pygame.mixer.Channel(2)
         self.chan_base = pygame.mixer.Channel(3)  # one-shot base
-        self.chan_fx = pygame.mixer.Channel(4)  # one-shots gameplay
+        self.chan_fx = pygame.mixer.Channel(4)  # one-shots gameplay (tir, drop, etc.)
 
         # états
         self.static_islands = None
         self.quantum_islands = []
         self._last_base_trigger_time = 0
+
+        # paramètres d'audio locaux
+        self.vertical_attenuation_range = DEFAULT_VERTICAL_ATTEN_RANGE
+        self.debug_audio = False
 
         # init des beds
         self._ensure_beds_started()
@@ -153,6 +164,39 @@ class SpatialAudioManager:
         _safe_load("EXPLOSION_MINE", EXPLOSION_MINE)
         _safe_load("DROP_ECLAIREURS", DROP_ECLAIREURS)
 
+        # tirs (tir_chaloupe / tir_bateau / tir_paquebot)
+        self.sfx_shot = {}
+
+        def _safe_load_shot(key, filename):
+            try:
+                path = resource_path(f"blue_frontline_sounds/{filename}")
+                self.sfx_shot[key] = pygame.mixer.Sound(path)
+            except Exception:
+                self.sfx_shot[key] = None
+
+        _safe_load_shot("chaloupe", "tir_chaloupe.mp3")
+        _safe_load_shot("bateau", "tir_bateau.mp3")
+        _safe_load_shot("paquebot", "tir_paquebot.mp3")
+
+        # victoire / défaite
+        try:
+            self.sfx_victory = pygame.mixer.Sound(resource_path("blue_frontline_sounds/victoire.mp3"))
+        except Exception:
+            self.sfx_victory = None
+
+        try:
+            self.sfx_defeat = pygame.mixer.Sound(resource_path("blue_frontline_sounds/son_defaite.mp3"))
+        except Exception:
+            self.sfx_defeat = None
+
+        # klaxon / corne de bateau
+        try:
+            self.sfx_horn = pygame.mixer.Sound(
+                resource_path("blue_frontline_sounds/staten-island-ferry-horn-close-85120.mp3")
+            )
+        except Exception:
+            self.sfx_horn = None
+
     def _ensure_beds_started(self):
         if self.sfx_island and not self.chan_island.get_busy():
             self.chan_island.play(self.sfx_island, loops=-1)
@@ -203,7 +247,7 @@ class SpatialAudioManager:
 
     def play_drop_for_unit(self, unit_class_name: str, pos=None):
         key = None
-        low = unit_class_name.lower()
+        low = (unit_class_name or "").lower()
         if "chaloupe" in low:
             key = "chaloupe"
         elif "paquebot" in low:
@@ -223,6 +267,53 @@ class SpatialAudioManager:
         sfx = self.sfx_drop.get(const_name)
         if sfx:
             self._play_spatial_one_shot(sfx, world_pos=world_pos, base_vol=VOL_DROPS)
+
+    def play_shot_for_unit(self, unit_class_name: str, pos=None):
+        """
+        Joue le son de tir associé à l'unité (chaloupe / bateau / paquebot).
+        """
+        low = (unit_class_name or "").lower()
+        if "chaloupe" in low:
+            key = "chaloupe"
+        elif "paquebot" in low:
+            key = "paquebot"
+        else:
+            key = "bateau"
+
+        sfx = self.sfx_shot.get(key)
+        if sfx:
+            self._play_spatial_one_shot(sfx, world_pos=pos, base_vol=VOL_DROPS)
+
+    def play_victory(self):
+        """Joue le son de victoire (non-spatial, centré)."""
+        if not self.sfx_victory:
+            return
+        vol = clamp(self._master, 0.0, 1.0)
+        self.chan_fx.set_volume(vol, vol)
+        self.chan_fx.play(self.sfx_victory)
+
+    def play_defeat(self):
+        """Joue le son de défaite (non-spatial, centré)."""
+        if not self.sfx_defeat:
+            return
+        vol = clamp(self._master, 0.0, 1.0)
+        self.chan_fx.set_volume(vol, vol)
+        self.chan_fx.play(self.sfx_defeat)
+
+    def play_ship_horn(self, pos=None):
+        """
+        Joue le klaxon / corne de bateau.
+        - si pos est fourni → spatial
+        - sinon → centré
+        """
+        if not self.sfx_horn:
+            return
+        if pos is None:
+            vol = clamp(self._master, 0.0, 1.0)
+            self.chan_fx.set_volume(vol, vol)
+            self.chan_fx.play(self.sfx_horn)
+        else:
+            self._play_spatial_one_shot(self.sfx_horn, world_pos=pos, base_vol=VOL_DROPS)
 
     # --- update frame ---
     def update(self):
@@ -348,11 +439,30 @@ class SpatialAudioManager:
             self.chan_fx.set_volume(vol, vol)
             self.chan_fx.play(sfx)
             return
-        sx, _ = self._world_to_screen(world_pos[0], world_pos[1], cam, screen)
+        sx, sy = self._world_to_screen(world_pos[0], world_pos[1], cam, screen)
+        # Atténuation verticale (simule qu'une source trop haut/bas devient plus faible)
+        try:
+            cy = float(screen.get_height()) / 2.0
+            vertical_distance = abs(sy - cy) / max(1.0, cy)
+            vertical_factor = clamp(1.0 - vertical_distance * float(self.vertical_attenuation_range), 0.0, 1.0)
+            vol = clamp(vol * vertical_factor, 0.0, 1.0)
+        except Exception:
+            # en cas de souci, ne pas changer le volume
+            pass
         pan = self._pan_from_screen_x(sx, screen)
         left, right = self._pan_to_lr(vol, pan)
         self.chan_fx.set_volume(left, right)
         self.chan_fx.play(sfx)
+
+        # Debug optionnel pour vérifier panning/volumes
+        try:
+            if getattr(self, "debug_audio", False) or getattr(self.game, "debug_audio", False):
+                print(
+                    f"[AUDIO DEBUG] world_pos={world_pos} sx={sx:.1f} sy={sy:.1f} "
+                    f"pan={pan:.2f} vol={vol:.3f} L={left:.3f} R={right:.3f}"
+                )
+        except Exception:
+            pass
 
 
 # ------------- WRAPPER PUBLIC (rétro-compat) -------------
@@ -406,6 +516,33 @@ class Sound:
     def on_coin_drop(self, pos):
         self._engine.play_one_shot_named("DROP_COIN", world_pos=pos)
 
+    def on_unit_shot(self, unit_class_name: str, pos=None):
+        """À appeler quand une unité tire (joue tir_chaloupe / tir_bateau / tir_paquebot)."""
+        self._engine.play_shot_for_unit(unit_class_name, pos=pos)
+
+    def on_victory(self):
+        """À appeler sur écran de victoire."""
+        self._engine.play_victory()
+
+    def on_defeat(self):
+        """À appeler quand le joueur perd."""
+        self._engine.play_defeat()
+
     # --- îles quantiques ---
     def set_quantum_islands(self, centers):
         self._engine.set_quantum_islands(centers)
+
+    # --- configuration audio ---
+    def set_vertical_attenuation(self, range_float: float):
+        """Range: 0.0 = no vertical attenuation, 1.0 = full falloff to screen edge"""
+        try:
+            self._engine.vertical_attenuation_range = float(range_float)
+        except Exception:
+            pass
+
+    def enable_audio_debug(self, flag: bool = True):
+        """Active des logs diagnostics pour l'audio (print)."""
+        try:
+            self._engine.debug_audio = bool(flag)
+        except Exception:
+            pass

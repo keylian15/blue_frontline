@@ -569,6 +569,14 @@ class EventHandler:
         self.game.combat_system.add_unit(unit)
         self.game.units.append(unit)
         self.game.group.add(unit)
+
+        # === SON : drop de l'unité ===
+        if hasattr(self.game, "sound") and self.game.sound:
+            try:
+                self.game.sound.on_unit_dropped(unit.__class__.__name__, pos=tuple(unit.position))
+            except Exception:
+                pass
+
         return True
 
     def trigger_shooting(self):

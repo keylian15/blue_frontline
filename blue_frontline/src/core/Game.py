@@ -465,6 +465,13 @@ class Game:
         else:
             self.winner_team = "red"
 
+        # === AUDIO : victoire ===
+        if hasattr(self, "sound") and self.sound:
+            try:
+                self.sound.on_victory()
+            except Exception:
+                pass
+
         # Suivre les statistiques pour les succès de l'équipe gagnante
         if self.winner_team == "red" and hasattr(self, "achievements_system_rouge") and self.achievements_system_rouge:
             self.achievements_system_rouge.track_platform_destroyed()
