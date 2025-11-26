@@ -1,8 +1,10 @@
-import pygame, math
-from Class.units.Unit import Unit
-from Global import RED_TEAM_PATH_BIG, GREEN_TEAM_PATH_BIG
-from Utils import load_tileset
+import math
+
+import pygame
 from Class.ExplosionRenderer import ExplosionRenderer
+from Class.units.Unit import Unit
+from Global import GREEN_TEAM_PATH_BIG, RED_TEAM_PATH_BIG
+from Utils import load_tileset
 
 
 class Explosion:
@@ -386,6 +388,17 @@ class CombatSystem:
         )
         
         self.projectiles.add(projectile)
+        
+        # === AUDIO : tir d'unité ===
+        try:
+            if hasattr(self.game, "sound") and self.game.sound:
+                self.game.sound.on_unit_shot(
+                    shooter.__class__.__name__,
+                    pos=(shooter.position[0], shooter.position[1])
+                )
+        except Exception:
+            pass
+
         return projectile
     
     def update(self, dt: float):
@@ -440,14 +453,9 @@ class CombatSystem:
                 if mine.check_collision(unit):
                     # === AUDIO: explosion de mine ===
                     try:
-                        if (hasattr(unit, "is_alive") and not unit.is_alive
-                                and hasattr(unit, "position")
-                                and hasattr(self, "game") and hasattr(self.game, "sound") and self.game.sound):
-                            # On joue le son au centre de l'unité détruite
-                            pos = (unit.position[0], unit.position[1])
-                            self.game.sound.on_coin_drop(pos)
+                        if hasattr(self, "game") and hasattr(self.game, "sound") and self.game.sound:
+                            self.game.sound.on_mine_explosion(tuple(mine.position))
                     except Exception:
-                        # On ne casse jamais la boucle de jeu à cause de l'audio
                         pass
                     break  # Mine explosée, passer à la suivante
     
