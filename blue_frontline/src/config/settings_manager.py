@@ -23,12 +23,18 @@ def load_gameplay_settings():
 
 
 def get_gameplay_settings():
-    """Retourne les settings actuels."""
+    """Retourne les settings actuels.
+    Returns:
+        (dict): Dictionnaire des settings.
+    """
     return GAMEPLAY_SETTINGS
 
 
 def set_gameplay_setting(new_settings):
-    """Met à jour les settings et sauvegarde."""
+    """Met à jour les settings et sauvegarde.
+    Args:
+        new_settings (dict): Nouveau dictionnaire des settings.
+    """
     global GAMEPLAY_SETTINGS, TIME_MAREE, OIL_PER_SECOND, PIECE_PER_KILL
 
     GAMEPLAY_SETTINGS = new_settings
