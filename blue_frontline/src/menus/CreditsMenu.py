@@ -192,6 +192,12 @@ class CreditsMenu:
         subtitle_rect = subtitle_surf.get_rect(midtop=(self.WIDTH // 2, 110))
         self.screen.blit(subtitle_surf, subtitle_rect)
 
+        # Sous-titre
+        subtitle_bis = "Fait avec Pygame et Tiled"
+        subtitle_bis_surf = self.small_font.render(subtitle_bis, True, (150, 200, 255))
+        subtitle_bis_rect = subtitle_bis_surf.get_rect(midtop=(self.WIDTH // 2, self.HEIGHT - 60))
+        self.screen.blit(subtitle_bis_surf, subtitle_bis_rect)
+
         # Dessiner les boutons des membres de l'équipe
         mouse_pos = pygame.mouse.get_pos()
 
