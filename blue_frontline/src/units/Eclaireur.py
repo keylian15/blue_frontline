@@ -92,7 +92,7 @@ class Eclaireur(Unit):
 
     def init_ai(self, game: Game) -> None:
         """Initialise le contrôleur ScoutAI si possible.
-        
+
         Args:
             game (Game): instance du jeu.
         """
@@ -190,7 +190,7 @@ class Eclaireur(Unit):
 
     def can_fire(self) -> bool:
         """L'éclaireur ne tire pas.
-        
+
         Returns:
             (bool): Toujours False.
         """
@@ -198,10 +198,10 @@ class Eclaireur(Unit):
 
     def get_attack_target(self, units: list[Unit]) -> None:
         """Pas d'attaque ciblée pour l'éclaireur -> toujours None.
-        
+
         Args:
             units (list[Unit]): Liste des unités.
-        
+
         Returns:
             (None): Toujours None.
         """
@@ -216,6 +216,7 @@ class Eclaireur(Unit):
 
 class EclaireurRouge(Eclaireur):
     """Classe pour l'Éclaireur Rouge."""
+
     def __init__(self, game: Game, is_ia: bool = True) -> None:
         """Initialise une instance d'Éclaireur Rouge.
 
@@ -228,6 +229,7 @@ class EclaireurRouge(Eclaireur):
 
 class EclaireurVert(Eclaireur):
     """Classe pour l'Éclaireur Vert."""
+
     def __init__(self, game: Game, is_ia: bool = True) -> None:
         """Initialise une instance d'Éclaireur Vert.
 

@@ -218,8 +218,8 @@ class Renderer:
                 else:
                     key_name = "T"  # Valeur par défaut
 
-                message = f"Ennemis en vue: {len(self.game.selected_unit.enemies_in_range)} -\
-                    Appuyez sur {key_name} pour tirer"
+                nb = len(self.game.selected_unit.enemies_in_range)
+                message = f"Ennemis en vue: {nb} -Appuyez sur {key_name} pour tirer"
                 text_surface = font.render(message, True, (255, 255, 255))
 
                 # Position du texte au-dessus du cercle de portée

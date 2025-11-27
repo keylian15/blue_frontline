@@ -416,7 +416,7 @@ class Bateau(Unit):
 
         def is_in_shallow_water(grid):
             """Retourne True si la cellule se trouve dans une zone d’eau peu profonde.
-            
+
             Args:
                 grid (tuple): Coordonnées de la cellule (x, y)
             Returns:

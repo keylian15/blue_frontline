@@ -556,9 +556,22 @@ class Chaloupe(Unit):
             (list): chemin en pixels (centre des tuiles, tuple de 2 int) ou None
         """
 
+        # Construire l'ensemble des obstacles à partir des polygones
+        obstacles = set()
+
+        # Obstacles principaux (îles, récifs)
+        for poly in self.game.obstacles:
+            min_x = min(p[0] for p in poly) // 32
+            max_x = max(p[0] for p in poly) // 32
+            min_y = min(p[1] for p in poly) // 32
+            max_y = max(p[1] for p in poly) // 32
+            for x in range(int(min_x), int(max_x) + 1):
+                for y in range(int(min_y), int(max_y) + 1):
+                    obstacles.add((x, y))
+
         def pos_to_grid(pos):
             """Convertit une position en coordonnées de grille.
-            
+
             Args:
                 pos (tuple): Position (x, y) en pixels.
 
@@ -580,7 +593,7 @@ class Chaloupe(Unit):
 
         def is_valid_position(grid_pos):
             """Vérifie si une position de grille est valide (pas dans un obstacle).
-            
+
             Args:
                 grid_pos (tuple): Coordonnées de la grille (x, y).
 
@@ -593,19 +606,6 @@ class Chaloupe(Unit):
         goal_grid = pos_to_grid(goal)
         if not is_valid_position(start_grid) or not is_valid_position(goal_grid):
             return None  # Départ ou but invalide
-
-        # Construire l'ensemble des obstacles à partir des polygones
-        obstacles = set()
-
-        # Obstacles principaux (îles, récifs)
-        for poly in self.game.obstacles:
-            min_x = min(p[0] for p in poly) // 32
-            max_x = max(p[0] for p in poly) // 32
-            min_y = min(p[1] for p in poly) // 32
-            max_y = max(p[1] for p in poly) // 32
-            for x in range(int(min_x), int(max_x) + 1):
-                for y in range(int(min_y), int(max_y) + 1):
-                    obstacles.add((x, y))
 
         # Ajouter les îles quantiques comme obstacles
         if hasattr(self.game, "quantum_islands"):
@@ -977,7 +977,7 @@ class Chaloupe(Unit):
 
     def get_qlearning_stats(self) -> dict:
         """Retourne les statistiques Q-Learning si disponibles.
-        
+
         Returns:
             (dict): Statistiques Q-Learning ou None si non disponibles.
         """
@@ -1001,7 +1001,7 @@ class Chaloupe(Unit):
 
     def is_qlearning_enabled(self):
         """Vérifie si le Q-Learning est activé.
-        
+
         Returns:
             (bool): True si le Q-Learning est activé, False sinon.
         """
@@ -1012,6 +1012,7 @@ class Chaloupe(Unit):
 
 class ChaloupeRouge(Chaloupe):
     """Classe pour la Chaloupe Rouge."""
+
     def __init__(self, game, is_ia: bool = True):
         """Initialise une instance de Chaloupe Rouge.
 
@@ -1024,6 +1025,7 @@ class ChaloupeRouge(Chaloupe):
 
 class ChaloupeVerte(Chaloupe):
     """Classe pour la Chaloupe Verte."""
+
     def __init__(self, game, is_ia: bool = True):
         """Initialise une instance de Chaloupe Verte.
 

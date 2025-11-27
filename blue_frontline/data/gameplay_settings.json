@@ -15,7 +15,7 @@
     },
     "TIME_MAREE": 180,
     "OIL_PER_SECOND": 1,
-    "PIECE_PER_KILL": 5,
+    "PIECE_PER_KILL": 20,
     "OCTAVES": 4,
     "SCALE": 32
 }

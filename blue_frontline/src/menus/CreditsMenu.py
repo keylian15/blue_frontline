@@ -7,6 +7,7 @@ from src.config.visuals import BUTTON_BORDER_RADIUS, LIGHT_BLUE, OCEAN_BLUE, WAV
 
 class CreditsMenu:
     """Menu des crédits du jeu."""
+
     def __init__(self, screen):
         """Initialise le menu des crédits.
 
@@ -73,11 +74,11 @@ class CreditsMenu:
 
     def draw_gradient_button(self, rect, hovered=False):
         """Dessine un bouton avec dégradé
-        
+
         Args:
             rect (pygame.Rect): Le rectangle du bouton.
             hovered (bool): Si le bouton est survolé par la souris.
-            
+
         Returns:
             button_surf (pygame.Surface): La surface du bouton.
         """

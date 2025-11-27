@@ -10,7 +10,7 @@ CONTROLS_KEYS = None
 
 def load_keys(path):
     """Charge le fichier keys.json.
-    
+
     Args:
         path (str): Chemin vers le fichier keys.json.
     Returns:

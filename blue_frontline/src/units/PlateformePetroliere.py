@@ -61,11 +61,10 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         self.rect = pygame.Rect(rect_x, rect_y, self.width, self.height)
 
         # Pour compatibilité avec la logique d'unités
-        from src.config.units import UNIT_CONFIGS
 
-        self.range = 15
-        self.damage_pourcentage = 10
-        self.damage = UNIT_CONFIGS["chaloupe"]["max_health"] * self.damage_pourcentage / 100
+        self.range = 12
+        self.damage = 18
+        print(self.damage, type(self.damage))
         self.fire_rate = 0.25  # 4 tir/ 4 secondes
         self.last_shot_time = 0
         self.is_platform = True

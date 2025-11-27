@@ -54,7 +54,7 @@ class AchievementsSystem:
 
     def get_save_filename(self):
         """Retourne le nom du fichier de sauvegarde selon l'équipe.
-        
+
         Returns:
             (str): Le chemin du fichier de sauvegarde.
         """
@@ -409,7 +409,7 @@ class AchievementsSystem:
 
     def get_completion_percentage(self):
         """Retourne le pourcentage de succès complétés.
-        
+
         Returns:
             (float): Le pourcentage de succès complétés.
         """
@@ -469,7 +469,7 @@ class AchievementsSystem:
 
     def get_pending_notifications(self):
         """Retourne et supprime les notifications en attente.
-        
+
         Returns:
             notifications (list): Liste des notifications en attente.
         """

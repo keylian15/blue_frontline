@@ -382,6 +382,7 @@ class Paquebot(Unit):
 
 class PaquebotRouge(Paquebot):
     """Classe pour le Paquebot Rouge."""
+
     def __init__(self, game, is_ia: bool = True):
         """Initialise une instance de Paquebot Rouge.
 
@@ -394,6 +395,7 @@ class PaquebotRouge(Paquebot):
 
 class PaquebotVert(Paquebot):
     """Classe pour le Paquebot Vert."""
+
     def __init__(self, game, is_ia: bool = True):
         """Initialise une instance de Paquebot Vert.
 

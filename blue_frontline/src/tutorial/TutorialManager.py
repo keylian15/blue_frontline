@@ -473,7 +473,7 @@ class TutorialManager:
 
     def draw_arrow_towards(self, pop_up, pop_up_size, target_pos, color=(255, 255, 255)):
         """Dessine une flèche allant de la popup vers la position cible.
-        
+
         Args:
             pop_up (tuple): Position de la popup (x, y).
             pop_up_size (tuple): Taille de la popup (width, height).
@@ -749,7 +749,7 @@ class TutorialManager:
     def do_seq_fire(self):
         """Exécute les actions de la séquence.
         Spawn une chaloupe verte a coté de la chaloupe rouge
-        
+
         Returns:
             (bool): True si la séquence est terminée, False sinon.
         """
@@ -765,7 +765,7 @@ class TutorialManager:
     def do_seq_submarin(self):
         """Exécute les actions de la séquence.
         Spawn un sous-marin rouge pour placer une mine
-        
+
         Returns:
             (bool): True si la séquence est terminée, False sinon.
         """
@@ -786,7 +786,7 @@ class TutorialManager:
     def do_seq_plateforme(self):
         """Exécute les actions de la séquence.
         Voit les améliorations de la plateforme.
-        
+
         Returns:
             (bool): True si la séquence est terminée, False sinon.
         """
@@ -798,7 +798,7 @@ class TutorialManager:
 
     def get_alien_message(self, nb: int):
         """Renvoie le message à afficher avec le nombre de caractéres
-        
+
         Args:
             nb (int): Nombre de caractères à afficher
         Returns:

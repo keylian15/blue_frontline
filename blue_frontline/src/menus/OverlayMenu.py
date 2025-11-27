@@ -13,7 +13,7 @@ class OverlayMenu:
 
     def __init__(self, screen, game: Game):
         """Initialise le menu.
-        
+
         Args:
             screen (pygame.Surface): La surface d'affichage.
             game (Game): Instance du jeu.
@@ -77,7 +77,7 @@ class OverlayMenu:
 
     def create_button(self, label: str, upgrade_name: str, unit: str, action: callable):
         """Crée un bouton et l'ajoute à la liste.
-        
+
         Args:
             label (str): Texte du bouton.
             upgrade_name (str): Nom de l'amélioration.
@@ -95,7 +95,7 @@ class OverlayMenu:
 
     def get_button_text(self, btn):
         """Génère le texte à afficher sur un bouton.
-        
+
         Args:
             btn (dict): Dictionnaire du bouton.
         Returns:
@@ -120,7 +120,7 @@ class OverlayMenu:
 
     def upgrade(self, upgrade_name: str):
         """Effectue une amélioration.
-        
+
         Args:
             upgrade_name (str): Nom de l'amélioration.
         """

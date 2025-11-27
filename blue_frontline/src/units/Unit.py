@@ -434,7 +434,7 @@ class Unit(pygame.sprite.Sprite):
 
     def die_when_stuck(self):
         """Vérifie si l'unité est coincée sur un obstacle et la fait mourir si c'est le cas.
-        
+
         Returns:
             (bool): True si l'unité est coincée, False sinon.
         """
@@ -447,7 +447,7 @@ class Unit(pygame.sprite.Sprite):
 
     def get_health_percentage(self):
         """Retourne le pourcentage de vie restante.
-        
+
         Returns:
             (float): Pourcentage de vie restante.
         """
@@ -484,7 +484,7 @@ class Unit(pygame.sprite.Sprite):
 
     def can_attack(self):
         """Vérifie si l'unité peut attaquer (cooldown respecté).
-        
+
         Returns:
             (bool): True si l'unité peut attaquer, False sinon.
         """
@@ -673,7 +673,7 @@ class Unit(pygame.sprite.Sprite):
 
     def get_closest_enemy_in_range(self):
         """Retourne l'ennemi le plus proche dans la portée.
-        
+
         Returns:
             (Unit): L'ennemi le plus proche, ou None si aucun ennemi n'est dans la portée.
         """

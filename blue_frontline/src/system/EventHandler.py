@@ -619,10 +619,10 @@ class EventHandler:
 
     def _input_qlearning(self, event: pygame.event):
         """Gère les entrées clavier pour le debug du Q-Learning
-        
+
         Args:
             event (pygame.event): Événement pygame
-            
+
         Returns:
             (bool): True si une touche de debug a été pressée, False sinon.
         """
@@ -718,7 +718,7 @@ class EventHandler:
 
     def _toggle_visual_debug_all_chaloupes(self):
         """Active/désactive le debug visuel pour toutes les chaloupes.
-        
+
         Returns:
             (bool): True si le debug a été togglé, False sinon.
         """
