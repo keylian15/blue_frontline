@@ -182,7 +182,7 @@ Les pompes permettent d’améliorer votre rendement en pétrole.
 ## Améliorations  
 Lorsque vous détruisez des troupes adverse vous recuperer des pieces qui peuvent être utilisées pour des améliorations:  
 ### Destruction :  
-• 1 : 20 pièce – Coût : Gratuit (défaut)  
+• 1 : 20 pièces - Coût : Gratuit (défaut)  
 • 2 : 40 pièces – Coût : 100 pièces  
 • 3 : 60 pièces – Coût : 200 pièces  
 • 4 : 80 pièces – Coût : 500 pièces  
