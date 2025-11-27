@@ -154,7 +154,7 @@ class SpatialAudioManager:
 
     # ---- API volume maître / mute ----
     def set_master_volume(self, value_0_1: float):
-        """Définit le volume maître (0..1) et recalcule immédiatement les volumes."""
+        """Définit le volume maître (0..1) et recalcule immédiatement les volumes.
 
         Args:
             value_0_1 (float): Volume maître entre 0 et 1.
@@ -619,16 +619,13 @@ class SpatialAudioManager:
         return f, pan
 
     def _maybe_trigger_base_oneshot(self, base_focus, base_pan, effective_master):
-        if not self.sfx_base or self._global_muted:
-
-    def _maybe_trigger_base_oneshot(self, base_focus, base_pan):
         """Déclenche un one-shot audio pour la base si le focus est suffisant et le cooldown écoulé.
 
         Args:
             base_focus (float): Focus de la base (0..1).
             base_pan (float): Panning de la base (-1..+1).
         """
-        if not self.sfx_base:
+        if not self.sfx_base or self._global_muted:
             return
         now = pygame.time.get_ticks()
         if (
