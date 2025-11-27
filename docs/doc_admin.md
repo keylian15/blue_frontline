@@ -1,4 +1,5 @@
 # Manuel Administrateur
+
 ## Blue Frontline - Jeu Naval Stratégique
 
 ---
@@ -8,14 +9,12 @@
 **Auteur :** CHAMPY Thomas  
 **Destinataires :** Professeurs, Administrateurs système, DevOps, Développeurs
 
- [🧩 **Documentation Technique (Fonctions)** ](https://blue-frontline.readthedocs.io/fr/latest/doc_technique)
----
-
+## [🧩 **Documentation Technique (Fonctions)** ](https://blue-frontline.readthedocs.io/fr/latest/doc_technique)
 
 ## TABLE DES MATIÈRES
 
 1. [Introduction](#1-introduction)
-2. [Description du système](#2-description-du-système)
+2. [Description du système](#2-description-du-systeme)
 3. [Installation](#3-installation)
 4. [Configuration](#4-configuration)
 5. [Exploitation](#5-exploitation)
@@ -27,25 +26,29 @@
 ## 1. INTRODUCTION
 
 ### 1.1 Objectif du document
+
 Ce manuel administrateur fournit les procédures techniques nécessaires pour l'installation, la configuration, l'exploitation et la maintenance du jeu **Blue Frontline**, un jeu naval stratégique développé en Python avec Pygame.
 
 ### 1.2 Public cible
-- Professeurs
-- Administrateurs système
-- Ingénieurs DevOps
-- Développeurs souhaitant déployer ou maintenir l'application
-- Exploitants techniques
+
+-   Professeurs
+-   Administrateurs système
+-   Ingénieurs DevOps
+-   Développeurs souhaitant déployer ou maintenir l'application
+-   Exploitants techniques
 
 ### 1.3 Prérequis
-- Connaissances de base en Python
-- Familiarité avec les systèmes Windows/Linux
-- Notions de gestion de versions Git
+
+-   Connaissances de base en Python
+-   Familiarité avec les systèmes Windows/Linux
+-   Notions de gestion de versions Git
 
 ---
 
 ## 2. DESCRIPTION DU SYSTÈME
 
 ### 2.1 Architecture générale
+
 Blue Frontline est une application standalone Python utilisant l'architecture MVC :
 
 ```
@@ -65,13 +68,15 @@ blue_frontline/
 ```
 
 ### 2.2 Composants principaux
-- **Moteur de jeu** : Pygame 2.5.2+
-- **Gestion des cartes** : PyTMX pour fichiers Tiled
-- **Système de succès** : Persistance JSON
-- **Audio** : Mixer Pygame
-- **Interface** : Rendu 2D temps réel
+
+-   **Moteur de jeu** : Pygame 2.5.2+
+-   **Gestion des cartes** : PyTMX pour fichiers Tiled
+-   **Système de succès** : Persistance JSON
+-   **Audio** : Mixer Pygame
+-   **Interface** : Rendu 2D temps réel
 
 ### 2.3 Flux de données
+
 ```
 Utilisateur → Interface Menu → Game Engine → Rendu Pygame → Écran
         ↓
@@ -86,21 +91,24 @@ Utilisateur → Interface Menu → Game Engine → Rendu Pygame → Écran
 
 ### 3.1 Prérequis système
 
-**Configuration minimale :**  
-- OS : Windows 10+ / Linux Ubuntu 18.04+ / macOS 10.14+  
-- Python : 3.11  
-- RAM : 2 GB minimum  
-- Espace disque : 500 MB  
-- Résolution : 1024x768 minimum  
-- Outils : [PIP, Installation si nécessaire ](https://pip.pypa.io/en/stable/installation)
+**Configuration minimale :**
+
+-   OS : Windows 10+ / Linux Ubuntu 18.04+ / macOS 10.14+
+-   Python : 3.11
+-   RAM : 2 GB minimum
+-   Espace disque : 500 MB
+-   Résolution : 1024x768 minimum
+-   Outils : [PIP, Installation si nécessaire ](https://pip.pypa.io/en/stable/installation)
 
 **Configuration recommandée :**
-- Python : 3.11
-- RAM : 4 GB ou plus
+
+-   Python : 3.11
+-   RAM : 4 GB ou plus
 
 ### 3.2 Procédure d'installation
 
 #### Étape 1 : Clonage du dépôt
+
 ```bash
 git clone https://github.com/keylian15/blue_frontline.git
 cd blue_frontline
@@ -108,6 +116,7 @@ git checkout main  # Branche principale recommandée
 ```
 
 #### Étape 2 : Environnement virtuel (recommandé)
+
 ```bash
 # Windows
 python -m venv venv
@@ -121,34 +130,37 @@ source venv/bin/activate
 #### Étape 3 : Installation des dépendances
 
 Pour installer les dépendances du projet, selon le cas il vous suffit de faire :  
-Pour travailler sur le projet : 
+Pour travailler sur le projet :
+
 ```text
 pip install -r requirements.txt
 ```
 
 Pour faire la documentation du projet :
+
 ```text
 pip install -r docs/requirements.txt
 ```
 
-Pour faire un .exe du projet : 
+Pour faire un .exe du projet :
+
 ```text
 pip install -r requirements-dev.txt
 ```
 
-
 #### Étape 4 : Vérification de l'installation
+
 ```bash
 python .\blue_frontline\main.py
 ```
 
 ### 3.3 Erreurs courantes d'installation
 
-| Erreur | Cause | Solution |
-|--------|-------|----------|
-| `ModuleNotFoundError: pygame` | Dépendances manquantes | `pip install pygame` |
-| `No module named 'pytmx'` | PyTMX non installé | `pip install pytmx` |
-| `Permission denied` | Droits insuffisants | Exécuter en administrateur |
+| Erreur                        | Cause                  | Solution                   |
+| ----------------------------- | ---------------------- | -------------------------- |
+| `ModuleNotFoundError: pygame` | Dépendances manquantes | `pip install pygame`       |
+| `No module named 'pytmx'`     | PyTMX non installé     | `pip install pytmx`        |
+| `Permission denied`           | Droits insuffisants    | Exécuter en administrateur |
 
 ---
 
@@ -157,7 +169,9 @@ python .\blue_frontline\main.py
 ### 4.1 Fichiers de configuration
 
 #### Global.py
+
 Variables de configuration principales :
+
 ```python
 # Résolution d'écran (configurable dans le menu ou dans le code)
 SCREEN_WIDTH = 1366  # Peut être modifié dans le menu ou main.py
@@ -174,31 +188,35 @@ SOUNDS_PATH = "sounds/"
 ```
 
 #### map.tmx
+
 Carte de jeu au format Tiled contenant :
-- Couches de terrain
-- Objets de positionnement des plateformes
-- Zones de spawn des unités
+
+-   Couches de terrain
+-   Objets de positionnement des plateformes
+-   Zones de spawn des unités
 
 ### 4.2 Configuration des succès
 
 Le système de succès utilise `achievements.json` :
+
 ```json
 {
-  "unlocked_achievements": ["first_unit", "unit_collector"],
-  "stats": {
-    "units_created": {"chaloupe": 5, "bateau": 2},
-    "units_killed": {"chaloupe": 3},
-    "total_petrole_spent": 150,
-    "games_won": 2
-  }
+    "unlocked_achievements": ["first_unit", "unit_collector"],
+    "stats": {
+        "units_created": { "chaloupe": 5, "bateau": 2 },
+        "units_killed": { "chaloupe": 3 },
+        "total_petrole_spent": 150,
+        "games_won": 2
+    }
 }
 ```
 
 ### 4.3 Variables d'environnement
 
 Aucune variable d'environnement requise par défaut. Options disponibles :
-- `PYGAME_HIDE_SUPPORT_PROMPT=1` : Masque les messages Pygame
-- `PYTHONPATH` : Pour imports personnalisés
+
+-   `PYGAME_HIDE_SUPPORT_PROMPT=1` : Masque les messages Pygame
+-   `PYTHONPATH` : Pour imports personnalisés
 
 ---
 
@@ -206,17 +224,20 @@ Aucune variable d'environnement requise par défaut. Options disponibles :
 
 ### 5.1 Lancement de l'application
 
-#### Aller dans le dossier 
+#### Aller dans le dossier
+
 ```bash
 cd blue_frontline
 ```
 
 #### Mode normal
+
 ```bash
 python main.py
 ```
 
 #### Mode debug
+
 ```bash
 python -u main.py  # Sortie non bufferisée
 ```
@@ -224,7 +245,9 @@ python -u main.py  # Sortie non bufferisée
 ### 5.2 Supervision
 
 #### Logs système
+
 Les logs sont affichés dans la console :
+
 ```
 pygame 2.5.2 (SDL 2.28.3, Python 3.12.6)
 Hello from the pygame community.
@@ -234,6 +257,7 @@ Plateforme green créée à (3696.0, 1488.0)
 ```
 
 #### Monitoring des performances
+
 ```python
 # Dans Game.py - Monitoring FPS
 clock = pygame.time.Clock()
@@ -242,18 +266,18 @@ fps = clock.get_fps()
 
 ### 5.3 Arrêt de l'application
 
-- **Normal** : Menu Quitter ou Alt+F4
-- **Forcé** : Ctrl+C dans le terminal
-- **Urgence** : Gestionnaire des tâches
+-   **Normal** : Menu Quitter ou Alt+F4
+-   **Forcé** : Ctrl+C dans le terminal
+-   **Urgence** : Gestionnaire des tâches
 
 ### 5.4 Fichiers de données
 
-| Fichier | Description | Sauvegarde |
-|---------|-------------|------------|
-| `data/achievements.json` | Progression succès | Automatique |
-| `data/keys.json` | Assignation de touches | Automatique |
-| `map.tmx` | Carte de jeu | Statique |
-| `assets/*` | Ressources graphiques | Statique |
+| Fichier                  | Description            | Sauvegarde  |
+| ------------------------ | ---------------------- | ----------- |
+| `data/achievements.json` | Progression succès     | Automatique |
+| `data/keys.json`         | Assignation de touches | Automatique |
+| `map.tmx`                | Carte de jeu           | Statique    |
+| `assets/*`               | Ressources graphiques  | Statique    |
 
 ---
 
@@ -262,6 +286,7 @@ fps = clock.get_fps()
 ### 6.1 Sauvegarde
 
 #### Données utilisateur
+
 ```bash
 # Sauvegarde progression
 cp data/achievements.json backup/achievements_$(date +%Y%m%d).json
@@ -273,6 +298,7 @@ tar -czf blue_frontline_backup_$(date +%Y%m%d).tar.gz .
 ```
 
 #### Restauration
+
 ```bash
 # Restaurer progression
 cp backup/achievements_20250930.json data/achievements.json
@@ -283,6 +309,7 @@ cp backup/keys_20250930.json data/keys.json
 ### 6.2 Mises à jour
 
 #### Procédure de mise à jour
+
 ```bash
 # 1. Sauvegarde des données
 cp data/achievements.json achievements_backup.json
@@ -298,6 +325,7 @@ python main.py
 ### 6.3 Sécurité
 
 #### Permissions fichiers
+
 ```bash
 # Linux/macOS - Sécurisation
 chmod 755 *.py
@@ -307,6 +335,7 @@ chmod -R 644 assets/
 ```
 
 #### Vérification d'intégrité
+
 ```bash
 # Vérification syntaxe Python
 python -m py_compile main.py
@@ -315,11 +344,11 @@ python -m py_compile Class/*.py
 
 ### 6.4 Dépannage courant
 
-| Problème | Diagnostic | Solution |
-|----------|------------|----------|
-| Jeu ne démarre pas | `python main.py` → erreur | Vérifier dépendances |
-| Sons absents | Erreur mixer | Installer codecs audio |
-| Performances lentes | FPS < 30 | Réduire résolution |
+| Problème            | Diagnostic                | Solution               |
+| ------------------- | ------------------------- | ---------------------- |
+| Jeu ne démarre pas  | `python main.py` → erreur | Vérifier dépendances   |
+| Sons absents        | Erreur mixer              | Installer codecs audio |
+| Performances lentes | FPS < 30                  | Réduire résolution     |
 
 ---
 
@@ -327,14 +356,15 @@ python -m py_compile Class/*.py
 
 ### 7.1 Glossaire
 
-- **PyGame** : Bibliothèque Python pour développement de jeux 2D
-- **PyTMX** : Parseur Python pour fichiers Tiled Map Editor
-- **Succès** : Système de récompenses basé sur les actions du joueur
-- **TMX** : Format de fichier XML pour cartes de jeu Tiled
+-   **PyGame** : Bibliothèque Python pour développement de jeux 2D
+-   **PyTMX** : Parseur Python pour fichiers Tiled Map Editor
+-   **Succès** : Système de récompenses basé sur les actions du joueur
+-   **TMX** : Format de fichier XML pour cartes de jeu Tiled
 
 ### 7.2 Scripts utiles
 
 #### Vérification dépendances
+
 ```bash
 pip check
 pip list --outdated
@@ -342,10 +372,10 @@ pip list --outdated
 
 ### 7.3 Références externes
 
-- [Documentation Pygame](https://www.pygame.org/docs/)
-- [Tiled Map Editor](https://www.mapeditor.org/)
-- [Python.org](https://docs.python.org/3/)
-- [ISO/IEC 26514](https://www.iso.org/standard/43073.html)
+-   [Documentation Pygame](https://www.pygame.org/docs/)
+-   [Tiled Map Editor](https://www.mapeditor.org/)
+-   [Python.org](https://docs.python.org/3/)
+-   [ISO/IEC 26514](https://www.iso.org/standard/43073.html)
 
 ### 7.4 Structure des logs
 
@@ -360,8 +390,8 @@ pip list --outdated
 ### 7.5 Contact support
 
 **Développeur** : CHAMPY Thomas, TURBE Keylian, SIAME Romain, LE PALLEC Hippolyte, ARNOULT Antoine, BERGHOL Samy  
-**Repository** : https://github.com/keylian15/blue_frontline  
+**Repository** : https://github.com/keylian15/blue_frontline
 
 ---
 
-*Ce document respecte les préconisations ISO/IEC 26514 pour la documentation technique.*
+_Ce document respecte les préconisations ISO/IEC 26514 pour la documentation technique._
