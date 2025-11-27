@@ -6,9 +6,9 @@ from src.utils.Utils import resource_path, user_data_path
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # === Données utilisateur ===
-ACHIVEMENTS_PATH = user_data_path("achievements.json")
-SETTINGS_PATH = user_data_path("gameplay_settings.json")
-KEYS_PATH = user_data_path("keys.json")
+ACHIVEMENTS_PATH = user_data_path("data/achievements.json")
+SETTINGS_PATH = user_data_path("data/gameplay_settings.json")
+KEYS_PATH = user_data_path("data/keys.json")
 
 # === Map ===
 MAP_PATH = resource_path("src/utils/map.tmx")

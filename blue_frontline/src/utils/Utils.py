@@ -49,20 +49,38 @@ def resource_path(relative_path: str):
     return os.path.join(base_path, relative_path)
 
 
-def user_data_path(filename):
-    """Retourne un chemin sûr en écriture pour sauvegarder les données utilisateur."""
+def user_data_path(filename: str):
+    """Retourne le chemin pour les données utilisateur (lecture/écriture).
 
-    if getattr(sys, "frozen", False):
-        # Le dossier spécifique à l'utilisateur
-        base_dir = os.path.join(os.path.expanduser("~"), "AppData", "Local", "BlueFrontline")
-    else:
-        # Mode développement → stocke dans le dossier du projet
-        base_dir = os.path.join(os.getcwd(), "data")
+    Pour les exécutables PyInstaller, vérifie d'abord si le fichier existe dans le package,
+    sinon crée un chemin à côté de l'exécutable.
 
-    # Crée le dossier s'il n'existe pas
-    os.makedirs(base_dir, exist_ok=True)
+    Args:
+        filename (str): Chemin relatif vers la ressource.
 
-    return os.path.join(base_dir, filename)
+    Returns:
+        (str): Chemin absolu vers la ressource.
+    """
+    if hasattr(sys, "_MEIPASS"):  # si exe PyInstaller
+        # D'abord, vérifier si le fichier existe dans le package
+        packaged_path = os.path.join(sys._MEIPASS, filename)
+        if os.path.exists(packaged_path):
+            return packaged_path
+
+        # Sinon, utiliser le dossier à côté de l'exe pour l'écriture
+        base_path = os.path.dirname(sys.executable)
+    else:  # si script normal
+        base_path = os.path.dirname(__file__)
+
+    # Remonter jusqu'a blue_frontline
+    base_path = os.path.dirname(base_path)  # /src
+    base_path = os.path.dirname(base_path)  # /blue_frontline
+
+    # Crée les dossiers nécessaires
+    full_path = os.path.join(base_path, filename)
+    data_dir = os.path.dirname(full_path)
+    os.makedirs(data_dir, exist_ok=True)
+    return full_path
 
 
 def random_point_in_polygon(points: tuple[int, int]):

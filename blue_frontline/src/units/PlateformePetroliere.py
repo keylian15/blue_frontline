@@ -64,7 +64,6 @@ class PlateformePetroliere(pygame.sprite.Sprite):
 
         self.range = 12
         self.damage = 18
-        print(self.damage, type(self.damage))
         self.fire_rate = 0.25  # 4 tir/ 4 secondes
         self.last_shot_time = 0
         self.is_platform = True
@@ -173,7 +172,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         if self.is_ia:
             self.ia_save_log(self.team)
         # Déclencher la victoire si la plateforme a une référence vers le Game
-        if hasattr(self, Game) and self.game:
+        if hasattr(self, "game") and self.game:
             self.game.on_platform_destroyed(self)
 
     def draw_health_bar(self, screen: pygame.Surface, camera_offset: tuple[float, float], zoom: float):
