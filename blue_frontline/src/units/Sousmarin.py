@@ -198,10 +198,14 @@ class SousMarin(Unit):
         if x < margin or y < margin or x >= (self.game.map_width - margin) or y >= (self.game.map_height - margin):
             return False
 
-        # Vérifier si la position est dans un obstacle (île) avec une zone de sécurité
+        # Vérifier si la position est dans un obstacle (île) avec une zone de sécurité élargie de 20px
         if hasattr(self.game, "obstacles") and self.game.obstacles:
-            if point_in_many_polygons(self.game.obstacles, world_pos):
-                return False
+            # Créer une position de test avec une marge de 20px dans toutes les directions
+            for offset_x in [-20, 0, 20]:
+                for offset_y in [-20, 0, 20]:
+                    test_pos = (x + offset_x, y + offset_y)
+                    if point_in_many_polygons(self.game.obstacles, test_pos):
+                        return False
 
         # Vérifier les zones quantiques cachées (obstacles pour le sous-marin)
         if hasattr(self.game, "quantique_area_hidden") and self.game.quantique_area_hidden:
