@@ -52,19 +52,106 @@ Ce manuel administrateur fournit les procédures techniques nécessaires pour l'
 Blue Frontline est une application standalone Python utilisant l'architecture MVC :
 
 ```
-blue_frontline/
-├── main.py                # Point d'entrée principal
-├── Global.py              # Variables globales et constantes
-├── Utils.py               # Utilitaires partagés
-├── requirements.txt       # Dépendances Python
-├── Class/                 # Classes métier
-│   ├── Game.py            # Moteur de jeu principal
-│   ├── menu.py            # Interface menu
-│   ├── units/             # Unités de combat
-│   └── ...
-├── assets/                # Ressources graphiques
-├── sounds/ # Ressources audio
-└── dist/                  # Builds compilés
+└── blue_frontline/
+    ├── blue_frontline
+    │   ├── BlueFrontline.spec
+    │   ├── __init__.py
+    │   ├── assets
+    │   │   ├── Green_team
+    │   │   ├── HUD
+    │   │   ├── Red_team
+    │   │   ├── deep_water
+    │   │   ├── entity
+    │   │   ├── fissure
+    │   │   ├── ile_cailloux
+    │   │   ├── island
+    │   │   ├── logo
+    │   │   ├── menu
+    │   │   ├── miscellaneous
+    │   │   └── water
+    │   ├── data
+    │   │   ├── achievements.json
+    │   │   ├── achievements_rouge.json
+    │   │   ├── achievements_vert.json
+    │   │   ├── gameplay_settings.json
+    │   │   ├── keys.json
+    │   │   └── qlearning
+    │   │       ├── chaloupe_green_qtable.pkl
+    │   │       ├── chaloupe_red_qtable.pkl
+    │   │       └── test_chaloupe_qtable.pkl
+    │   ├── main.py
+    │   ├── sounds
+    │   └── src
+    │       ├── __init__.py
+    │       ├── config
+    │       │   ├── __init__.py
+    │       │   ├── audio.py
+    │       │   ├── controls_manager.py
+    │       │   ├── game_constants.py
+    │       │   ├── mapping.py
+    │       │   ├── paths.py
+    │       │   ├── settings_manager.py
+    │       │   ├── units.py
+    │       │   └── visuals.py
+    │       ├── core
+    │       │   ├── Camera.py
+    │       │   ├── ExplosionRenderer.py
+    │       │   ├── Game.py
+    │       │   ├── GameInitializer.py
+    │       │   ├── GameUpdater.py
+    │       │   ├── Renderer.py
+    │       │   ├── Timer.py
+    │       │   └── __init__.py
+    │       ├── menus
+    │       │   ├── AchievementsMenu.py
+    │       │   ├── CreditsMenu.py
+    │       │   ├── Menu.py
+    │       │   ├── OptionsMenu.py
+    │       │   ├── OverlayMenu.py
+    │       │   └── __init__.py
+    │       ├── sound
+    │       │   ├── Sound.py
+    │       │   ├── SoundAPI.py
+    │       │   └── __init__.py
+    │       ├── system
+    │       │   ├── AchievementsNotification.py
+    │       │   ├── AchievementsSystem.py
+    │       │   ├── AchievementsSystemRouge.py
+    │       │   ├── AchievementsSystemVert.py
+    │       │   ├── Combat.py
+    │       │   ├── EventHandler.py
+    │       │   ├── Hud.py
+    │       │   ├── Perlin.py
+    │       │   ├── Petrole.py
+    │       │   ├── Piece.py
+    │       │   └── __init__.py
+    │       ├── tutorial
+    │       │   ├── TutorialManager.py
+    │       │   └── __init__.py
+    │       ├── units
+    │       │   ├── Bateau.py
+    │       │   ├── Chaloupe.py
+    │       │   ├── Eclaireur.py
+    │       │   ├── IA
+    │       │   │   ├── ChaloupeAI.py
+    │       │   │   ├── ChaloupeQLearning.py
+    │       │   │   ├── IA_Eclaireur.py
+    │       │   │   ├── PathfindingLogic.py
+    │       │   │   └── __init__.py
+    │       │   ├── Paquebot.py
+    │       │   ├── PlateformePetroliere.py
+    │       │   ├── PompePetroliere.py
+    │       │   ├── Sousmarin.py
+    │       │   ├── Unit.py
+    │       │   └── __init__.py
+    │       └── utils
+    │           ├── Utils.py
+    │           ├── __init__.py
+    │           └── map.tmx
+    ├── mkdocs.yml
+    ├── requirements-dev.txt
+    ├── requirements.txt
+    └── ruff.toml
 ```
 
 ### 2.2 Composants principaux
