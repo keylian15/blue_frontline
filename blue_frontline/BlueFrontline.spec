@@ -9,46 +9,99 @@ a = Analysis(
     datas=[
         ('assets', 'assets'),
         ('sounds', 'sounds'),
-        ('map.tmx', '.'),
+        ('src/utils/map.tmx', 'src/utils'),
         ('data', 'data'),
     ],
     hiddenimports=[
         # Bibliothèques externes
         'pygame',
         'pytmx',
+        'pytmx.util_pygame',
+        'pytmx.TiledObjectGroup',
+        'pytmx.TiledObject',
         'pyscroll',
         'perlin_noise',
+        'numpy',
+        'numpy._core',
+        'numpy._core.multiarray',
         'shapely',
         'shapely.geometry',
-
-        # Modules du jeu (Class/)
-        'Class.menu',
-        'Class.Game',
-        'Class.Combat',
-        'Class.EventHandler',
-        'Class.Renderer',
-        'Class.InputManager',
-        'Class.GameUpdater',
-        'Class.GameInitializer',
-        'Class.Perlin',
-        'Class.Camera',
-        'Class.HUD',
-        'Class.Petrole',
-        'Class.Piece',
-        'Class.Timer',
-        'Class.OptionsMenu',
-        'Class.AchievementSystem',
-        'Class.AchievementNotification',
-        'Class.PlateformePetroliere',
-
-        # Unités
-        'Class.units',
-        'Class.units.Unit',
-        'Class.units.Bateau',
-        'Class.units.Chaloupe',
-        'Class.units.Eclaireur',
-        'Class.units.Paquebot',
-        'Class.units.Sousmarin',
+        
+        # Modules src
+        'src',
+        'src.config',
+        'src.core',
+        'src.menus',
+        'src.sound',
+        'src.system',
+        'src.tutorial',
+        'src.units',
+        'src.units.IA',
+        'src.utils',
+        
+        # Config
+        'src.config.audio',
+        'src.config.controls_manager',
+        'src.config.game_constants',
+        'src.config.mapping',
+        'src.config.paths',
+        'src.config.settings_manager',
+        'src.config.units',
+        'src.config.visuals',
+        
+        # Core
+        'src.core.Camera',
+        'src.core.ExplosionRenderer',
+        'src.core.Game',
+        'src.core.GameInitializer',
+        'src.core.GameUpdater',
+        'src.core.Renderer',
+        'src.core.Timer',
+        
+        # Menus
+        'src.menus.AchievementsMenu',
+        'src.menus.CreditsMenu',
+        'src.menus.Menu',
+        'src.menus.OptionsMenu',
+        'src.menus.OverlayMenu',
+        
+        # Sound
+        'src.sound.Sound',
+        'src.sound.SoundAPI',
+        
+        # System
+        'src.system.AchievementsNotification',
+        'src.system.AchievementsSystem',
+        'src.system.AchievementsSystemRouge',
+        'src.system.AchievementsSystemVert',
+        'src.system.Combat',
+        'src.system.EventHandler',
+        'src.system.Hud',
+        'src.system.Perlin',
+        'src.system.Petrole',
+        'src.system.Piece',
+        
+        # Tutorial
+        'src.tutorial.TutorialManager',
+        
+        # Units
+        'src.units.Bateau',
+        'src.units.Chaloupe',
+        'src.units.Eclaireur',
+        'src.units.Paquebot',
+        'src.units.PlateformePetroliere',
+        'src.units.PompePetroliere',
+        'src.units.Sousmarin',
+        'src.units.Unit',
+        
+        # IA
+        'src.units.IA.ChaloupeAI',
+        'src.units.IA.ChaloupeQLearning',
+        'src.units.IA.IA_Eclaireur',
+        'src.units.IA.PathfindingLogic',
+        
+        # Utils
+        'src.utils.Utils',
     ],
     hookspath=[],
     hooksconfig={},
@@ -62,6 +115,7 @@ a = Analysis(
         'scipy',
         'IPython',
         'pandas',
+        'PIL',
     ],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
@@ -91,5 +145,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # icon='assets/icon.ico',
+    # icon='assets/icon.ico',  # Décommentez si vous avez une icône
 )
