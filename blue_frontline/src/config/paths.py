@@ -41,3 +41,4 @@ GREEN_BASE_TEAM_PATH = resource_path("assets/Green_team/png/Green_base.png")
 # === Menu ===
 MENU_PATH = resource_path("assets/menu/menu.png")
 ANCHOR_PATH = resource_path("assets/menu/NotoV1Anchor.png")
+LOGO_PATH = resource_path("assets/logo/png/logo.png")

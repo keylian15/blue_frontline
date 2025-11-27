@@ -2,7 +2,7 @@ import math
 import sys
 
 import pygame
-from src.config.paths import ANCHOR_PATH, MENU_PATH
+from src.config.paths import ANCHOR_PATH, LOGO_PATH, MENU_PATH
 from src.config.settings_manager import set_gameplay_setting
 from src.config.visuals import (
     BUTTON_BORDER_RADIUS,
@@ -41,6 +41,13 @@ class Menu:
         # Ajout : chargement de l'image d'ancre
         self.anchor_img = pygame.image.load(ANCHOR_PATH).convert_alpha()
         self.anchor_img = pygame.transform.smoothscale(self.anchor_img, (40, 40))
+
+        # Chargement du logo
+        self.logo_img = pygame.image.load(LOGO_PATH).convert_alpha()
+        # Redimensionner le logo (ajuster la taille selon vos besoins)
+        logo_width = 400
+        logo_height = int(self.logo_img.get_height() * (logo_width / self.logo_img.get_width()))
+        self.logo_img = pygame.transform.smoothscale(self.logo_img, (logo_width, logo_height))
 
         # Boutons
         start_x = BUTTON_MARGIN_LEFT
@@ -179,6 +186,10 @@ class Menu:
 
             self.screen.blit(self.background, (0, 0))
 
+            # Afficher le logo en haut au milieu
+            logo_rect = self.logo_img.get_rect(midtop=(self.WIDTH // 2, 50))
+            self.screen.blit(self.logo_img, logo_rect)
+
             # Affichage des boutons
             start_y = self.HEIGHT // 3
             for idx, (text, mode) in enumerate(modes):
@@ -229,6 +240,10 @@ class Menu:
                         mouse_click = True
 
                 self.screen.blit(self.background, (0, 0))
+
+                # Afficher le logo en haut au milieu
+                logo_rect = self.logo_img.get_rect(midtop=(self.WIDTH // 2, 50))
+                self.screen.blit(self.logo_img, logo_rect)
 
                 for _idx, (text, x, y, w, h) in enumerate(self.buttons):
                     hovered = x <= mouse_pos[0] <= x + w and y <= mouse_pos[1] <= y + h
