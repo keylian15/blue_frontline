@@ -170,9 +170,9 @@ Les sous-marins sont des unitées classiques, mais ont la particularitée de pou
 **Coût**:180    
 **PV max**:35   
 **Vitesse**:65px/s    
-**Portée**:5  
-**Dégâts**:18   
-**cadence**:0.5/s    
+**Portée**:0  
+**Dégâts**:12   
+**cadence**:1/s    
 __________________________________  
 ### Pompes
 ![unite](images/pompe.png)  
@@ -182,10 +182,10 @@ Les pompes permettent d’améliorer votre rendement en pétrole.
 ## Améliorations  
 Lorsque vous détruisez des troupes adverse vous recuperer des pieces qui peuvent être utilisées pour des améliorations:  
 ### Destruction :  
-• 1 : 1 pièce – Coût : Gratuit (défaut)  
-• 2 : 2 pièces – Coût : 100 pièces  
-• 3 : 3 pièces – Coût : 200 pièces  
-• 4 : 4 pièces – Coût : 500 pièces  
+• 1 : 20 pièce – Coût : Gratuit (défaut)  
+• 2 : 40 pièces – Coût : 100 pièces  
+• 3 : 60 pièces – Coût : 200 pièces  
+• 4 : 80 pièces – Coût : 500 pièces  
 ### Dégâts de la base :  
 • 1 : 10% du blindage de la Chaloupe – Coût : Gratuit (défaut)  
 • 2 : 20% du blindage de la Chaloupe – Coût : 200 pièces  
