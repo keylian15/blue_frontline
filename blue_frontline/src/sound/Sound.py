@@ -5,7 +5,6 @@ import math
 from typing import TYPE_CHECKING
 
 import pygame
-from src.sound import SoundAPI
 from src.config.audio import (
     APPARITION_QUANTIQUE,
     BASE_BED,
@@ -36,6 +35,7 @@ from src.config.audio import (
     VOL_MUSIC,
     VOL_SEA,
 )
+from src.sound import SoundAPI
 from src.utils.Utils import resource_path
 
 if TYPE_CHECKING:
@@ -44,7 +44,7 @@ if TYPE_CHECKING:
 
 def clamp(v, lo, hi):
     """Contraint v entre lo et hi
-    
+
     Args:
         v(float): Valeur à contraindre
         lo(float): Valeur minimale
@@ -57,7 +57,7 @@ def clamp(v, lo, hi):
 
 def lerp(a, b, t):
     """Interpolation linéaire entre a et b selon t
-    
+
     Args:
         a(float): Valeur de départ
         b(float): Valeur de fin
@@ -70,7 +70,7 @@ def lerp(a, b, t):
 
 def smoothstep(x):
     """Interpolation de Hermite (smoothstep) entre 0 et 1 selon x
-    
+
     Args:
         x(float): Coefficient d'interpolation
     Returns:
@@ -114,8 +114,8 @@ class SpatialAudioManager:
         self._master = clamp(MASTER_VOL_DEFAULT, MASTER_VOL_MIN, MASTER_VOL_MAX)
 
         # flags de mute
-        self._global_muted = False    # coupe tout le son (SOUND_ENABLED)
-        self._music_muted = False     # coupe uniquement la musique de fond (MUSIC_ENABLED)
+        self._global_muted = False  # coupe tout le son (SOUND_ENABLED)
+        self._music_muted = False  # coupe uniquement la musique de fond (MUSIC_ENABLED)
 
         # musique de fond
         try:
@@ -129,7 +129,7 @@ class SpatialAudioManager:
         self.chan_island = pygame.mixer.Channel(1)
         self.chan_sea = pygame.mixer.Channel(2)
         self.chan_base = pygame.mixer.Channel(3)  # one-shot base
-        self.chan_fx = pygame.mixer.Channel(4)    # one-shots gameplay (tir, drop, etc.)
+        self.chan_fx = pygame.mixer.Channel(4)  # one-shots gameplay (tir, drop, etc.)
 
         # états
         self.static_islands = None
@@ -231,9 +231,9 @@ class SpatialAudioManager:
 
         def _safe_load(name, path):
             """Charge un son de drop en toute sécurité.
-             Args:
-                 name (str): Nom de la clé pour le son.
-                 path (str): Chemin du fichier sonore.
+            Args:
+                name (str): Nom de la clé pour le son.
+                path (str): Chemin du fichier sonore.
             """
             try:
                 self.sfx_drop[name] = pygame.mixer.Sound(path)
@@ -254,9 +254,9 @@ class SpatialAudioManager:
 
         def _safe_load_shot(key, filename):
             """Charge un son de tir en toute sécurité.
-             Args:
-                 key (str): Nom de la clé pour le son.
-                 filename (str): Nom du fichier sonore.
+            Args:
+                key (str): Nom de la clé pour le son.
+                filename (str): Nom du fichier sonore.
             """
             try:
                 path = resource_path(f"blue_frontline_sounds/{filename}")
@@ -332,7 +332,7 @@ class SpatialAudioManager:
     # --- API interne (déclenchées par l'API publique) ---
     def set_quantum_islands(self, centers):
         """Définit les centres des îles quantiques actives.
-        
+
         Args:
             centers (list[tuple]): Liste des centres (x, y) des îles quantiques.
         """
@@ -344,7 +344,7 @@ class SpatialAudioManager:
 
     def play_drop_for_unit(self, unit_class_name: str, pos=None):
         """Joue le son de drop associé à l'unité (chaloupe / bateau / paquebot / sousmarin).
-        
+
         Args:
             unit_class_name (str): Nom de la classe d'unité.
             pos (tuple, optional): Position (x, y) du drop. Defaults to None.
@@ -383,7 +383,7 @@ class SpatialAudioManager:
     def play_shot_for_unit(self, unit_class_name: str, pos=None):
         """
         Joue le son de tir associé à l'unité (chaloupe / bateau / paquebot).
-        
+
         Args:
             unit_class_name (str): Nom de la classe d'unité.
             pos (tuple, optional): Position (x, y) du tir. Defaults to None
@@ -428,7 +428,7 @@ class SpatialAudioManager:
         Joue le klaxon / corne de bateau.
         - si pos est fourni → spatial
         - sinon → centré
-        
+
         Args:
             pos (tuple, optional): Position (x, y) du son. Defaults to None
         """
@@ -497,13 +497,13 @@ class SpatialAudioManager:
     # --- helpers spatialisation ---
     def _world_to_screen(self, wx, wy, cam, screen):
         """Convertit une position monde en position écran.
-        
+
         Args:
             wx (float): Position monde X.
             wy (float): Position monde Y.
             cam (Camera): Caméra.
             screen (pygame.Surface): Écran.
-        
+
         Returns:
             (tuple[float, float]): Position écran (x, y).
         """
@@ -514,11 +514,11 @@ class SpatialAudioManager:
 
     def _pan_from_screen_x(self, sx, screen):
         """Convertit une position écran en panning (-1..+1) pour la spatialisation.
-        
+
         Args:
             sx (float): Position écran X.
             screen (pygame.Surface): Écran.
-        
+
         Returns:
             (float): Panning (-1..+1).
         """
@@ -528,11 +528,11 @@ class SpatialAudioManager:
 
     def _pan_to_lr(self, vol, pan):
         """Convertit un volume + panning en volumes gauche/droite.
-        
+
         Args:
             vol (float): Volume global.
             pan (float): Panning (-1..+1).
-        
+
         Returns:
             (tuple[float, float]): Volumes gauche/droite.
         """
@@ -542,7 +542,7 @@ class SpatialAudioManager:
 
     def _dist_focus(self, wx, wy, cam, screen, radius_mult):
         """Calcule le focus (0..1) d'une position monde selon la distance au centre écran.
-        
+
         Args:
             wx (float): Position monde X.
             wy (float): Position monde Y.
@@ -563,13 +563,13 @@ class SpatialAudioManager:
 
     def _best_focus_pan(self, centers, cam, screen, radius_mult):
         """Calcule le meilleur focus + panning parmi une liste de centres monde.
-        
+
         Args:
             centers (list[tuple]): Liste des centres (x, y) à considérer.
             cam (Camera): Caméra.
             screen (pygame.Surface): Écran.
             radius_mult (float): Multiplicateur de rayon (0.5..3.0).
-        
+
         Returns:
             (tuple[float, float]): Focus (0..1) et panning (-1..+1).
         """
@@ -628,10 +628,7 @@ class SpatialAudioManager:
         if not self.sfx_base or self._global_muted:
             return
         now = pygame.time.get_ticks()
-        if (
-            base_focus >= BASE_TRIGGER_THRESHOLD
-            and (now - self._last_base_trigger_time) >= BASE_COOLDOWN_MS
-        ):
+        if base_focus >= BASE_TRIGGER_THRESHOLD and (now - self._last_base_trigger_time) >= BASE_COOLDOWN_MS:
             vol = clamp(BASE_ONE_SHOT_VOL * base_focus * effective_master, 0.0, 1.0)
             left, right = self._pan_to_lr(vol, base_pan)
             self.chan_base.set_volume(left, right)
@@ -786,7 +783,7 @@ class Sound:
 
     def on_unit_shot(self, unit_class_name: str, pos=None):
         """À appeler quand une unité tire (joue tir_chaloupe / tir_bateau / tir_paquebot).
-        
+
         Args:
             unit_class_name (str): Nom de la classe de l'unité.
             pos (tuple, optional): Position dans le monde (x, y).
@@ -824,7 +821,7 @@ class Sound:
 
     def enable_audio_debug(self, flag: bool = True):
         """Active des logs diagnostics pour l'audio (print).
-        
+
         Args:
             flag (bool, optional): True pour activer, False pour désactiver. Defaults to True.
         """

@@ -5,15 +5,14 @@ import pygame
 from src.config.audio import get_audio_settings
 from src.config.controls_manager import get_controls_keys, get_pygame_key
 from src.config.paths import ANCHOR_PATH, KEYS_PATH
+from src.config.settings_manager import get_gameplay_settings, set_gameplay_setting
+from src.config.visuals import BUTTON_BORDER_RADIUS, LIGHT_BLUE, OCEAN_BLUE, WAVE_COLOR, WHITE
 from src.sound import SoundAPI
-from src.config.settings_manager import (get_gameplay_settings,
-                                         set_gameplay_setting)
-from src.config.visuals import (BUTTON_BORDER_RADIUS, LIGHT_BLUE, OCEAN_BLUE,
-                                WAVE_COLOR, WHITE)
 
 
 class OptionsMenu:
     """Menu des options du jeu."""
+
     def __init__(self, screen):
         """Initialise le menu des options.
 
@@ -41,7 +40,7 @@ class OptionsMenu:
         self.CURSOR_BLINK_SPEED = 500  # millisecondes
 
         # État actuel : 'main', 'controls', 'gameplay', 'audio'
-        self.current_view = 'main'
+        self.current_view = "main"
 
         # Pour la vue controls
         self.waiting_for_key = None
@@ -161,7 +160,7 @@ class OptionsMenu:
 
     def save_keys(self):
         """Sauvegarde les touches de contrôle dans le fichier keys.json.
-        
+
         Returns:
             (bool): True si la sauvegarde a réussi, False sinon.
         """
@@ -239,11 +238,11 @@ class OptionsMenu:
 
     def draw_gradient_button(self, rect, hovered=False):
         """Dessine un bouton avec dégradé
-        
+
         Args:
             rect (pygame.Rect): Le rectangle du bouton.
             hovered (bool): Si le bouton est survolé par la souris.
-            
+
         Returns:
             button_surf (pygame.Surface): La surface du bouton.
         """
@@ -316,7 +315,7 @@ class OptionsMenu:
 
     def draw_control_button(self, key, rect, action):
         """Dessine un bouton de contrôle stylisé
-        
+
         Args:
             key (str): Nom de la touche.
             rect (pygame.Rect): Rectangle de base pour le bouton.
@@ -355,7 +354,7 @@ class OptionsMenu:
 
     def draw_controls_menu(self):
         """Dessine le menu des contrôles
-        
+
         Returns:
             control_rects (dict): Dictionnaire des rectangles interactifs par action.
             back_button_rect (pygame.Rect): Rectangle du bouton retour.
@@ -429,7 +428,7 @@ class OptionsMenu:
 
     def draw_gameplay_menu(self):
         """Dessine le menu Gameplay en grille responsive et retourne les zones interactives
-        
+
         Returns:
             interactive_rects (dict): Dictionnaire des rectangles interactifs par action.
         """
@@ -651,8 +650,7 @@ class OptionsMenu:
         # ===============================
         #       1. SLIDER VOLUME
         # ===============================
-        slider_label = self.font.render(
-            f"Volume général : {int(audio_settings['VOLUME'] * 100)}%", True, WHITE)
+        slider_label = self.font.render(f"Volume général : {int(audio_settings['VOLUME'] * 100)}%", True, WHITE)
         self.screen.blit(slider_label, (100, 170))
 
         slider_x = 100
@@ -664,7 +662,7 @@ class OptionsMenu:
         pygame.draw.rect(self.screen, OCEAN_BLUE, track_rect, border_radius=10)
 
         # Curseur
-        cursor_x = slider_x + int(audio_settings['VOLUME'] * slider_w)
+        cursor_x = slider_x + int(audio_settings["VOLUME"] * slider_w)
         cursor_rect = pygame.Rect(cursor_x - 10, slider_y - 5, 20, slider_h + 10)
         pygame.draw.rect(self.screen, LIGHT_BLUE, cursor_rect, border_radius=10)
 
@@ -698,7 +696,7 @@ class OptionsMenu:
         txt2_surf = self.font.render(text2, True, WHITE)
         self.screen.blit(txt2_surf, (bg_rect.x + 20, bg_rect.y + 15))
         interactive_rects["MUSIC_ENABLED"] = bg_rect
-        
+
         # ===============================
         #          Bouton appliquer
         # ===============================
@@ -710,7 +708,6 @@ class OptionsMenu:
         apply_txt = self.font.render("Appliquer", True, WHITE)
         self.screen.blit(apply_txt, (apply_rect.x + 20, apply_rect.y + 15))
         interactive_rects["APPLY_AUDIO"] = apply_rect
-
 
         # ===============================
         #          Bouton retour
@@ -729,7 +726,7 @@ class OptionsMenu:
 
     def handle_key_binding(self, event, control_name):
         """Gère l'attribution d'une nouvelle touche
-        
+
         Args:
             event (pygame.Event): L'événement pygame.
             control_name (str): Nom du contrôle à binder.
@@ -750,7 +747,7 @@ class OptionsMenu:
 
     def get_key_name(self, key_value):
         """Convertit une valeur de touche en nom lisible
-        
+
         Args:
             key_value (int): Valeur de la touche pygame.
         Returns:
@@ -770,7 +767,7 @@ class OptionsMenu:
 
     def handle_scroll(self, scroll_direction):
         """Gère le défilement du menu
-        
+
         Args:
             scroll_direction (int): La direction du scroll (1 pour vers le bas, -1 pour vers le haut).
         """
@@ -798,7 +795,7 @@ class OptionsMenu:
 
                 interactive_rects = self.draw_gameplay_menu()
 
-            elif self.current_view == 'audio':
+            elif self.current_view == "audio":
                 interactive_rects = self.draw_audio_menu()
 
             pygame.display.flip()
@@ -834,8 +831,8 @@ class OptionsMenu:
                     if event.key == pygame.K_ESCAPE:
                         if self.current_view == "main":
                             return True
-                        elif self.current_view in ['controls', 'gameplay', 'audio'] and not self.waiting_for_key:
-                            self.current_view = 'main'
+                        elif self.current_view in ["controls", "gameplay", "audio"] and not self.waiting_for_key:
+                            self.current_view = "main"
                             self.scroll_y = 0
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -852,7 +849,7 @@ class OptionsMenu:
                                     elif button["action"] == "gameplay":
                                         self.current_view = "gameplay"
                                     elif button["action"] == "audio":
-                                        self.current_view = 'audio'
+                                        self.current_view = "audio"
                                     elif button["action"] == "quit_game":
                                         pygame.quit()
                                         import sys
@@ -895,7 +892,7 @@ class OptionsMenu:
                                         return True
                                     break
 
-                        elif self.current_view == 'audio' and interactive_rects:
+                        elif self.current_view == "audio" and interactive_rects:
                             audio_settings = get_audio_settings()
                             for key, rect in interactive_rects.items():
                                 if rect.collidepoint(mouse_pos):
@@ -911,10 +908,10 @@ class OptionsMenu:
                                         except Exception as e:
                                             print("Erreur lors de l'application des paramètres audio :", e)
                                     elif key == "back":
-                                        self.current_view = 'main'
+                                        self.current_view = "main"
                                     break
 
-                    elif event.button == 4 and self.current_view == 'controls':  # Molette haut
+                    elif event.button == 4 and self.current_view == "controls":  # Molette haut
                         self.handle_scroll(-1)
                     elif event.button == 5 and self.current_view == "controls":  # Molette bas
                         self.handle_scroll(1)
@@ -935,9 +932,8 @@ class OptionsMenu:
                         time_max = 360
                         proportion = (mouse_x - slider_x) / slider_width
                         gameplay_settings = get_gameplay_settings()
-                        gameplay_settings["TIME_MAREE"] = int(
-                            time_min + proportion * (time_max - time_min))
-                    
+                        gameplay_settings["TIME_MAREE"] = int(time_min + proportion * (time_max - time_min))
+
                     # Curseur Octaves
                     if self.dragging_slider == "OCTAVES" and interactive_rects:
                         mouse_x = pygame.mouse.get_pos()[0]

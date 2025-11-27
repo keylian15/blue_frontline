@@ -136,7 +136,7 @@ class SousMarin(Unit):
 
     def can_place_mine(self):
         """Vérifie si le sous-marin peut poser une mine (cooldown respecté, mais fire_rate ignoré).
-        
+
         Returns:
             (bool): True si le sous-marin peut poser une mine, False sinon.
         """
@@ -182,7 +182,7 @@ class SousMarin(Unit):
 
     def is_position_valid(self, x, y, treat_platform_as_obstacle: bool = False):
         """Vérifie si une position est valide (pas dans un obstacle).
-        
+
         Args:
             x (float): Position x à vérifier
             y (float): Position y à vérifier
@@ -226,7 +226,7 @@ class SousMarin(Unit):
                             if hasattr(island, "name") and island.name and index == int(island.name[-1]):
                                 # On récupère la matrice de Perlin
                                 if hasattr(island, "matrix") and island.matrix:
-                                    from src.Perlin import Perlin
+                                    from src.system.Perlin import Perlin
 
                                     num = Perlin.get_zone_type(x, y, island.matrix, island)
 
@@ -401,7 +401,7 @@ class SousMarin(Unit):
 
     def broadcast_attack_signal(self, all_units):
         """Le leader envoie un signal d'attaque à tous les alliés de son groupe.
-        
+
         Args:
             all_units (list[Unit]): Liste de toutes les unités.
         """
@@ -423,7 +423,7 @@ class SousMarin(Unit):
 
     def attack_target(self, target_unit):
         """Effectue l'attaque vers la target sans redétection (logique similaire à behavior_attack).
-        
+
         Args:
             target_unit (Unit): L'unité cible à attaquer.
         """
@@ -476,7 +476,7 @@ class SousMarin(Unit):
 
     def coordinate_retreat(self, all_units):
         """Ordre de retraite coordonnée: envoie tous les membres du groupe en 'return_to_platform'.
-        
+
         Args:
             all_units (list[Unit]): Liste de toutes les unités.
         """
@@ -584,7 +584,7 @@ class SousMarin(Unit):
 
     def get_nearby_allied_submarines(self, all_units, radius=600):
         """Renvoie la liste des sous-marins alliés (vivants) dans un rayon donné (exclut self).
-        
+
         Args:
             all_units (list[Unit]): Liste de toutes les unités.
             radius (int): Rayon de recherche en pixels.
@@ -680,7 +680,7 @@ class SousMarin(Unit):
         # Ajouter les obstacles réels (parties terrestres) des îles quantiques DÉCOUVERTES
         if hasattr(self.game, "quantique_area") and self.game.quantique_area:
             if hasattr(self.game, "quantum_islands") and self.game.quantum_islands:
-                from src.Perlin import Perlin
+                from src.system.Perlin import Perlin
 
                 for island in self.game.quantum_islands:
                     if hasattr(island, "matrix") and island.matrix and hasattr(island, "rect"):
@@ -759,7 +759,7 @@ class SousMarin(Unit):
 
     def heuristic(self, a, b):
         """Distance de Manhattan.
-        
+
         Args:
             a (tuple): Position (x, y) 1.
             b (tuple): Position (x, y) 2.
@@ -817,7 +817,7 @@ class SousMarin(Unit):
 
     def update_path_from_thread(self):
         """Met à jour le chemin depuis le résultat du thread.
-        
+
         Returns:
             (bool): True si le chemin a été mis à jour, False sinon.
         """
@@ -1039,7 +1039,7 @@ class SousMarin(Unit):
         2. ATTACK → Poursuite et pose de mine
         3. RETURN_TO_PLATFORM → Retour à la plateforme pétrolière
         4. Retour en PATROL
-        
+
         Args:
             all_units (list[Unit]): Liste de toutes les unités du jeu
         """
@@ -1160,7 +1160,7 @@ class SousMarin(Unit):
 
         Utilise `is_position_valid` pour filtrer et tente de contourner les obstacles en cherchant
         une position proche si un point de la grille est invalide.
-        
+
         Args:
             all_units (list[Unit]): Liste de toutes les unités du jeu
         """
@@ -1264,7 +1264,7 @@ class SousMarin(Unit):
         - Le leader calcule la route vers la cible (A* ou direct) et la suit.
         - Les suiveurs gardent une position en formation relative au leader.
         - Quand le leader est à portée suffisante, il broadcast le signal d'attaque.
-        
+
         Args:
             all_units (list[Unit]): Liste de toutes les unités du jeu
         """
@@ -1406,7 +1406,7 @@ class SousMarin(Unit):
         - Générer positions de mines (une fois).
         - Se déplacer vers la position suivante et poser une mine si possible (respect cooldown).
         - Si toutes les mines posées, repasser en `patrol`.
-        
+
         Args:
             all_units (list[Unit]): Liste de toutes les unités du jeu
         """
@@ -1528,7 +1528,7 @@ class SousMarin(Unit):
         PRIORITÉ: Si paquebot détecté à 300px → passe en mode return_to_platform.
         Poursuit l'éclaireur et pose une mine à proximité.
         Si plus d'éclaireur → passe en mode return_to_platform.
-        
+
         Args:
             all_units (list[Unit]): Liste de toutes les unités du jeu
         """
@@ -1681,7 +1681,7 @@ class SousMarin(Unit):
 
         Retourne à une plateforme pétrolière alliée.
         Arrivé à destination → tourne de 180° et repasse en mode patrol.
-        
+
         Args:
             all_units (list[Unit]): Liste de toutes les unités du jeu
         """
@@ -1844,6 +1844,7 @@ class SousMarin(Unit):
 # Classes d'alias pour la compatibilité avec l'ancien code
 class SousMarinRouge(SousMarin):
     """Classe pour le SousMarin Rouge."""
+
     def __init__(self, game, is_ia: bool = True):
         """Constructeur de SousMarinRouge.
 
@@ -1855,7 +1856,8 @@ class SousMarinRouge(SousMarin):
 
 
 class SousMarinVert(SousMarin):
-    """Classe pour le SousMarin Vert."""    
+    """Classe pour le SousMarin Vert."""
+
     def __init__(self, game, is_ia: bool = True):
         """Constructeur de SousMarinVert.
 

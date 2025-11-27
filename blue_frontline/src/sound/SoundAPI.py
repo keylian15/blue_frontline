@@ -3,7 +3,6 @@
 # from src.sound.Sound import SpatialAudioManager
 from src.config.audio import get_audio_settings
 
-
 # ===================================================================
 # === FONCTIONS GLOBALES DU MODULE POUR LE MENU OPTIONS (CORRIGÉ) ===
 # ===================================================================
