@@ -20,6 +20,13 @@ class Explosion:
     """
 
     def __init__(self, x: int, y: int, size: int = 64):
+        """Initialise une explosion.
+
+        Args:
+            x (int): Position x de l'explosion.
+            y (int): Position y de l'explosion.
+            size (int, optional): Taille de l'explosion. Defaults to 64.
+        """
         self.position = [float(x), float(y)]
         self.size = size
         self.is_active = True
@@ -27,6 +34,11 @@ class Explosion:
         self.elapsed_time = 0
 
     def update(self, dt: float):
+        """Met à jour l'état de l'explosion.
+
+        Args:
+            dt (float): Le temps écoulé depuis la dernière mise à jour.
+        """
         if not self.is_active:
             return
         self.elapsed_time += dt
@@ -34,6 +46,7 @@ class Explosion:
             self.destroy()
 
     def destroy(self):
+        """Détruit l'explosion."""
         self.is_active = False
 
 
@@ -163,7 +176,7 @@ class Projectile(pygame.sprite.Sprite):
             target (Unit): La cible à vérifier.
 
         Returns:
-            bool: True si il y a collision, False sinon.
+            (bool): True si il y a collision, False sinon.
         """
 
         if not self.is_active:
@@ -275,7 +288,7 @@ class Mine(pygame.sprite.Sprite):
             unit: L'unité à vérifier.
 
         Returns:
-            bool: True si la mine a explosé, False sinon.
+            (bool): True si la mine a explosé, False sinon.
         """
         if not self.is_active or not unit.is_alive:
             return False
@@ -381,7 +394,7 @@ class CombatSystem:
             target (Unit): Unité cible.
 
         Returns:
-            Projectile: Projectile créé.
+            (Projectile): Projectile créé.
         """
 
         if not shooter.is_alive or not target.is_alive:

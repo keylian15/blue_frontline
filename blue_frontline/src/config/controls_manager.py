@@ -9,13 +9,24 @@ CONTROLS_KEYS = None
 
 
 def load_keys(path):
-    """Charge le fichier keys.json."""
+    """Charge le fichier keys.json.
+    
+    Args:
+        path (str): Chemin vers le fichier keys.json.
+    Returns:
+        (dict): Dictionnaire des contrôles.
+    """
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 
 
 def get_pygame_key(key_str):
-    """Convertit une chaîne en constante pygame."""
+    """Convertit une chaîne en constante pygame.
+    Args:
+        key_str (str): Chaîne à convertir.
+    Returns:
+        (int): Constante pygame.
+    """
     if isinstance(key_str, int):
         return key_str
     if isinstance(key_str, str):
@@ -25,7 +36,10 @@ def get_pygame_key(key_str):
 
 
 def load_controls_runtime():
-    """Charge et convertit les contrôles."""
+    """Charge et convertit les contrôles.
+    Returns:
+        (dict): Dictionnaire des contrôles avec touches pygame.
+    """
     raw = load_keys(KEYS_PATH)
     return {
         action: {
@@ -37,7 +51,12 @@ def load_controls_runtime():
 
 
 def get_action_key(action):
-    """Retourne la touche pygame pour une action."""
+    """Retourne la touche pygame pour une action.
+    Args:
+        action (str): Nom de l'action.
+    Returns:
+        (int): Touche pygame.
+    """
     try:
         raw = load_keys(KEYS_PATH)
         data = raw.get(action)
@@ -49,7 +68,10 @@ def get_action_key(action):
 
 
 def get_controls_keys():
-    """Retourne le dictionnaire des contrôles (avec cache)."""
+    """Retourne le dictionnaire des contrôles (avec cache).
+    Returns:
+        (dict): Dictionnaire des contrôles.
+    """
     global CONTROLS_KEYS
     if CONTROLS_KEYS is None:
         try:

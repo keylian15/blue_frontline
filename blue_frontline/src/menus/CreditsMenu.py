@@ -6,7 +6,13 @@ from src.config.visuals import BUTTON_BORDER_RADIUS, LIGHT_BLUE, OCEAN_BLUE, WAV
 
 
 class CreditsMenu:
+    """Menu des crédits du jeu."""
     def __init__(self, screen):
+        """Initialise le menu des crédits.
+
+        Args:
+            screen (pygame.Surface): Surface de dessin du menu.
+        """
         self.screen = screen
         self.WIDTH, self.HEIGHT = self.screen.get_size()
         self.font = pygame.font.SysFont(None, 40)
@@ -66,7 +72,15 @@ class CreditsMenu:
         self.create_member_buttons()
 
     def draw_gradient_button(self, rect, hovered=False):
-        """Dessine un bouton avec dégradé"""
+        """Dessine un bouton avec dégradé
+        
+        Args:
+            rect (pygame.Rect): Le rectangle du bouton.
+            hovered (bool): Si le bouton est survolé par la souris.
+            
+        Returns:
+            button_surf (pygame.Surface): La surface du bouton.
+        """
         import math
 
         button_surf = pygame.Surface((rect.width, rect.height), pygame.SRCALPHA)
@@ -231,6 +245,7 @@ class CreditsMenu:
             self.screen.blit(text_surf, text_rect)
 
     def run(self):
+        """Boucle principale du menu des crédits."""
         running = True
         clock = pygame.time.Clock()
         while running:

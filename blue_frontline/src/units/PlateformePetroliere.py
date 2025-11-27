@@ -493,7 +493,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         """Renvoie le meilleur scénario 75% du temps, sinon un scénario aléatoire.
 
         Returns:
-            tuple: (scénario, sous_scénario, score)
+            (tuple): (scénario, sous_scénario, score)
         """
         from random import choice, random
 
@@ -528,7 +528,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             scenario (tuple[str, str  |  None, int]): Le scénario demandé
 
         Returns:
-            bool: -1 si ca ne s'execute pas.
+            (bool): -1 si ca ne s'execute pas.
         """
         # On regarde le scénario principal et le secondaire s'il existe.
         match scenario:
@@ -551,7 +551,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         """Fonction permettant de faire le scénario de défense simple.
 
         Returns :
-            bool (bool): True si le scénario a été effectué, False sinon."""
+            (bool): True si le scénario a été effectué, False sinon."""
         from src.utils.Utils import get_cost
 
         # On vérifie qu'on peux spawn la chaloupe.
@@ -572,7 +572,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             indice (int): Indice de l'entité à spawn.
 
         Returns :
-            bool (bool): True si le scénario a été effectué, False sinon."""
+            (bool): True si le scénario a été effectué, False sinon."""
         # Si on doit attendre, on ne fait rien.
         if self.wait:
             return False
@@ -646,7 +646,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         """Fonction permettant de faire le scénario d'attaque simple.
 
         Returns:
-            bool: True si le scénario a fonctionné, False sinon.
+            (bool): True si le scénario a fonctionné, False sinon.
         """
 
         from src.utils.Utils import get_cost
@@ -670,7 +670,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             indice (int): Indice de l'entité à spawn.
 
         Returns :
-            bool (bool): True si le scénario a été effectué, False sinon."""
+            (bool): True si le scénario a été effectué, False sinon."""
         # Si on doit attendre, on ne fait rien.
         if self.wait:
             return False
@@ -746,7 +746,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         """Fonction permettant de faire le scénario d'exploration.
 
         Returns:
-            bool: True si le scénario est réalisé, False sinon.
+            (bool): True si le scénario est réalisé, False sinon.
         """
         from src.utils.Utils import get_cost
 
@@ -773,7 +773,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         """Fonction permettant de faire le scénario de production.
 
         Returns:
-            bool: True si le scénario est réalisé, False sinon.
+            (bool): True si le scénario est réalisé, False sinon.
         """
 
         from src.utils.Utils import get_cost
@@ -823,7 +823,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             data (tuple[str, str, int], optional): Les données pour le spawn. Defaults to None.
 
         Returns:
-            bool: True si l'IA attend, False sinon.
+            (bool): True si l'IA attend, False sinon.
         """
         if self.wait:
             from src.utils.Utils import get_cost
@@ -843,7 +843,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         """Fonction permettant de vérifier si le seuil est atteint pour toutes les unités alliées.
 
         Returns :
-            bool (bool): True si le seuil est atteint pour tous, False sinon."""
+            (bool): True si le seuil est atteint pour tous, False sinon."""
 
         # On parcours toutes les unités alliées.
         for cle, valeur in self.units_ally_dico.items():
@@ -930,7 +930,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
             probas (dict[str, float]): Les probabilités.
 
         Returns:
-            str: La valeur de la probabilité.
+            (str): La valeur de la probabilité.
         """
         from random import random
 
@@ -946,7 +946,7 @@ class PlateformePetroliere(pygame.sprite.Sprite):
         """Détermine quelle amélioration l'IA peut acheter, en choisissant la moins chère.
 
         Returns:
-            str | None: Nom de l'amélioration la moins chère possible, ou None si toutes sont au max.
+            (str | None): Nom de l'amélioration la moins chère possible, ou None si toutes sont au max.
         """
         upgrades = self.game.overlay_menu.upgrades[self.team]
         pieces_attr = "piece_red" if self.team == "red" else "piece_green"

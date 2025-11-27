@@ -11,10 +11,12 @@ class ExplosionRenderer:
     """
 
     def __init__(self):
+        """Initialise le renderer et charge l'image de base."""
         self.base_image = None
         self.load_base_image()
 
     def load_base_image(self):
+        """Charge l'image de l'explosion depuis le fichier."""
         try:
             self.base_image = pygame.image.load(EXPLOSION_IMAGE_PATH)
         except Exception as e:

@@ -41,7 +41,7 @@ class Timer:
         """Retourne le temps écoulé en minutes:secondes.
 
         Returns:
-            str: Temps écoulé en minutes:secondes.
+            (str): Temps écoulé en minutes:secondes.
         """
 
         return f"{self.count // 60} : {self.count % 60}"
@@ -64,7 +64,7 @@ class Timer:
         """Passe à la vitesse suivante dans le cycle x1 -> x2 -> x4 -> x8 -> x10 -> x20 -> 0.5 -> 1.
 
         Returns:
-            int: La nouvelle vitesse.
+            (int): La nouvelle vitesse.
         """
 
         self.speed_index = (self.speed_index + 1) % len(TIME_SPEEDS)
@@ -76,7 +76,7 @@ class Timer:
         """Retourne le multiplicateur de vitesse actuel.
 
         Returns:
-            int: Multiplicateur de vitesse actuel.
+            (int): Multiplicateur de vitesse actuel.
         """
 
         return self.current_speed

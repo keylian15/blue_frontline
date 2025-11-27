@@ -35,7 +35,7 @@ class EventHandler:
         """Gère tous les événements ponctuels.
 
         Returns:
-            bool: True si le jeu doit continuer, False sinon.
+            (bool): True si le jeu doit continuer, False sinon.
         """
 
         self.handle_continuous_input()
@@ -263,7 +263,7 @@ class EventHandler:
         * Les obstacles et les zones quantiques.
 
         Returns:
-            bool: True si le jeu doit continuer, False sinon.
+            (bool): True si le jeu doit continuer, False sinon.
         """
 
         for event in pygame.event.get():
@@ -457,7 +457,7 @@ class EventHandler:
             mouse_pos (tuple[int, int]): Coordonnées écran.
 
         Returns:
-            tuple[int, int]: Coordonnées monde.
+            (tuple[int, int]): Coordonnées monde.
         """
 
         mouse_x, mouse_y = mouse_pos
@@ -481,7 +481,7 @@ class EventHandler:
             cost (int): Coût de l'unité.
 
         Returns:
-            bool: True si le coût est valide, False sinon.
+            (bool): True si le coût est valide, False sinon.
         """
 
         # S'il n'y a pas assez de pétrole.
@@ -618,6 +618,14 @@ class EventHandler:
     # ==========================================
 
     def _input_qlearning(self, event: pygame.event):
+        """Gère les entrées clavier pour le debug du Q-Learning
+        
+        Args:
+            event (pygame.event): Événement pygame
+            
+        Returns:
+            (bool): True si une touche de debug a été pressée, False sinon.
+        """
         # F1: Toggle Q-Learning pour toutes les chaloupes
         if event.key == pygame.K_F1:
             self._toggle_qlearning_all_chaloupes()
@@ -709,7 +717,11 @@ class EventHandler:
         print(f"[Q-Learning Debug] Q-Learning reset pour {reset_count} chaloupes")
 
     def _toggle_visual_debug_all_chaloupes(self):
-        """Active/désactive le debug visuel pour toutes les chaloupes."""
+        """Active/désactive le debug visuel pour toutes les chaloupes.
+        
+        Returns:
+            (bool): True si le debug a été togglé, False sinon.
+        """
         chaloupes = [unit for unit in self.game.units if hasattr(unit, "unit_type") and unit.unit_type == "chaloupe"]
 
         if not chaloupes:

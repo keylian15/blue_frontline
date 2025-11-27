@@ -258,7 +258,7 @@ class Bateau(Unit):
         Args:
             all_units (list[Unit]): La liste de toutes les unités dans le jeu.
         Returns:
-            Unit: L'unité éclaireur alliée la plus proche, ou None si aucun trouvé.
+            (Unit): L'unité éclaireur alliée la plus proche, ou None si aucun trouvé.
         """
 
         # Cooldown pour éviter de chercher trop souvent
@@ -365,7 +365,7 @@ class Bateau(Unit):
             goal (tuple): Position d'arrivée sous forme de tuple (x, y).
 
         Returns:
-            list: Liste des positions (x, y) formant le chemin du départ à l'arrivée.
+            (list): Liste des positions (x, y) formant le chemin du départ à l'arrivée.
                 Retourne une liste vide si aucun chemin n'est trouvé.
         """
 
@@ -415,7 +415,13 @@ class Bateau(Unit):
         f_score = {start_grid: self.IA_heuristic(start_grid, goal_grid)}
 
         def is_in_shallow_water(grid):
-            """Retourne True si la cellule se trouve dans une zone d’eau peu profonde."""
+            """Retourne True si la cellule se trouve dans une zone d’eau peu profonde.
+            
+            Args:
+                grid (tuple): Coordonnées de la cellule (x, y)
+            Returns:
+                (bool): True si la cellule est dans une zone d’eau peu profonde, False sinon.
+            """
             pos = grid_to_pos(grid)
             pt = ShapelyPoint(pos[0], pos[1])
             return any(poly.contains(pt) for poly in shallow_polygons)

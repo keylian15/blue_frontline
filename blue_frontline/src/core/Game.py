@@ -132,8 +132,11 @@ class Game:
         self.notification_manager = AchievementNotificationManager(screen)
 
     def set_ia_setting(self, ia_setting: bool, team: str):
-        """
-        Définit les paramètres IA pour l'équipe demandée.
+        """Définit les paramètres IA pour l'équipe demandée.
+
+        Args:
+            ia_setting (bool): Activation ou désactivation de l'IA.
+            team (str): Nom de l'équipe ("red" ou autre).
         """
         settings = get_gameplay_settings()
 
@@ -432,6 +435,8 @@ class Game:
         """
         Renvoie les polygones des zones quantiques NON révélées.
         -> Ça correspond à ce que l'Éclaireur doit aller découvrir.
+        Returns:
+            (list[list[tuple]]): Liste des polygones des zones quantiques cachées.
         """
         return self.quantique_area_hidden
 
@@ -440,7 +445,10 @@ class Game:
         Renvoie la position vers laquelle l'unité doit rentrer à la fin.
         On utilise les plateformes pétrolières comme 'base'.
 
-        team : "red" ou "green"
+        Args:
+            team (str): L'équipe pour laquelle on veut la position de la base.
+        Returns:
+            (tuple): Position (x, y) de la base.
         """
         # Les plateformes sont construites dans GameInitializer.init_game_systems()
         # et stockées dans self.plateformes = {"red": plateforme_rouge, "green": plateforme_verte}

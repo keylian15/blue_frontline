@@ -43,14 +43,39 @@ if TYPE_CHECKING:
 
 
 def clamp(v, lo, hi):
+    """Contraint v entre lo et hi
+    
+    Args:
+        v(float): Valeur à contraindre
+        lo(float): Valeur minimale
+        hi(float): Valeur maximale
+    Returns:
+        (float): Valeur contrainte
+    """
     return max(lo, min(hi, v))
 
 
 def lerp(a, b, t):
+    """Interpolation linéaire entre a et b selon t
+    
+    Args:
+        a(float): Valeur de départ
+        b(float): Valeur de fin
+        t(float): Coefficient d'interpolation
+    Returns:
+        (float): Valeur interpolée
+    """
     return a + (b - a) * clamp(t, 0.0, 1.0)
 
 
 def smoothstep(x):
+    """Interpolation de Hermite (smoothstep) entre 0 et 1 selon x
+    
+    Args:
+        x(float): Coefficient d'interpolation
+    Returns:
+        (float): Valeur interpolée
+    """
     x = clamp(x, 0.0, 1.0)
     return x * x * (3 - 2 * x)
 
@@ -73,6 +98,11 @@ class SpatialAudioManager:
     """
 
     def __init__(self, game: Game):
+        """Initialise le gestionnaire audio avec une référence au jeu.
+
+        Args:
+            game (Game): Référence au jeu.
+        """
         self.game = game
 
         if not pygame.mixer.get_init():
@@ -125,6 +155,10 @@ class SpatialAudioManager:
     # ---- API volume maître / mute ----
     def set_master_volume(self, value_0_1: float):
         """Définit le volume maître (0..1) et recalcule immédiatement les volumes."""
+
+        Args:
+            value_0_1 (float): Volume maître entre 0 et 1.
+        """
         self._master = clamp(value_0_1, MASTER_VOL_MIN, MASTER_VOL_MAX)
         # Recalcule immédiatement les volumes en fonction du zoom / focus courant
         try:
@@ -133,11 +167,20 @@ class SpatialAudioManager:
             pass
 
     def adjust_master_volume(self, direction: int):
-        """direction: +1 (increase) / -1 (decrease)"""
+        """Ajuste le volume maître.
+
+        Args:
+            direction (int): +1 pour augmenter, -1 pour diminuer.
+        """
         step = MASTER_VOL_STEP * (1 if direction >= 0 else -1)
         self.set_master_volume(self._master + step)
 
     def get_master_volume(self) -> float:
+        """Obtient le volume maître actuel.
+
+        Returns:
+            (float): Volume maître entre 0 et 1.
+        """
         return self._master
 
     def set_global_mute(self, muted: bool):
@@ -164,6 +207,7 @@ class SpatialAudioManager:
 
     # ---- chargement sons ----
     def _load_sounds(self):
+        """Charge tous les effets sonores nécessaires."""
         # beds
         try:
             self.sfx_island = pygame.mixer.Sound(ISLAND_BED)
@@ -186,6 +230,11 @@ class SpatialAudioManager:
         self.sfx_drop = {}
 
         def _safe_load(name, path):
+            """Charge un son de drop en toute sécurité.
+             Args:
+                 name (str): Nom de la clé pour le son.
+                 path (str): Chemin du fichier sonore.
+            """
             try:
                 self.sfx_drop[name] = pygame.mixer.Sound(path)
             except Exception:
@@ -204,6 +253,11 @@ class SpatialAudioManager:
         self.sfx_shot = {}
 
         def _safe_load_shot(key, filename):
+            """Charge un son de tir en toute sécurité.
+             Args:
+                 key (str): Nom de la clé pour le son.
+                 filename (str): Nom du fichier sonore.
+            """
             try:
                 path = resource_path(f"blue_frontline_sounds/{filename}")
                 self.sfx_shot[key] = pygame.mixer.Sound(path)
@@ -234,6 +288,7 @@ class SpatialAudioManager:
             self.sfx_horn = None
 
     def _ensure_beds_started(self):
+        """S'assure que les beds île/mer sont lancés en boucle."""
         if self.sfx_island and not self.chan_island.get_busy():
             self.chan_island.play(self.sfx_island, loops=-1)
             self.chan_island.set_volume(0, 0)
@@ -243,6 +298,7 @@ class SpatialAudioManager:
 
     # --- îles statiques depuis TMX ---
     def _init_static_islands_from_tmx(self):
+        """Initialise les îles statiques à partir des données TMX."""
         tmx = self.game.tmx_data
         centers = []
 
@@ -275,6 +331,11 @@ class SpatialAudioManager:
 
     # --- API interne (déclenchées par l'API publique) ---
     def set_quantum_islands(self, centers):
+        """Définit les centres des îles quantiques actives.
+        
+        Args:
+            centers (list[tuple]): Liste des centres (x, y) des îles quantiques.
+        """
         had = len(self.quantum_islands) > 0
         self.quantum_islands = list(centers or [])
         have_now = len(self.quantum_islands) > 0
@@ -282,6 +343,12 @@ class SpatialAudioManager:
             self.chan_fx.play(self.sfx_quantum)
 
     def play_drop_for_unit(self, unit_class_name: str, pos=None):
+        """Joue le son de drop associé à l'unité (chaloupe / bateau / paquebot / sousmarin).
+        
+        Args:
+            unit_class_name (str): Nom de la classe d'unité.
+            pos (tuple, optional): Position (x, y) du drop. Defaults to None.
+        """
         if self._global_muted:
             return
         key = None
@@ -302,6 +369,11 @@ class SpatialAudioManager:
             self._play_spatial_one_shot(sfx, world_pos=pos, base_vol=VOL_DROPS)
 
     def play_one_shot_named(self, const_name: str, world_pos=None):
+        """Joue un son de drop one-shot selon le nom constant fourni.
+        Args:
+            const_name (str): Nom de la constante du son (ex: "DROP_MINE", "DROP_COIN", etc.)
+            world_pos (tuple, optional): Position (x, y) du son. Defaults to None.
+        """
         if self._global_muted:
             return
         sfx = self.sfx_drop.get(const_name)
@@ -311,6 +383,10 @@ class SpatialAudioManager:
     def play_shot_for_unit(self, unit_class_name: str, pos=None):
         """
         Joue le son de tir associé à l'unité (chaloupe / bateau / paquebot).
+        
+        Args:
+            unit_class_name (str): Nom de la classe d'unité.
+            pos (tuple, optional): Position (x, y) du tir. Defaults to None
         """
         if self._global_muted:
             return
@@ -352,6 +428,9 @@ class SpatialAudioManager:
         Joue le klaxon / corne de bateau.
         - si pos est fourni → spatial
         - sinon → centré
+        
+        Args:
+            pos (tuple, optional): Position (x, y) du son. Defaults to None
         """
         if self._global_muted:
             return
@@ -366,6 +445,7 @@ class SpatialAudioManager:
 
     # --- update frame ---
     def update(self):
+        """Met à jour l'audio (à appeler chaque frame)."""
         self._ensure_beds_started()
         cam = getattr(self.game, "camera", None)
         screen = getattr(self.game, "screen", None)
@@ -416,22 +496,63 @@ class SpatialAudioManager:
 
     # --- helpers spatialisation ---
     def _world_to_screen(self, wx, wy, cam, screen):
+        """Convertit une position monde en position écran.
+        
+        Args:
+            wx (float): Position monde X.
+            wy (float): Position monde Y.
+            cam (Camera): Caméra.
+            screen (pygame.Surface): Écran.
+        
+        Returns:
+            (tuple[float, float]): Position écran (x, y).
+        """
         ox, oy = cam.get_offset(screen.get_size())
         sx = (wx - ox) / cam.zoom_level
         sy = (wy - oy) / cam.zoom_level
         return sx, sy
 
     def _pan_from_screen_x(self, sx, screen):
+        """Convertit une position écran en panning (-1..+1) pour la spatialisation.
+        
+        Args:
+            sx (float): Position écran X.
+            screen (pygame.Surface): Écran.
+        
+        Returns:
+            (float): Panning (-1..+1).
+        """
         w = max(1, screen.get_width())
         x = clamp(sx / w, 0.0, 1.0)
         return (x * 2.0) - 1.0  # -1..+1
 
     def _pan_to_lr(self, vol, pan):
+        """Convertit un volume + panning en volumes gauche/droite.
+        
+        Args:
+            vol (float): Volume global.
+            pan (float): Panning (-1..+1).
+        
+        Returns:
+            (tuple[float, float]): Volumes gauche/droite.
+        """
         left = vol * (1.0 - clamp((pan + 1.0) / 2.0, 0.0, 1.0))
         right = vol * (1.0 - clamp((-pan + 1.0) / 2.0, 0.0, 1.0))
         return left, right
 
     def _dist_focus(self, wx, wy, cam, screen, radius_mult):
+        """Calcule le focus (0..1) d'une position monde selon la distance au centre écran.
+        
+        Args:
+            wx (float): Position monde X.
+            wy (float): Position monde Y.
+            cam (Camera): Caméra.
+            screen (pygame.Surface): Écran.
+            radius_mult (float): Multiplicateur de rayon (0.5..3.0).
+
+        Returns:
+            (float): Focus (0..1).
+        """
         sx, sy = self._world_to_screen(wx, wy, cam, screen)
         cx, cy = screen.get_width() / 2, screen.get_height() / 2
         dx, dy = (sx - cx), (sy - cy)
@@ -441,6 +562,17 @@ class SpatialAudioManager:
         return clamp(1.0 - (d / r), 0.0, 1.0)
 
     def _best_focus_pan(self, centers, cam, screen, radius_mult):
+        """Calcule le meilleur focus + panning parmi une liste de centres monde.
+        
+        Args:
+            centers (list[tuple]): Liste des centres (x, y) à considérer.
+            cam (Camera): Caméra.
+            screen (pygame.Surface): Écran.
+            radius_mult (float): Multiplicateur de rayon (0.5..3.0).
+        
+        Returns:
+            (tuple[float, float]): Focus (0..1) et panning (-1..+1).
+        """
         best = 0.0
         best_pan = 0.0
         for wx, wy in centers:
@@ -452,6 +584,11 @@ class SpatialAudioManager:
         return best, best_pan
 
     def _all_island_centers(self):
+        """Retourne la liste de tous les centres d'îles connus.
+
+        Returns:
+            (list[tuple]): Liste des centres (x, y).
+        """
         out = []
         if self.static_islands:
             out.extend(self.static_islands)
@@ -460,6 +597,15 @@ class SpatialAudioManager:
         return out
 
     def _base_focus_pan(self, cam, screen):
+        """Calcule le focus et le panning de la base (plateformes rouge et verte).
+
+        Args:
+            cam (Camera): Caméra.
+            screen (pygame.Surface): Écran.
+
+        Returns:
+            (tuple[float, float]): Focus (0..1) et panning (-1..+1).
+        """
         centers = []
         rp = getattr(self.game, "red_platform_spawn", None)
         gp = getattr(self.game, "green_platform_spawn", None)
@@ -474,6 +620,15 @@ class SpatialAudioManager:
 
     def _maybe_trigger_base_oneshot(self, base_focus, base_pan, effective_master):
         if not self.sfx_base or self._global_muted:
+
+    def _maybe_trigger_base_oneshot(self, base_focus, base_pan):
+        """Déclenche un one-shot audio pour la base si le focus est suffisant et le cooldown écoulé.
+
+        Args:
+            base_focus (float): Focus de la base (0..1).
+            base_pan (float): Panning de la base (-1..+1).
+        """
+        if not self.sfx_base:
             return
         now = pygame.time.get_ticks()
         if (
@@ -487,6 +642,13 @@ class SpatialAudioManager:
             self._last_base_trigger_time = now
 
     def _play_spatial_one_shot(self, sfx, world_pos=None, base_vol=1.0):
+        """Joue un son one-shot avec spatialisation basée sur la position dans le monde.
+
+        Args:
+            sfx (pygame.mixer.Sound): Son à jouer.
+            world_pos (tuple, optional): Position dans le monde (x, y). Si None, pas de spatialisation.
+            base_vol (float, optional): Volume de base (0..1).
+        """
         if not sfx or self._global_muted:
             return
         cam = getattr(self.game, "camera", None)
@@ -532,29 +694,49 @@ class Sound:
     """
 
     def __init__(self, game):
+        """Initialise le wrapper public avec une référence au jeu.
+
+        Args:
+            game (Game): Référence au jeu.
+        """
         self._engine = SpatialAudioManager(game)
 
     def update(self):
+        """Met à jour l'audio (à appeler chaque frame)."""
         self._engine.update()
 
     # --- anciens noms (compat EventHandler) ---
     def increase_volume(self):
+        """Augmente le volume maître."""
         self._engine.adjust_master_volume(+1)
 
     def decrease_volume(self):
+        """Diminue le volume maître."""
         self._engine.adjust_master_volume(-1)
 
     # --- nouveaux noms (si vous préférez) ---
     def increase_master_volume(self):
+        """Augmente le volume maître."""
         self._engine.adjust_master_volume(+1)
 
     def decrease_master_volume(self):
+        """Diminue le volume maître."""
         self._engine.adjust_master_volume(-1)
 
     def set_master_volume(self, value_0_1: float):
+        """Définit le volume maître.
+
+        Args:
+            value_0_1 (float): Volume maître (0..1).
+        """
         self._engine.set_master_volume(value_0_1)
 
     def get_master_volume(self) -> float:
+        """Retourne le volume maître actuel.
+
+        Returns:
+            (float): Volume maître (0..1).
+        """
         return self._engine.get_master_volume()
 
     def set_global_mute(self, muted: bool):
@@ -565,22 +747,53 @@ class Sound:
 
     # --- événements de gameplay (one-shots) ---
     def on_unit_dropped(self, unit_class_name: str, pos=None):
+        """À appeler quand une unité est déposée.
+
+        Args:
+            unit_class_name (str): Nom de la classe de l'unité.
+            pos (tuple, optional): Position dans le monde (x, y).
+        """
         self._engine.play_drop_for_unit(unit_class_name, pos=pos)
 
     def on_eclaireur_dropped(self, pos):
+        """À appeler quand un éclaireur est déposé.
+
+        Args:
+            pos (tuple): Position dans le monde (x, y).
+        """
         self._engine.play_one_shot_named("DROP_ECLAIREURS", world_pos=pos)
 
     def on_mine_dropped(self, pos):
+        """À appeler quand une mine est déposée.
+
+        Args:
+            pos (tuple): Position dans le monde (x, y).
+        """
         self._engine.play_one_shot_named("DROP_MINE", world_pos=pos)
 
     def on_mine_explosion(self, pos):
+        """À appeler quand une mine explose.
+
+        Args:
+            pos (tuple): Position dans le monde (x, y).
+        """
         self._engine.play_one_shot_named("EXPLOSION_MINE", world_pos=pos)
 
     def on_coin_drop(self, pos):
+        """À appeler quand une pièce est déposée.
+
+        Args:
+            pos (tuple): Position dans le monde (x, y).
+        """
         self._engine.play_one_shot_named("DROP_COIN", world_pos=pos)
 
     def on_unit_shot(self, unit_class_name: str, pos=None):
-        """À appeler quand une unité tire (joue tir_chaloupe / tir_bateau / tir_paquebot)."""
+        """À appeler quand une unité tire (joue tir_chaloupe / tir_bateau / tir_paquebot).
+        
+        Args:
+            unit_class_name (str): Nom de la classe de l'unité.
+            pos (tuple, optional): Position dans le monde (x, y).
+        """
         self._engine.play_shot_for_unit(unit_class_name, pos=pos)
 
     def on_victory(self):
@@ -593,18 +806,31 @@ class Sound:
 
     # --- îles quantiques ---
     def set_quantum_islands(self, centers):
+        """Définit les centres des îles quantiques.
+
+        Args:
+            centers (list): Liste des positions des centres des îles quantiques.
+        """
         self._engine.set_quantum_islands(centers)
 
     # --- configuration audio ---
     def set_vertical_attenuation(self, range_float: float):
-        """Range: 0.0 = no vertical attenuation, 1.0 = full falloff to screen edge"""
+        """Définit la plage d'atténuation verticale (0.0 = pas d'atténuation, 1.0 = atténuation totale).
+
+        Args:
+            range_float (float): Plage d'atténuation verticale (0.0..1.0).
+        """
         try:
             self._engine.vertical_attenuation_range = float(range_float)
         except Exception:
             pass
 
     def enable_audio_debug(self, flag: bool = True):
-        """Active des logs diagnostics pour l'audio (print)."""
+        """Active des logs diagnostics pour l'audio (print).
+        
+        Args:
+            flag (bool, optional): True pour activer, False pour désactiver. Defaults to True.
+        """
         try:
             self._engine.debug_audio = bool(flag)
         except Exception:

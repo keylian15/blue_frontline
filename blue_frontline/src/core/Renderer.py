@@ -65,7 +65,7 @@ class Renderer:
         self.map_needs_refresh = False
 
     def restore_quantum_islands(self):
-        """Réstaure les iles quantiques."""
+        """Restaure les iles quantiques."""
         if hasattr(self.game, "quantum_islands"):
             for island in self.game.quantum_islands:
                 if island not in self.game.group.sprites():

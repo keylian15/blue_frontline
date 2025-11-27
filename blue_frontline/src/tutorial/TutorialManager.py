@@ -472,6 +472,14 @@ class TutorialManager:
                             self.do_function = False
 
     def draw_arrow_towards(self, pop_up, pop_up_size, target_pos, color=(255, 255, 255)):
+        """Dessine une flèche allant de la popup vers la position cible.
+        
+        Args:
+            pop_up (tuple): Position de la popup (x, y).
+            pop_up_size (tuple): Taille de la popup (width, height).
+            target_pos (tuple): Position cible (x, y).
+            color (tuple, optional): Couleur de la flèche. Par defaut à (255, 255, 255).
+        """
         import math
 
         import pygame
@@ -647,7 +655,7 @@ class TutorialManager:
             self.draw_arrow_towards((x, y), (width, height), pos)
 
     def count_to_next_step(self):
-        """"""
+        """Incrémente le compteur pour passer à l'étape suivante du tutoriel."""
         if self.count == self.count_max:
             self.next_step()
             self.count = 0
@@ -672,7 +680,7 @@ class TutorialManager:
         """Déplace la caméra vers la base spécifiée.
 
         Returns:
-            True si la cible est visible à l'écran, False sinon
+            (bool): True si la cible est visible à l'écran, False sinon
         """
         cam_x, cam_y = self.game.camera.position
         target_x, target_y = self.game.get_base_position(team)
@@ -740,7 +748,11 @@ class TutorialManager:
 
     def do_seq_fire(self):
         """Exécute les actions de la séquence.
-        Spawn une chaloupe verte a coté de la chaloupe rouge"""
+        Spawn une chaloupe verte a coté de la chaloupe rouge
+        
+        Returns:
+            (bool): True si la séquence est terminée, False sinon.
+        """
         if not self.game.selected_unit.is_moving and len(self.game.units) == 3:
             self.game.event_handler.spawn_unit("chaloupe", "green")
             self.game.units[-1].position = (
@@ -752,7 +764,11 @@ class TutorialManager:
 
     def do_seq_submarin(self):
         """Exécute les actions de la séquence.
-        Spawn un sous-marin rouge pour placer une mine"""
+        Spawn un sous-marin rouge pour placer une mine
+        
+        Returns:
+            (bool): True si la séquence est terminée, False sinon.
+        """
         if len(self.game.units) == 2:
             self.game.event_handler.spawn_unit("sousmarin", "red")
             self.game.units[-1].position = self.game.get_base_position("red")
@@ -769,7 +785,11 @@ class TutorialManager:
 
     def do_seq_plateforme(self):
         """Exécute les actions de la séquence.
-        Voit les améliorations de la plateforme."""
+        Voit les améliorations de la plateforme.
+        
+        Returns:
+            (bool): True si la séquence est terminée, False sinon.
+        """
         if len(self.game.units) == 3:
             self.game.selected_unit.die()
             self.game.selected_unit = None
@@ -777,7 +797,13 @@ class TutorialManager:
         return False
 
     def get_alien_message(self, nb: int):
-        """Renvoie le message à afficher avec le nombre de caractéres"""
+        """Renvoie le message à afficher avec le nombre de caractéres
+        
+        Args:
+            nb (int): Nombre de caractères à afficher
+        Returns:
+            (str): Message alien
+        """
         from random import choice
 
         return " ".join(choice(self.alien_symbols) for _ in range(nb))

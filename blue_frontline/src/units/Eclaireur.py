@@ -32,9 +32,11 @@ class Eclaireur(Unit):
 
     def __init__(self, game: Game, team: str, is_ia: bool = True) -> None:
         """
+        Initialise une instance d'Éclaireur.
         Args:
             game (Game): instance du jeu.
             team (str): "red" ou "green".
+            is_ia (bool): active ou désactive l'IA pour cet éclaireur. Defaults to True.
         """
         # IMPORTANT :
         # On laisse Unit faire tout le boulot d'initialisation :
@@ -89,7 +91,11 @@ class Eclaireur(Unit):
             self.init_ai(game)
 
     def init_ai(self, game: Game) -> None:
-        """Initialise le contrôleur ScoutAI si possible."""
+        """Initialise le contrôleur ScoutAI si possible.
+        
+        Args:
+            game (Game): instance du jeu.
+        """
         try:
             self.ai = ScoutAI(
                 unit=self,
@@ -126,6 +132,12 @@ class Eclaireur(Unit):
         - le rect.center.
 
         Et on rajoute juste l'affichage spécifique si besoin.
+        Args:
+            dt (float): Delta time depuis la dernière frame.
+            combat_system (CombatSystem | None): Système de combat. Defaults to None.
+            screen (pygame.Surface | None): Surface d'affichage. Defaults to None.
+            camera_offset (tuple[float, float]): Décalage de la caméra. Defaults to (0.0, 0.0).
+            all_units (list[Unit] | None): Liste de toutes les unités. Defaults to None.
         """
         super().update(dt, combat_system, screen, camera_offset, all_units)
 
@@ -177,11 +189,22 @@ class Eclaireur(Unit):
         self.kill()
 
     def can_fire(self) -> bool:
-        """L'éclaireur ne tire pas."""
+        """L'éclaireur ne tire pas.
+        
+        Returns:
+            (bool): Toujours False.
+        """
         return False
 
     def get_attack_target(self, units: list[Unit]) -> None:
-        """Pas d'attaque ciblée pour l'éclaireur -> toujours None."""
+        """Pas d'attaque ciblée pour l'éclaireur -> toujours None.
+        
+        Args:
+            units (list[Unit]): Liste des unités.
+        
+        Returns:
+            (None): Toujours None.
+        """
         return None
 
 
@@ -192,10 +215,24 @@ class Eclaireur(Unit):
 
 
 class EclaireurRouge(Eclaireur):
+    """Classe pour l'Éclaireur Rouge."""
     def __init__(self, game: Game, is_ia: bool = True) -> None:
+        """Initialise une instance d'Éclaireur Rouge.
+
+        Args:
+            game (Game): Instance du jeu.
+            is_ia (bool): Active ou désactive l'IA pour cet éclaireur. Defaults to True.
+        """
         super().__init__(game, team="red", is_ia=is_ia)
 
 
 class EclaireurVert(Eclaireur):
+    """Classe pour l'Éclaireur Vert."""
     def __init__(self, game: Game, is_ia: bool = True) -> None:
+        """Initialise une instance d'Éclaireur Vert.
+
+        Args:
+            game (Game): Instance du jeu.
+            is_ia (bool): Active ou désactive l'IA pour cet éclaireur. Defaults to True.
+        """
         super().__init__(game, team="green", is_ia=is_ia)

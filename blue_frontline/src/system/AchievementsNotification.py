@@ -179,6 +179,11 @@ class AchievementNotificationManager:
     """Gestionnaire des notifications de succès."""
 
     def __init__(self, screen):
+        """génère le gestionnaire de notifications de succès.
+
+        Args:
+            screen (pygame.Surface): L'écran sur lequel dessiner.
+        """
         self.screen = screen
         self.WIDTH, self.HEIGHT = screen.get_size()
         self.active_notifications = []
