@@ -145,5 +145,5 @@ exe = EXE(
     target_arch=None,
     codesign_identity=None,
     entitlements_file=None,
-    # icon='assets/icon.ico',  # Décommentez si vous avez une icône
+    icon='assets/logo/ico/meteorite.ico', 
 )
