@@ -1,10 +1,7 @@
 import math
-from typing import TYPE_CHECKING
 
 import pygame
-
-if TYPE_CHECKING:
-    import TiledObject
+from pytmx import TiledObject
 from src.config.game_constants import FPS, TIME_STEP
 from src.config.settings_manager import get_gameplay_settings, set_gameplay_setting
 from src.core.GameInitializer import GameInitializer

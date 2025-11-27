@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 import pygame
+from pytmx import TiledObject
 
 if TYPE_CHECKING:
-    import TiledObject
     from src.core.Game import Game
     from src.units.Unit import Unit
 
