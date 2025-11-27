@@ -2,9 +2,10 @@ import json
 import math
 
 import pygame
-from config.audio import get_audio_settings
+from src.config.audio import get_audio_settings
 from src.config.controls_manager import get_controls_keys, get_pygame_key
 from src.config.paths import ANCHOR_PATH, KEYS_PATH
+from src.sound import SoundAPI
 from src.config.settings_manager import (get_gameplay_settings,
                                          set_gameplay_setting)
 from src.config.visuals import (BUTTON_BORDER_RADIUS, LIGHT_BLUE, OCEAN_BLUE,
@@ -849,8 +850,6 @@ class OptionsMenu:
                                         audio_settings["MUSIC_ENABLED"] = not audio_settings["MUSIC_ENABLED"]
                                     elif key == "APPLY_AUDIO":
                                         try:
-                                            from Class import \
-                                                SoundAPI  # adapte le chemin si besoin
                                             SoundAPI.apply_audio_settings_from_global()
                                         except Exception as e:
                                             print("Erreur lors de l'application des paramètres audio :", e)

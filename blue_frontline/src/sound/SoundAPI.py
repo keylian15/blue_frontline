@@ -1,14 +1,14 @@
 # Class/SoundAPI.py
-import pygame
-from Sound import SpatialAudioManager
+# import pygame
+# from src.sound.Sound import SpatialAudioManager
 from src.config.audio import get_audio_settings
 
-
+"""
 class Sound:
-    """
-    API publique simple pour piloter l'audio depuis le jeu.
-    Toute la logique est implémentée dans SpatialAudioManager.
-    """
+    
+    # API publique simple pour piloter l'audio depuis le jeu.
+    # Toute la logique est implémentée dans SpatialAudioManager.
+    
 
     def __init__(self, game):
         self._engine = SpatialAudioManager(game)
@@ -47,7 +47,7 @@ class Sound:
         self._engine.play_one_shot_named("DROP_COIN", world_pos=pos)
 
     def on_unit_shot(self, unit_class_name: str, pos=None):
-        """À appeler quand une unité tire."""
+        # À appeler quand une unité tire.
         self._engine.play_shot_for_unit(unit_class_name, pos=pos)
 
     def on_victory(self):
@@ -79,6 +79,7 @@ class Sound:
 
     def decrease_volume(self):
         self._engine.adjust_master_volume(-1)
+"""
 
 # ===================================================================
 # === FONCTIONS GLOBALES DU MODULE POUR LE MENU OPTIONS (CORRIGÉ) ===

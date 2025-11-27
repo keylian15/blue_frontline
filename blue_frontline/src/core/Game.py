@@ -657,7 +657,7 @@ class Game:
                 self.event_handler.handle_continuous_input()
 
             # Mise à jour des systèmes de jeu
-            self.updater.update_systems(dt, self)
+            self.updater.update_systems(dt)
             
             # Mise à jour de l'audio spatial
             if hasattr(self, "sound") and self.sound:

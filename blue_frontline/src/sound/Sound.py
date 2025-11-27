@@ -5,8 +5,8 @@ import math
 from typing import TYPE_CHECKING
 
 import pygame
-from SoundAPI import *
-from config.audio import (
+from src.sound import SoundAPI
+from src.config.audio import (
     APPARITION_QUANTIQUE,
     BASE_BED,
     BASE_COOLDOWN_MS,
