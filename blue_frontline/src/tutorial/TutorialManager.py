@@ -769,19 +769,14 @@ class TutorialManager:
         Returns:
             (bool): True si la séquence est terminée, False sinon.
         """
-        if len(self.game.units) == 2:
-            self.game.event_handler.spawn_unit("sousmarin", "red")
-            self.game.units[-1].position = self.game.get_base_position("red")
-            self.game.units[-1].position = (
-                self.game.units[-1].position[0] + 100,
-                self.game.units[-1].position[1],
-            )
-            self.select_last_unit()
-            return True
-        elif len(self.game.units) != 3:
-            self.game.selected_unit.die()
-            self.game.units[-1].die()
-            return False
+        self.game.event_handler.spawn_unit("sousmarin", "red")
+        self.game.units[-1].position = self.game.get_base_position("red")
+        self.game.units[-1].position = (
+            self.game.units[-1].position[0] + 100,
+            self.game.units[-1].position[1],
+        )
+        self.select_last_unit()
+        return True
 
     def do_seq_plateforme(self):
         """Exécute les actions de la séquence.

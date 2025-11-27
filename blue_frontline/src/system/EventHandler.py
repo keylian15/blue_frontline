@@ -270,6 +270,10 @@ class EventHandler:
             if event.type == pygame.QUIT:
                 return False
 
+            # Verifier qu'on est pas en index out of range
+            if self.game.tutorial.step >= len(self.game.tutorial.messages):
+                self.game.tutorial.active = False
+                return False
             seq = self.game.tutorial.messages[self.game.tutorial.step]
             # On verifie si des fonctions doivent etre exectués dans la sequence actuelle. Si oui, on les execute.
             if "function" in seq:

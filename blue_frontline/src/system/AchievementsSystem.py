@@ -258,6 +258,14 @@ class AchievementsSystem:
                 "condition": self._check_master_tactician,
                 "unlocked": False,
             },
+            "speed_run_tuto": {
+                "name": "Pas le temps d'apprendre",
+                "description": "Terminer le tutoriel en moins de 2 minutes",
+                "hidden_description": "Succès mystère - Apprendre vite, gagner vite...",
+                "category": "Succès Spéciaux",
+                "condition": self._check_speed_runner_tuto,
+                "unlocked": False,
+            },
         }
 
     def _check_survivor(self):
@@ -272,6 +280,11 @@ class AchievementsSystem:
 
     def _check_speed_runner(self):
         """Vérifie le succès 'Coureur de Vitesse'."""
+        # Implémenté plus tard avec le temps de partie
+        return False
+
+    def _check_speed_runner_tuto(self):
+        """Vérifie le succès 'Pas le temps d'apprendre."""
         # Implémenté plus tard avec le temps de partie
         return False
 
