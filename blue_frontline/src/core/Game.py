@@ -666,6 +666,10 @@ class Game:
 
             # Mise à jour des systèmes de jeu
             self.updater.update_systems(dt)
+            
+            # Mise à jour de l'audio spatial
+            if hasattr(self, "sound") and self.sound:
+                self.sound.update()
 
             # Gestion achievements et notifications
             if self.mode != "tuto" and self.achievements_system:

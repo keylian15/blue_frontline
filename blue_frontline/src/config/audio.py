@@ -45,3 +45,14 @@ BASE_FOCUS_RADIUS_MULT = 1.6
 BASE_TRIGGER_THRESHOLD = 0.5
 BASE_COOLDOWN_MS = 2500
 BASE_ONE_SHOT_VOL = 0.9
+
+# === PARAMÈTRES AUDIO pour OptionsMenu.py ============
+AUDIO_SETTINGS = {
+    "VOLUME": MASTER_VOL_DEFAULT,   # Volume global (0.0 → 1.0)
+    "SOUND_ENABLED": True,          # ON/OFF globale du son
+    "MUSIC_ENABLED": True           # ON/OFF musique de fond uniquement
+}
+
+def get_audio_settings():
+    """Retourne le dictionnaire centralisé des paramètres audio."""
+    return AUDIO_SETTINGS

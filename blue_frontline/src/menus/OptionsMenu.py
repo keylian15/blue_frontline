@@ -2,10 +2,14 @@ import json
 import math
 
 import pygame
+from src.config.audio import get_audio_settings
 from src.config.controls_manager import get_controls_keys, get_pygame_key
 from src.config.paths import ANCHOR_PATH, KEYS_PATH
-from src.config.settings_manager import get_gameplay_settings, set_gameplay_setting
-from src.config.visuals import BUTTON_BORDER_RADIUS, LIGHT_BLUE, OCEAN_BLUE, WAVE_COLOR, WHITE
+from src.sound import SoundAPI
+from src.config.settings_manager import (get_gameplay_settings,
+                                         set_gameplay_setting)
+from src.config.visuals import (BUTTON_BORDER_RADIUS, LIGHT_BLUE, OCEAN_BLUE,
+                                WAVE_COLOR, WHITE)
 
 
 class OptionsMenu:
@@ -36,8 +40,8 @@ class OptionsMenu:
         self.cursor_visible = True
         self.CURSOR_BLINK_SPEED = 500  # millisecondes
 
-        # État actuel : 'main' ou 'controls'
-        self.current_view = "main"
+        # État actuel : 'main', 'controls', 'gameplay', 'audio'
+        self.current_view = 'main'
 
         # Pour la vue controls
         self.waiting_for_key = None
@@ -629,6 +633,100 @@ class OptionsMenu:
 
         return interactive_rects
 
+    def draw_audio_menu(self):
+        """Menu AUDIO : volume + mute global + mute musique"""
+        self.screen.fill(self.background)
+
+        # === Titre ===
+        title = "AUDIO"
+        title_surf = self.title_font.render(title, True, WHITE)
+        title_rect = title_surf.get_rect(midtop=(self.WIDTH // 2, 50))
+        self.screen.blit(title_surf, title_rect)
+
+        interactive_rects = {}
+
+        # Charger paramètres audio
+        audio_settings = get_audio_settings()
+
+        # ===============================
+        #       1. SLIDER VOLUME
+        # ===============================
+        slider_label = self.font.render(
+            f"Volume général : {int(audio_settings['VOLUME'] * 100)}%", True, WHITE)
+        self.screen.blit(slider_label, (100, 170))
+
+        slider_x = 100
+        slider_y = 220
+        slider_w = 400
+        slider_h = 20
+
+        track_rect = pygame.Rect(slider_x, slider_y, slider_w, slider_h)
+        pygame.draw.rect(self.screen, OCEAN_BLUE, track_rect, border_radius=10)
+
+        # Curseur
+        cursor_x = slider_x + int(audio_settings['VOLUME'] * slider_w)
+        cursor_rect = pygame.Rect(cursor_x - 10, slider_y - 5, 20, slider_h + 10)
+        pygame.draw.rect(self.screen, LIGHT_BLUE, cursor_rect, border_radius=10)
+
+        interactive_rects["VOLUME"] = track_rect
+        interactive_rects["VOLUME_CURSOR"] = cursor_rect
+
+        # ===============================
+        #    2. BOUTON SON GLOBAL
+        # ===============================
+        btn_rect = pygame.Rect(100, 300, 300, 60)
+        hovered = btn_rect.collidepoint(pygame.mouse.get_pos())
+        btn_surf = self.draw_gradient_button(btn_rect, hovered)
+        self.screen.blit(btn_surf, btn_rect)
+        pygame.draw.rect(self.screen, WHITE, btn_rect, 3, border_radius=10)
+
+        text = "Son : ON" if audio_settings["SOUND_ENABLED"] else "Son : OFF"
+        txt_surf = self.font.render(text, True, WHITE)
+        self.screen.blit(txt_surf, (btn_rect.x + 20, btn_rect.y + 15))
+        interactive_rects["SOUND_ENABLED"] = btn_rect
+
+        # ===============================
+        #    3. BOUTON MUSIQUE DE FOND
+        # ===============================
+        bg_rect = pygame.Rect(100, 400, 300, 60)
+        hovered = bg_rect.collidepoint(pygame.mouse.get_pos())
+        bg_surf = self.draw_gradient_button(bg_rect, hovered)
+        self.screen.blit(bg_surf, bg_rect)
+        pygame.draw.rect(self.screen, WHITE, bg_rect, 3, border_radius=10)
+
+        text2 = "Musique : ON" if audio_settings["MUSIC_ENABLED"] else "Musique : OFF"
+        txt2_surf = self.font.render(text2, True, WHITE)
+        self.screen.blit(txt2_surf, (bg_rect.x + 20, bg_rect.y + 15))
+        interactive_rects["MUSIC_ENABLED"] = bg_rect
+        
+        # ===============================
+        #          Bouton appliquer
+        # ===============================
+        apply_rect = pygame.Rect(self.WIDTH - 270, self.HEIGHT - 90, 250, 60)
+        hovered = apply_rect.collidepoint(pygame.mouse.get_pos())
+        apply_surf = self.draw_gradient_button(apply_rect, hovered)
+        self.screen.blit(apply_surf, apply_rect)
+        pygame.draw.rect(self.screen, WHITE, apply_rect, 3, border_radius=10)
+        apply_txt = self.font.render("Appliquer", True, WHITE)
+        self.screen.blit(apply_txt, (apply_rect.x + 20, apply_rect.y + 15))
+        interactive_rects["APPLY_AUDIO"] = apply_rect
+
+
+        # ===============================
+        #          Bouton retour
+        # ===============================
+        back_rect = pygame.Rect(50, self.HEIGHT - 90, 250, 60)
+        hovered = back_rect.collidepoint(pygame.mouse.get_pos())
+        btn_surf = self.draw_gradient_button(back_rect, hovered)
+        self.screen.blit(btn_surf, back_rect)
+        pygame.draw.rect(self.screen, WHITE, back_rect, 3, border_radius=10)
+
+        back_surf = self.font.render("Retour", True, WHITE)
+        self.screen.blit(back_surf, (back_rect.x + 20, back_rect.y + 15))
+        interactive_rects["back"] = back_rect
+
+        return interactive_rects
+
     def handle_key_binding(self, event, control_name):
         """Gère l'attribution d'une nouvelle touche
         
@@ -700,6 +798,9 @@ class OptionsMenu:
 
                 interactive_rects = self.draw_gameplay_menu()
 
+            elif self.current_view == 'audio':
+                interactive_rects = self.draw_audio_menu()
+
             pygame.display.flip()
             clock.tick(60)
 
@@ -733,8 +834,8 @@ class OptionsMenu:
                     if event.key == pygame.K_ESCAPE:
                         if self.current_view == "main":
                             return True
-                        elif self.current_view in ["controls", "gameplay"] and not self.waiting_for_key:
-                            self.current_view = "main"
+                        elif self.current_view in ['controls', 'gameplay', 'audio'] and not self.waiting_for_key:
+                            self.current_view = 'main'
                             self.scroll_y = 0
 
                 elif event.type == pygame.MOUSEBUTTONDOWN:
@@ -751,7 +852,7 @@ class OptionsMenu:
                                     elif button["action"] == "gameplay":
                                         self.current_view = "gameplay"
                                     elif button["action"] == "audio":
-                                        print("Menu Audio à implémenter")
+                                        self.current_view = 'audio'
                                     elif button["action"] == "quit_game":
                                         pygame.quit()
                                         import sys
@@ -794,14 +895,33 @@ class OptionsMenu:
                                         return True
                                     break
 
-                    elif event.button == 4 and self.current_view == "controls":  # Molette haut
+                        elif self.current_view == 'audio' and interactive_rects:
+                            audio_settings = get_audio_settings()
+                            for key, rect in interactive_rects.items():
+                                if rect.collidepoint(mouse_pos):
+                                    if key == "VOLUME":
+                                        self.dragging_slider = "VOLUME"
+                                    elif key == "SOUND_ENABLED":
+                                        audio_settings["SOUND_ENABLED"] = not audio_settings["SOUND_ENABLED"]
+                                    elif key == "MUSIC_ENABLED":
+                                        audio_settings["MUSIC_ENABLED"] = not audio_settings["MUSIC_ENABLED"]
+                                    elif key == "APPLY_AUDIO":
+                                        try:
+                                            SoundAPI.apply_audio_settings_from_global()
+                                        except Exception as e:
+                                            print("Erreur lors de l'application des paramètres audio :", e)
+                                    elif key == "back":
+                                        self.current_view = 'main'
+                                    break
+
+                    elif event.button == 4 and self.current_view == 'controls':  # Molette haut
                         self.handle_scroll(-1)
                     elif event.button == 5 and self.current_view == "controls":  # Molette bas
                         self.handle_scroll(1)
 
                 elif event.type == pygame.MOUSEBUTTONUP:
                     # Relâchement de la souris
-                    if self.dragging_slider in ["TIME_MAREE", "OCTAVES", "SCALE"]:
+                    if self.dragging_slider in ["TIME_MAREE", "OCTAVES", "SCALE", "VOLUME"]:
                         self.dragging_slider = None
 
                 elif event.type == pygame.MOUSEMOTION:
@@ -815,9 +935,10 @@ class OptionsMenu:
                         time_max = 360
                         proportion = (mouse_x - slider_x) / slider_width
                         gameplay_settings = get_gameplay_settings()
-                        gameplay_settings["TIME_MAREE"] = int(time_min + proportion * (time_max - time_min))
-
-                    # Curseur Octaves - CORRIGÉ : Bonnes valeurs min/max
+                        gameplay_settings["TIME_MAREE"] = int(
+                            time_min + proportion * (time_max - time_min))
+                    
+                    # Curseur Octaves
                     if self.dragging_slider == "OCTAVES" and interactive_rects:
                         mouse_x = pygame.mouse.get_pos()[0]
                         slider_x = interactive_rects["OCTAVES"].x
@@ -851,5 +972,16 @@ class OptionsMenu:
                         snap_value = min(allowed_values, key=lambda v: abs(v - raw_value))
 
                         gameplay_settings["SCALE"] = snap_value
+
+                    # Curseur VOLUME (audio)
+                    if self.dragging_slider == "VOLUME" and interactive_rects and self.current_view == "audio":
+                        mouse_x = pygame.mouse.get_pos()[0]
+                        slider_x = interactive_rects["VOLUME"].x
+                        slider_width = interactive_rects["VOLUME"].width
+                        mouse_x = max(slider_x, min(slider_x + slider_width, mouse_x))
+
+                        proportion = (mouse_x - slider_x) / slider_width
+                        audio_settings = get_audio_settings()
+                        audio_settings["VOLUME"] = max(0.0, min(1.0, round(proportion, 2)))
 
         return True
