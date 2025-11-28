@@ -49,37 +49,25 @@ def resource_path(relative_path: str):
     return os.path.join(base_path, relative_path)
 
 
-def user_data_path(filename: str):
-    """Retourne le chemin pour les données utilisateur (lecture/écriture).
+def user_data_path(filename: str) -> str:
+    """Retourne un chemin sûr pour lire/écrire des données utilisateur."""
 
-    Pour les exécutables PyInstaller, vérifie d'abord si le fichier existe dans le package,
-    sinon crée un chemin à côté de l'exécutable.
-
-    Args:
-        filename (str): Chemin relatif vers la ressource.
-
-    Returns:
-        (str): Chemin absolu vers la ressource.
-    """
-    if hasattr(sys, "_MEIPASS"):  # si exe PyInstaller
-        # D'abord, vérifier si le fichier existe dans le package
+    # 1) PyInstaller : si fichier packagé → lecture interne
+    if hasattr(sys, "_MEIPASS"):
         packaged_path = os.path.join(sys._MEIPASS, filename)
         if os.path.exists(packaged_path):
             return packaged_path
 
-        # Sinon, utiliser le dossier à côté de l'exe pour l'écriture
-        base_path = os.path.dirname(sys.executable)
-    else:  # si script normal
-        base_path = os.path.dirname(__file__)
+    # 2) Dossier utilisateur (écriture sécurisée)
+    if sys.platform == "win32":
+        base_dir = os.path.join(os.environ["APPDATA"], "BlueFrontline")
+    else:
+        base_dir = os.path.join(os.path.expanduser("~/.config"), "blue_frontline")
 
-    # Remonter jusqu'a blue_frontline
-    base_path = os.path.dirname(base_path)  # /src
-    base_path = os.path.dirname(base_path)  # /blue_frontline
+    # Créer les dossiers
+    full_path = os.path.join(base_dir, filename)
+    os.makedirs(os.path.dirname(full_path), exist_ok=True)
 
-    # Crée les dossiers nécessaires
-    full_path = os.path.join(base_path, filename)
-    data_dir = os.path.dirname(full_path)
-    os.makedirs(data_dir, exist_ok=True)
     return full_path
 
 

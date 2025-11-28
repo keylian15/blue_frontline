@@ -322,14 +322,14 @@ class EventHandler:
                 else:
                     # Cas particulier.
                     if seq["restriction"]["name"] == "spawn_chaloupe":
-                        self.spawn_unit("chaloupe", "red")
-                        self.game.units[-1].position = self.game.get_base_position("red")
-                        self.game.units[-1].position = (
-                            self.game.units[-1].position[0] + 100,
-                            self.game.units[-1].position[1],
-                        )
-                        self.apply_cost("chaloupe", "red", 20)
-                        self.game.tutorial.next_step()
+                        if self.spawn_unit("chaloupe", "red"):
+                            self.game.units[-1].position = self.game.get_base_position("red")
+                            self.game.units[-1].position = (
+                                self.game.units[-1].position[0] + 100,
+                                self.game.units[-1].position[1],
+                            )
+                            self.apply_cost("chaloupe", "red", 20)
+                            self.game.tutorial.next_step()
 
                     # Cas particulier.
                     elif seq["restriction"]["name"] == "fire_mine":

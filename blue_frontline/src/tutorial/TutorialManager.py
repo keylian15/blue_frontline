@@ -753,6 +753,8 @@ class TutorialManager:
         Returns:
             (bool): True si la séquence est terminée, False sinon.
         """
+        if not (hasattr(self.game, "selected_unit") and hasattr(self.game.selected_unit, "is_moving")):
+            return False
         if not self.game.selected_unit.is_moving and len(self.game.units) == 3:
             self.game.event_handler.spawn_unit("chaloupe", "green")
             self.game.units[-1].position = (
