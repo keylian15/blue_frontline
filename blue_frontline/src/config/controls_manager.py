@@ -1,8 +1,11 @@
 import json
+import os
+import shutil
 
 import pygame
 
 from .paths import KEYS_PATH
+from src.utils.Utils import resource_path
 
 # Cache des contrôles
 CONTROLS_KEYS = None
@@ -16,6 +19,13 @@ def load_keys(path):
     Returns:
         (dict): Dictionnaire des contrôles.
     """
+    # Si le fichier n'existe pas, copier le fichier par défaut
+    if not os.path.exists(path):
+        default_keys_path = resource_path("data/keys.json")
+        if os.path.exists(default_keys_path):
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            shutil.copy(default_keys_path, path)
+    
     with open(path, encoding="utf-8") as f:
         return json.load(f)
 

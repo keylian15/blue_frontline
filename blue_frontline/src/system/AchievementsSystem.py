@@ -1,8 +1,9 @@
 import json
 import os
+import shutil
 
 import pygame
-from src.utils.Utils import user_data_path
+from src.utils.Utils import user_data_path, resource_path
 
 
 class AchievementsSystem:
@@ -450,6 +451,14 @@ class AchievementsSystem:
         """Charge les succès débloqués depuis un fichier JSON."""
         try:
             save_file = self.get_save_filename()
+            
+            # Si le fichier n'existe pas, copier le fichier par défaut
+            if not os.path.exists(save_file):
+                default_achievements_path = resource_path("data/achievements.json")
+                if os.path.exists(default_achievements_path):
+                    os.makedirs(os.path.dirname(save_file), exist_ok=True)
+                    shutil.copy(default_achievements_path, save_file)
+            
             if os.path.exists(save_file):
                 with open(save_file, encoding="utf-8") as f:
                     data = json.load(f)

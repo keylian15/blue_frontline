@@ -1,5 +1,7 @@
 import json
 import math
+import os
+import shutil
 
 import pygame
 from src.config.audio import get_audio_settings
@@ -8,6 +10,7 @@ from src.config.paths import ANCHOR_PATH, KEYS_PATH
 from src.config.settings_manager import get_gameplay_settings, set_gameplay_setting
 from src.config.visuals import BUTTON_BORDER_RADIUS, LIGHT_BLUE, OCEAN_BLUE, WAVE_COLOR, WHITE
 from src.sound import SoundAPI
+from src.utils.Utils import resource_path
 
 
 class OptionsMenu:
@@ -132,6 +135,13 @@ class OptionsMenu:
     def load_keys_from_file(self):
         """Recharge CONTROLS_KEYS depuis le fichier JSON."""
         try:
+            # Si le fichier n'existe pas, copier le fichier par défaut
+            if not os.path.exists(KEYS_PATH):
+                default_keys_path = resource_path("data/keys.json")
+                if os.path.exists(default_keys_path):
+                    os.makedirs(os.path.dirname(KEYS_PATH), exist_ok=True)
+                    shutil.copy(default_keys_path, KEYS_PATH)
+            
             with open(KEYS_PATH, encoding="utf-8") as f:
                 loaded_data = json.load(f)
                 controls_keys = get_controls_keys()

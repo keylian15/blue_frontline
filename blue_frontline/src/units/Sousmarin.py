@@ -86,6 +86,7 @@ class SousMarin(Unit):
         self.current_path = []  # Chemin A* actuel
         self.path_index = 0  # Index dans le chemin actuel
         self.is_computing_path = False  # Flag indiquant qu'un calcul est en cours
+        self._last_alternative_path_time = 0  # Cooldown pour éviter les freezes
         # ===== Variables pour la logique de groupe (IA coordonnée) =====
         # Identifiant du groupe auquel appartient ce sous-marin (None si isolé)
         self.group_id = None
@@ -1164,6 +1165,9 @@ class SousMarin(Unit):
 
         Utilise `is_position_valid` pour filtrer et tente de contourner les obstacles en cherchant
         une position proche si un point de la grille est invalide.
+        
+        IMPORTANT: Force la vérification en mode marée basse pour garantir que les positions
+        restent valides même quand la marée change.
 
         Args:
             all_units (list[Unit]): Liste de toutes les unités du jeu
@@ -1175,6 +1179,16 @@ class SousMarin(Unit):
         if not self.platform_position:
             # Pas de plateforme trouvée : ne rien générer
             return
+
+        # Sauvegarder l'état actuel de la marée
+        original_maree_state = None
+        if hasattr(self.game, "hud") and hasattr(self.game.hud, "timer"):
+            original_maree_state = self.game.hud.timer.maree_haute
+            # Forcer la marée basse pour la génération des positions
+            self.game.hud.timer.maree_haute = False
+            # Mettre à jour les layers de collision
+            if hasattr(self.game, "initializer"):
+                self.game.initializer.switch_layer()
 
         cx, cy = self.platform_position
         half = self.defense_square_radius
@@ -1256,6 +1270,13 @@ class SousMarin(Unit):
                     if (x, y) not in positions and self.is_position_valid(x, y, treat_platform_as_obstacle=True):
                         positions.append((x, y))
                 y += small_step
+
+        # Restaurer l'état original de la marée
+        if original_maree_state is not None:
+            self.game.hud.timer.maree_haute = original_maree_state
+            # Restaurer les layers de collision
+            if hasattr(self.game, "initializer"):
+                self.game.initializer.switch_layer()
 
         # Enfin tailler la liste à la taille demandée
         self.defense_mine_positions = positions[: self.defense_max_mines]
@@ -1754,27 +1775,26 @@ class SousMarin(Unit):
             distance_check (int): Distance à vérifier pour chaque direction
             avoid_platform (bool): Si True, traite la plateforme comme un obstacle. Default is False.
         """
+        # Cooldown pour éviter de recalculer trop souvent (1.5 secondes)
+        current_time = time.time()
+        if current_time - self._last_alternative_path_time < 1.5:
+            return
+        
+        self._last_alternative_path_time = current_time
         direction_found = False
 
-        # Liste d'angles à tester (de plus en plus grand)
+        # Liste d'angles à tester optimisée (moins d'angles)
         angles_to_test = [
-            20,
-            -20,
-            40,
-            -40,
+            30,
+            -30,
             60,
             -60,
-            80,
-            -80,
-            100,
-            -100,
+            90,
+            -90,
             120,
             -120,
-            140,
-            -140,
-            160,
-            -160,
-            180,
+            150,
+            -150,
         ]
 
         # D'abord essayer avec la distance normale
@@ -1783,8 +1803,8 @@ class SousMarin(Unit):
             test_x = self.position[0] + math.cos(test_angle) * distance_check
             test_y = self.position[1] - math.sin(test_angle) * distance_check
 
-            # Vérifier tout le chemin, pas seulement la destination
-            if self.is_path_clear(test_x, test_y, treat_platform_as_obstacle=avoid_platform):
+            # Vérifier tout le chemin avec moins de points (5 au lieu de 10)
+            if self.is_path_clear(test_x, test_y, num_checks=5, treat_platform_as_obstacle=avoid_platform):
                 # Mettre à jour l'angle du sous-marin
                 self.angle = (self.angle + angle_offset) % 360
                 self.image = pygame.transform.rotate(self.image_original, self.angle)
@@ -1802,8 +1822,8 @@ class SousMarin(Unit):
                 test_x = self.position[0] + math.cos(test_angle) * shorter_distance
                 test_y = self.position[1] - math.sin(test_angle) * shorter_distance
 
-                # Vérifier tout le chemin, pas seulement la destination
-                if self.is_path_clear(test_x, test_y, treat_platform_as_obstacle=avoid_platform):
+                # Vérifier tout le chemin avec moins de points
+                if self.is_path_clear(test_x, test_y, num_checks=5, treat_platform_as_obstacle=avoid_platform):
                     # Mettre à jour l'angle du sous-marin
                     self.angle = (self.angle + angle_offset) % 360
                     self.image = pygame.transform.rotate(self.image_original, self.angle)
@@ -1826,8 +1846,8 @@ class SousMarin(Unit):
         dy = target_y - self.position[1]
         base_angle = math.degrees(math.atan2(-dy, dx)) - 90
 
-        # Tester des angles autour de la direction de la cible
-        angles_to_test = [0, 15, -15, 30, -30, 45, -45, 60, -60, 90, -90]
+        # Tester des angles autour de la direction de la cible (réduit pour performance)
+        angles_to_test = [0, 30, -30, 60, -60, 90, -90]
         distance_check = 100
 
         for angle_offset in angles_to_test:
@@ -1837,7 +1857,8 @@ class SousMarin(Unit):
             test_x = self.position[0] + math.cos(test_angle_rad) * distance_check
             test_y = self.position[1] - math.sin(test_angle_rad) * distance_check
 
-            if self.is_path_clear(test_x, test_y, treat_platform_as_obstacle=avoid_platform):
+            # Réduire le nombre de vérifications à 5 pour améliorer les performances
+            if self.is_path_clear(test_x, test_y, num_checks=5, treat_platform_as_obstacle=avoid_platform):
                 self.angle = test_angle_deg
                 self.image = pygame.transform.rotate(self.image_original, self.angle)
                 self.rect = self.image.get_rect(center=self.rect.center)
